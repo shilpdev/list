@@ -376,7 +376,6 @@ function ReactList<T = unknown>({
     setListState(memoizedState);
   }, [
     setListState,
-    memoizedState,
     state.items,
     state.count,
     state.error,
