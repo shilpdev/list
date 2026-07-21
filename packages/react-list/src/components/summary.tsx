@@ -1,5 +1,5 @@
 import { memo, useMemo, type ReactNode } from "react";
-import type { SummaryScope } from "@7span/react-list-types";
+import type { SummaryScope } from "@7span/list-types";
 import { useListContext } from "../context/list-provider";
 
 type ReactListSummaryProps = {

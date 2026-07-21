@@ -15,7 +15,7 @@ import type {
   RequestContextPatch,
   SavedListState,
   StateManagerContext,
-} from "@7span/react-list-types";
+} from "@7span/list-types";
 import { useListContext } from "../context/list-provider";
 import { hasActiveFilters } from "./utils";
 import { isEqual } from "../utils";

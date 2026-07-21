@@ -14,7 +14,9 @@
     "build:playground-typescript": "pnpm --filter playground-typescript run build",
     "start": "pnpm --filter {apps/*} run preview",
     "start:docs": "pnpm --filter docs run preview",
-    "start:playground": "pnpm --filter docs run preview"
+    "build:types": "pnpm --filter @7span/list-types build",
+    "build:react-list": "pnpm --filter @7span/react-list build",
+    "build:packages": "pnpm build:types && pnpm build:react-list"
   },
   "keywords": [],
   "author": "",

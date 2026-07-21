@@ -1,5 +1,5 @@
 {
-  "name": "@7span/react-list-types",
+  "name": "@7span/list-types",
   "version": "1.0.0",
   "description": "Shared TypeScript types for @7span/react-list and future vue-list",
   "type": "module",

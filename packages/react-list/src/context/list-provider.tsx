@@ -9,7 +9,7 @@ import type {
   ListProviderConfig,
   ListProviderContextValue,
   ListState,
-} from "@7span/react-list-types";
+} from "@7span/list-types";
 
 const ListContext = createContext<ListProviderContextValue<unknown> | null>(
   null

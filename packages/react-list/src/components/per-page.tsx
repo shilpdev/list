@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo, type ReactNode } from "react";
 import type {
   PerPageComponentOptions,
   PerPageScope,
-} from "@7span/react-list-types";
+} from "@7span/list-types";
 import { useListContext } from "../context/list-provider";
 
 type ReactListPerPageProps = PerPageComponentOptions & {

@@ -34,15 +34,15 @@
   "peerDependencies": {
     "react": "^18.2.0 || ^19.0.0",
     "react-dom": "^18.2.0 || ^19.0.0",
-    "@7span/react-list-types": "^1.0.0"
+    "@7span/list-types": "^1.0.0"
   },
   "peerDependenciesMeta": {
-    "@7span/react-list-types": {
+    "@7span/list-types": {
       "optional": true
     }
   },
   "devDependencies": {
-    "@7span/react-list-types": "workspace:*",
+    "@7span/list-types": "workspace:*",
     "@types/react": "^19.0.10",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.8.3",

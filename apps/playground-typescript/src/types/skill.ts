@@ -1,4 +1,4 @@
-import type { Filters } from '@7span/react-list-types';
+import type { Filters } from '@7span/list-types';
 
 export interface Skill {
   id: string | number;

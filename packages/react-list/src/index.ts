@@ -17,4 +17,4 @@ export {
   useListContext,
 } from "./context/list-provider";
 
-export type * from "@7span/react-list-types";
+export type * from "@7span/list-types";

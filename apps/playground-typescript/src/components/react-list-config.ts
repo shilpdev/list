@@ -2,7 +2,7 @@ import type {
   ListProviderConfig,
   SavedListState,
   StateManagerContext,
-} from '@7span/react-list-types';
+} from '@7span/list-types';
 
 import requestHandler from '../api/request-handler';
 import type { Skill } from '../types/skill';

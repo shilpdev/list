@@ -20,7 +20,7 @@ import type {
   SerializedListItem,
   SortOrder,
   SummaryScope,
-} from '@7span/react-list-types';
+} from '@7span/list-types';
 import { Icon } from '@iconify/react';
 import { useState } from 'react';
 

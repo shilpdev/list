@@ -3,7 +3,7 @@ import type {
   PaginationComponentOptions,
   PaginationScope,
   RenderPageArgs,
-} from "@7span/react-list-types";
+} from "@7span/list-types";
 import { useListContext } from "../context/list-provider";
 
 type ReactListPaginationProps = PaginationComponentOptions & {

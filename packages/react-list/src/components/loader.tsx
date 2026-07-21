@@ -2,7 +2,7 @@ import { memo, useMemo, type ReactNode } from "react";
 import type {
   LoaderComponentOptions,
   LoaderScope,
-} from "@7span/react-list-types";
+} from "@7span/list-types";
 import { useListContext } from "../context/list-provider";
 
 type ReactListLoaderProps = LoaderComponentOptions & {

@@ -1,4 +1,4 @@
-import type { RequestHandler } from '@7span/react-list-types';
+import type { RequestHandler } from '@7span/list-types';
 import type { Skill } from '../types/skill';
 
 const requestHandler: RequestHandler<Skill> = async ({

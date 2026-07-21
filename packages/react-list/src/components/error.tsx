@@ -1,5 +1,5 @@
 import { memo, type ReactNode } from "react";
-import type { ErrorScope } from "@7span/react-list-types";
+import type { ErrorScope } from "@7span/list-types";
 import { useListContext } from "../context/list-provider";
 
 type ReactListErrorProps = {
