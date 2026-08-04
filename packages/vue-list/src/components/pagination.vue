@@ -1,19 +1,19 @@
 <template>
-  <div class="vue-list__pagination">
+  <div v-if="showContent" class="vue-list__pagination">
     <slot v-bind="scope">
       <slot name="first" v-bind="scope">
-        <button type="button" :disabled="!hasPrev" @click="first">First</button>
+        <button type="button" :disabled="!scope.hasPrev" @click="scope.first">First</button>
       </slot>
 
       <slot name="prev" v-bind="scope">
-        <button type="button" :disabled="!hasPrev" @click="prev">Prev</button>
+        <button type="button" :disabled="!scope.hasPrev" @click="scope.prev">Prev</button>
       </slot>
 
       <slot name="pages" v-bind="scope">
-        <template v-for="item in pagesToDisplay">
-          <slot name="page" :page="item" :isActive="item == localPage" v-bind="scope">
-            <span v-if="item == localPage" :key="`page-active-${item}`">{{ item }}</span>
-            <button type="button" v-else :key="`page-${item}`" @click="setPage(item)">
+        <template v-for="item in scope.pagesToDisplay" :key="item">
+          <slot name="page" :page="item" :isActive="item === scope.page">
+            <span v-if="item === scope.page">{{ item }}</span>
+            <button v-else type="button" @click="scope.setPage(item)">
               {{ item }}
             </button>
           </slot>
@@ -21,102 +21,74 @@
       </slot>
 
       <slot name="next" v-bind="scope">
-        <button type="button" :disabled="!hasNext" @click="next">Next</button>
+        <button type="button" :disabled="!scope.hasNext" @click="scope.next">Next</button>
       </slot>
 
       <slot name="last" v-bind="scope">
-        <button type="button" :disabled="!hasNext" @click="last">Last</button>
+        <button type="button" :disabled="!scope.hasNext" @click="scope.last">Last</button>
       </slot>
     </slot>
   </div>
 </template>
 
-<script setup>
-/**
- * Display a pagination bar with clickable page numbers to allow users to navigate.
- */
-
-import { inject, computed } from 'vue'
-const setPage = inject('setPage')
-const localPage = inject('localPage')
-const localPerPage = inject('localPerPage')
-const count = inject('count')
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { PaginationComponentOptions, PaginationScope } from '@7span/list-types'
+import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'VueListPagination',
 })
 
-const props = defineProps({
-  pageLinks: {
-    /**
-     * Number of page buttons to display in the pagination component.
-     * The current page will be centered with additional pages shown on both sides.
-     * An odd number is recommended for balanced display.
-     */
-    type: Number,
-    default: 5,
-  },
+const props = withDefaults(defineProps<PaginationComponentOptions>(), {
+  pageLinks: 5,
 })
 
-const pagesCount = computed(() => {
-  return Math.ceil(count.value / localPerPage.value)
+const { listState } = useListContext()
+
+const showContent = computed(() => {
+  const state = listState.value
+  return (
+    !state.loader.initialLoading &&
+    state.data.length > 0 &&
+    !state.error
+  )
 })
 
-const halfWay = computed(() => {
-  return Math.floor(props.pageLinks / 2)
-})
+const scope = computed((): PaginationScope => {
+  const state = listState.value
+  const { page, perPage } = state.pagination
+  const total = state.count
+  const pagesCount = Math.ceil(total / perPage)
+  const halfWay = Math.floor(props.pageLinks / 2)
+  const hasNext = page * perPage < total
+  const hasPrev = page !== 1
+  const pageCount = Math.min(props.pageLinks, pagesCount)
+  const pages = Array.from({ length: pageCount })
 
-const hasNext = computed(() => {
-  return localPage.value * localPerPage.value < count.value
-})
-
-const hasPrev = computed(() => {
-  return localPage.value != 1
-})
-
-const pagesToDisplay = computed(() => {
-  const pages = Array.apply(null, Array(Math.min(props.pageLinks, pagesCount.value)))
-
-  if (localPage.value <= halfWay.value) {
-    return pages.map((value, index) => index + 1)
-  } else if (pagesCount.value - localPage.value < halfWay.value) {
-    return pages.map((value, index) => pagesCount.value - index).reverse()
+  let pagesToDisplay: number[]
+  if (page <= halfWay) {
+    pagesToDisplay = pages.map((_, index) => index + 1)
+  } else if (pagesCount - page < halfWay) {
+    pagesToDisplay = pages.map((_, index) => pagesCount - index).reverse()
   } else {
-    return pages.map((value, index) => localPage.value - halfWay.value + index)
+    pagesToDisplay = pages.map((_, index) => page - halfWay + index)
   }
-})
 
-const scope = computed(() => {
   return {
-    // States
-    page: localPage.value,
-    perPage: localPerPage.value,
-    count: count.value,
-    pagesCount: pagesCount.value,
-    pagesToDisplay: pagesToDisplay.value,
-    halfWay: halfWay.value,
-    hasNext: hasNext.value,
-    hasPrev: hasPrev.value,
-
-    // Methods
-    prev,
-    next,
-    first,
-    last,
-    setPage,
+    page,
+    perPage,
+    count: total,
+    pagesCount,
+    halfWay,
+    hasNext,
+    hasPrev,
+    pagesToDisplay,
+    prev: () => state.setPage(page - 1),
+    next: () => state.setPage(page + 1),
+    first: () => state.setPage(1),
+    last: () => state.setPage(pagesCount),
+    setPage: (nextPage: number) => state.setPage(nextPage),
   }
 })
-
-function prev() {
-  setPage(localPage.value - 1)
-}
-function next() {
-  setPage(localPage.value + 1)
-}
-function first() {
-  setPage(1)
-}
-function last() {
-  setPage(pagesCount.value)
-}
 </script>

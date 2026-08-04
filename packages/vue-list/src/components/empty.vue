@@ -1,18 +1,28 @@
 <template>
-  <div v-if="!isLoading && !items.length && !error" class="vue-list__empty">
+  <div v-if="showEmpty" class="vue-list__empty">
     <slot>
       <p>No data found!</p>
     </slot>
   </div>
 </template>
 
-<script setup>
-import { inject } from 'vue'
-const items = inject('items')
-const isLoading = inject('isLoading')
-const error = inject('error')
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'VueListEmpty',
+})
+
+const { listState } = useListContext()
+
+const showEmpty = computed(() => {
+  const state = listState.value
+  return (
+    !state.loader.initialLoading &&
+    !state.loader.isLoading &&
+    state.isEmpty &&
+    !state.error
+  )
 })
 </script>

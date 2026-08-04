@@ -8,6 +8,7 @@
     "dev:docs": "pnpm --filter docs run dev",
     "dev:playground": "pnpm --filter playground run dev",
     "dev:playground-typescript": "pnpm --filter playground-typescript run dev",
+    "dev:playground-vue3": "pnpm --filter vue-list-vue3-playground run dev",
     "build": "pnpm --filter {apps/*} run build",
     "build:docs": "pnpm --filter docs run build",
     "build:playground": "pnpm --filter playground run build",
@@ -15,9 +16,9 @@
     "start": "pnpm --filter {apps/*} run preview",
     "start:docs": "pnpm --filter docs run preview",
     "build:types": "pnpm --filter @7span/list-types build",
-    "build:react-list": "pnpm --filter @7span/react-list build",
-    "build:packages": "pnpm build:types && pnpm build:react-list",
-    "build:vue-list": "pnpm --filter @7span/vue-list build"
+    "build:react-list": "pnpm build:types && pnpm --filter @7span/react-list build",
+    "build:vue-list": "pnpm build:types && pnpm --filter @7span/vue-list build",
+    "build:packages": "pnpm build:types && pnpm --filter @7span/react-list build && pnpm --filter @7span/vue-list build"
   },
   "keywords": [],
   "author": "",

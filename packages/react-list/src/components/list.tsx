@@ -9,6 +9,7 @@ import {
 import type {
   AttrSettings,
   InternalListState,
+  ListAttribute,
   ListOptions,
   ListRenderScope,
   ListState,
@@ -30,6 +31,22 @@ type ReactListProps<T> = ListOptions<T> & {
 
 const toError = (err: unknown): Error =>
   err instanceof Error ? err : new Error(String(err));
+
+function buildDefaultAttrSettings(
+  attrSource: ListAttribute[] | string[] | undefined,
+  firstItem?: unknown
+): AttrSettings {
+  const names = attrSource?.length
+    ? attrSource.map((attr) => (typeof attr === "string" ? attr : attr.name))
+    : firstItem
+      ? Object.keys(firstItem as Record<string, unknown>)
+      : [];
+
+  return names.reduce<AttrSettings>((settings, name) => {
+    settings[name] = { visible: true };
+    return settings;
+  }, {});
+}
 
 /**
  * ReactList component for handling data fetching, pagination, and state management
@@ -294,10 +311,28 @@ function ReactList<T = unknown>({
         setState((prev) => ({ ...prev, items: newItems }));
       },
 
+      updateAttr: (
+        attrName: string,
+        settingKey: string,
+        value: boolean | unknown
+      ) => {
+        const nextAttrSettings = { ...(state.attrSettings ?? {}) };
+        if (!nextAttrSettings[attrName]) {
+          nextAttrSettings[attrName] = {};
+        }
+        nextAttrSettings[attrName] = {
+          ...nextAttrSettings[attrName],
+          [settingKey]: value,
+        };
+        const newState = { ...state, attrSettings: nextAttrSettings };
+        setState(newState);
+        updateStateManager(newState);
+      },
+
       setSelection: (selection: T[]) =>
         setState((prev) => ({ ...prev, selection })),
     }),
-    [fetchData, isLoadMore, state, filters]
+    [fetchData, isLoadMore, state, filters, updateStateManager]
   );
 
   const memoizedState = useMemo(
@@ -323,6 +358,7 @@ function ReactList<T = unknown>({
       attrs:
         attrs ||
         Object.keys((state.items[0] as Record<string, unknown>) || {}),
+      attrSettings: state.attrSettings,
       isEmpty: state.items.length === 0,
       ...handlers,
     }),
@@ -340,11 +376,25 @@ function ReactList<T = unknown>({
       state.sortOrder,
       state.search,
       state.filters,
+      state.attrSettings,
       handlers,
       attrs,
       filters,
     ]
   );
+
+  useEffect(() => {
+    if (Object.keys(state.attrSettings).length > 0) {
+      return;
+    }
+
+    const settings = buildDefaultAttrSettings(attrs, state.items[0]);
+    if (Object.keys(settings).length === 0) {
+      return;
+    }
+
+    setState((prev) => ({ ...prev, attrSettings: settings }));
+  }, [attrs, state.items, state.attrSettings]);
 
   useEffect(() => {
     if (!state.initializingState) {
@@ -385,6 +435,7 @@ function ReactList<T = unknown>({
     state.perPage,
     state.sortBy,
     state.sortOrder,
+    state.attrSettings,
   ]);
 
   return typeof children === "function" ? children(memoizedState) : children;

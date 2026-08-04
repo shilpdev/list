@@ -1,7 +1,7 @@
 {
   "name": "@7span/list-types",
   "version": "1.0.0",
-  "description": "Shared TypeScript types for @7span/react-list and future vue-list",
+  "description": "Shared TypeScript types for @7span/react-list and @7span/vue-list",
   "type": "module",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -34,6 +34,9 @@
     },
     "./options": {
       "types": "./dist/options/index.d.ts"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts"
     }
   },
   "files": [

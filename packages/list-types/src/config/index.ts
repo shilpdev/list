@@ -22,3 +22,8 @@ export interface ListProviderContextValue<T = unknown> {
   listState: ListState<T>;
   setListState: (state: ListState<T>) => void;
 }
+
+/** Context value provided by a list instance to its child components. */
+export interface ListInstanceContext<T = unknown> {
+  listState: ListState<T>;
+}

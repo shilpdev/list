@@ -4,41 +4,50 @@
       <input
         type="text"
         :value="localSearch"
-        @input="set($event.target.value)"
+        @input="handleInput(($event.target as HTMLInputElement).value)"
         placeholder="Search"
       />
     </slot>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { debounce } from 'lodash-es'
-import { computed, inject } from 'vue'
-const setSearch = inject('setSearch')
-const localSearch = inject('localSearch')
+import { computed, ref, watch } from 'vue'
+import type { SearchComponentOptions, SearchScope } from '@7span/list-types'
+import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'VueListSearch',
 })
 
-const props = defineProps({
-  debounceTime: {
-    type: Number,
-    default: 1000,
-  },
+const props = withDefaults(defineProps<SearchComponentOptions>(), {
+  debounceTime: 500,
 })
 
-const set = debounce((value) => {
-  setSearch(value)
+const { listState } = useListContext()
+const localSearch = ref(listState.value.search)
+
+watch(
+  () => listState.value.search,
+  (value) => {
+    if (value !== localSearch.value) {
+      localSearch.value = value
+    }
+  },
+)
+
+const debouncedSetSearch = debounce((value: string) => {
+  listState.value.setSearch(value)
 }, props.debounceTime)
 
-const scope = computed(() => {
-  return {
-    // Injected State
-    search: localSearch.value,
+function handleInput(value: string) {
+  localSearch.value = value
+  debouncedSetSearch(value)
+}
 
-    // Methods
-    setSearch: set,
-  }
-})
+const scope = computed((): SearchScope => ({
+  search: localSearch.value,
+  setSearch: handleInput,
+}))
 </script>

@@ -1,7 +1,7 @@
 <template>
-  <div v-if="!isInitialLoading" class="vue-list__items">
-    <slot name="default" :items="items">
-      <div v-for="(item, index) in items" :key="index">
+  <div v-if="!listState.loader.initialLoading" class="vue-list__items">
+    <slot name="default" v-bind="scope">
+      <div v-for="(item, index) in scope.items" :key="index">
         <slot name="item" :item="item" :index="index">
           <pre>{{ item }}</pre>
         </slot>
@@ -10,12 +10,29 @@
   </div>
 </template>
 
-<script setup>
-import { inject } from 'vue'
-const items = inject('items')
-const isInitialLoading = inject('isInitialLoading')
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { ItemsScope } from '@7span/list-types'
+import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'VueListItems',
+})
+
+const { listState } = useListContext()
+
+const scope = computed((): ItemsScope => {
+  const state = listState.value
+  const { page, perPage } = state.pagination
+
+  return {
+    items: state.data.map((item, index) => ({
+      ...(item as object),
+      _index: (page - 1) * perPage + index + 1,
+    })),
+    isLoading: state.loader.isLoading,
+    setSort: state.setSort,
+    sort: state.sort,
+  }
 })
 </script>

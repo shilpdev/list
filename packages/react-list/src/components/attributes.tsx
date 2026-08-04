@@ -59,7 +59,7 @@ export const ReactListAttributes = memo(
               <span>{attr.label}</span>
               <input
                 type="checkbox"
-                checked={attrSettings?.[attr.name]?.visible ?? false}
+                checked={attrSettings?.[attr.name]?.visible ?? true}
                 onChange={handleAttrChange(attr.name)}
               />
             </label>

@@ -1,3 +1,5 @@
+import type { App } from 'vue'
+import type { VueListPluginOptions } from '@7span/list-types'
 import defaultOptions from './options'
 
 //Components
@@ -16,7 +18,7 @@ import GoTo from './components/go-to.vue'
 import Refresh from './components/refresh.vue'
 import Empty from './components/empty.vue'
 
-const install = (app, userOptions = {}) => {
+const install = (app: App, userOptions: Partial<VueListPluginOptions> = {}) => {
   const options = Object.assign({}, defaultOptions, userOptions)
   const prefix = options.componentPrefix
 
@@ -36,7 +38,6 @@ const install = (app, userOptions = {}) => {
   app.component(`${prefix}VueListRefresh`, Refresh)
   app.component(`${prefix}VueListAttributes`, Attributes)
   app.component(`${prefix}VueListEmpty`, Empty)
-  // app.component(`${prefix}ListTable`, Table)
 }
 
 const plugin = {
@@ -45,6 +46,13 @@ const plugin = {
 
 export default plugin
 
-if (typeof window !== 'undefined' && window.Vue) {
-  window.Vue.use(plugin)
+export type * from '@7span/list-types'
+export { useListContext, LIST_CONTEXT_KEY } from './composables/use-list-context'
+
+const globalWindow = window as typeof window & {
+  Vue?: { use: (p: typeof plugin) => void }
+}
+
+if (typeof window !== 'undefined' && globalWindow.Vue) {
+  globalWindow.Vue.use(plugin)
 }

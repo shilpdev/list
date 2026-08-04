@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "pnpm --filter @7span/list-types build",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",

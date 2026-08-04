@@ -1,45 +1,49 @@
 <template>
-  <div class="vue-list__go-to">
+  <div v-if="showContent" class="vue-list__go-to">
     <slot v-bind="scope">
-      <select @input="setPage($event.target.value)" :value="localPage">
-        <option v-for="(option, index) in pages" :key="`option-${index}`">
-          {{ option }}
+      <select
+        :value="scope.page"
+        @input="scope.setPage(Number(($event.target as HTMLSelectElement).value))"
+      >
+        <option v-for="pageNum in scope.pages" :key="`page-${pageNum}`" :value="pageNum">
+          Page {{ pageNum }}
         </option>
       </select>
     </slot>
   </div>
 </template>
 
-<script setup>
-import { inject, computed } from 'vue'
-const setPage = inject('setPage')
-const localPage = inject('localPage')
-const localPerPage = inject('localPerPage')
-const count = inject('count')
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { GoToScope } from '@7span/list-types'
+import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'VueListGoTo',
 })
 
-const pagesCount = computed(() => {
-  return Math.ceil(count.value / localPerPage.value)
+const { listState } = useListContext()
+
+const showContent = computed(() => {
+  const state = listState.value
+  return (
+    !state.loader.initialLoading &&
+    state.data.length > 0 &&
+    !state.error
+  )
 })
 
-const pages = computed(() => {
-  return Array.from({ length: pagesCount.value }, (_, i) => i + 1)
-})
+const scope = computed((): GoToScope => {
+  const state = listState.value
+  const { page, perPage } = state.pagination
+  const pagesCount = Math.ceil(state.count / perPage)
+  const pages = Array.from({ length: pagesCount }, (_, index) => index + 1)
 
-const scope = computed(() => {
   return {
-    // Injected states
-    page: localPage.value,
-
-    // Computed properties
-    pages: pages.value,
-    pagesCount: pagesCount.value,
-
-    // Injected methods
-    setPage: setPage,
+    page,
+    pages,
+    pagesCount,
+    setPage: state.setPage,
   }
 })
 </script>

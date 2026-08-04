@@ -1,35 +1,29 @@
 import { startCase } from 'lodash-es'
+import type { ListAttribute } from '@7span/list-types'
+
+type AttrInput = string | (ListAttribute & { attrs?: AttrInput[] })
 
 /**
- * Converts an array of attribute names into an array of formatted attribute objects.
- * Each object contains a formatted label and the original attribute name.
- *
- * @param {string[]|object[]} attrs - Array of attribute names or objects
- * @returns {object[]} Array of formatted attribute objects
- *
- * Example:
- * Input: ['name', 'email']
- * Output: [
- *   {label: 'Name', name: 'name'},
- *   {label: 'Email', name: 'email'}
- * ]
+ * Converts attribute names or objects into normalized attribute definitions.
  */
-export const attrSerializer = (attrs) => {
+export const attrSerializer = (attrs: AttrInput[]): ListAttribute[] => {
   return attrs.map((item) => {
-    if (typeof item == 'string') {
+    if (typeof item === 'string') {
       return {
         label: startCase(item),
         name: item,
       }
-    } else {
-      // If there is a nested attribute:
-      if (item.attrs) {
-        item.attrs = attrSerializer(item.attrs)
-      }
-      return {
-        label: startCase(item.name),
-        ...item,
-      }
+    }
+
+    const normalized = { ...item }
+
+    if (normalized.attrs) {
+      normalized.attrs = attrSerializer(normalized.attrs)
+    }
+
+    return {
+      label: startCase(normalized.name),
+      ...normalized,
     }
   })
 }

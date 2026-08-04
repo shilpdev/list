@@ -3,8 +3,15 @@ import type { ListResponse } from '../response';
 import type { ListAttribute } from '../attributes';
 import type { PaginationScope } from '../scopes';
 
+/** Lifecycle hooks shared by React props and Vue emits. */
+export interface ListLifecycleCallbacks<T = unknown> {
+  onResponse?: (response: ListResponse<T>) => void;
+  afterPageChange?: (response: ListResponse<T>) => void;
+  afterLoadMore?: (response: ListResponse<T>) => void;
+}
+
 /** Root list configuration shared by React and Vue implementations. */
-export interface ListOptions<T = unknown> {
+export interface ListOptions<T = unknown> extends ListLifecycleCallbacks<T> {
   /** Preloaded items to skip the initial fetch. */
   initialItems?: T[];
   /** Unique identifier for the data source (API route or key). */
@@ -13,6 +20,11 @@ export interface ListOptions<T = unknown> {
   perPage?: number;
   sortBy?: string;
   sortOrder?: SortOrder;
+  /** Initial total count when using `initialItems` (e.g. SSR hydration). */
+  initialCount?: number;
+  /**
+   * @deprecated Use `initialCount` instead.
+   */
   count?: number;
   search?: string;
   filters?: Filters;
@@ -20,9 +32,6 @@ export interface ListOptions<T = unknown> {
   version?: number | string;
   paginationMode?: PaginationMode;
   meta?: MetaRecord;
-  onResponse?: (response: ListResponse<T>) => void;
-  afterPageChange?: (response: ListResponse<T>) => void;
-  afterLoadMore?: (response: ListResponse<T>) => void;
 }
 
 /** Options for the search input component. */

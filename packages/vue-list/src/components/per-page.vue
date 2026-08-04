@@ -1,62 +1,61 @@
 <template>
-  <div class="vue-list__per-page">
+  <div v-if="showContent" class="vue-list__per-page">
     <slot v-bind="scope">
-      <select :value="localPerPage" @input="setPerPage($event.target.value)">
+      <select
+        :value="scope.perPage"
+        @input="scope.setPerPage(Number(($event.target as HTMLSelectElement).value))"
+      >
         <option
-          v-for="(option, index) in serializedOptions"
-          :key="`option-${index}`"
+          v-for="option in scope.options"
+          :key="`option-${option.value}`"
           :value="option.value"
         >
-          {{ option.label }}
+          {{ option.label }} items per page
         </option>
       </select>
     </slot>
   </div>
 </template>
 
-<script setup>
-import { inject, computed } from 'vue'
-const setPerPage = inject('setPerPage')
-const localPerPage = inject('localPerPage')
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { PerPageComponentOptions, PerPageScope } from '@7span/list-types'
+import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'VueListPerPage',
 })
 
-const props = defineProps({
-  options: {
-    /**
-     * An array of options which lets user select how many items they want to see in a list at a time.
-     * Provide an object with 'label' and 'value' keys to have a label different then a value.
-     */
-    type: Array,
-    default: () => [10, 25, 50, 100],
-  },
+const props = withDefaults(defineProps<PerPageComponentOptions>(), {
+  options: () => [10, 25, 50, 100],
+})
+
+const { listState } = useListContext()
+
+const showContent = computed(() => {
+  const state = listState.value
+  return (
+    !state.loader.initialLoading &&
+    state.data.length > 0 &&
+    !state.error
+  )
 })
 
 const serializedOptions = computed(() => {
-  return props.options.map((item) => {
-    if (typeof item != 'object') {
+  return (props.options ?? []).map((item) => {
+    if (typeof item !== 'object') {
       return {
         value: item,
         label: item,
       }
-    } else {
-      return item
     }
+    return item
   })
 })
 
-const scope = computed(() => {
-  return {
-    // Injected state
-    perPage: localPerPage.value,
-
-    // Computed properties
-    options: serializedOptions.value,
-
-    // Injected methods
-    setPerPage: setPerPage,
-  }
-})
+const scope = computed((): PerPageScope => ({
+  perPage: listState.value.pagination.perPage,
+  setPerPage: listState.value.setPerPage,
+  options: serializedOptions.value,
+}))
 </script>
