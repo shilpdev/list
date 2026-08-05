@@ -1,7 +1,7 @@
 <template>
   <div class="py">
     <UContainer>
-      <VueList endpoint="skills" :per-page="5" pagination-mode="pagination">
+      <VueList endpoint="skills" :per-page="5" pagination-mode="pagination" :request-handler="requestHandlerFn">
         <template #default="listState">
           <div class="grid grid-cols-3 h-screen gap-5 p-5">
             <div class="col-span-2 overflow-y-auto p-1">
@@ -81,10 +81,13 @@
 
 <script setup lang="ts">
 import type { Skill } from '@/types/skill'
+import requestHandler from '@/api/request-handler'
 
 defineOptions({
   name: 'PlaygroundIndexView',
 })
+
+const requestHandlerFn = requestHandler
 
 const components = [
   { label: 'Pagination', slot: 'pagination' },
