@@ -4,11 +4,11 @@ import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
-import uiPro from '@nuxt/ui-pro/vite'
+import ui from '@nuxt/ui/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), tailwindcss(), vueDevTools(), uiPro()],
+  plugins: [vue(), tailwindcss(), vueDevTools(), ui()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
