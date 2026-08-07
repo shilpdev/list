@@ -13,6 +13,6 @@ export { default as ListGoTo } from './components/go-to.vue'
 export { default as ListRefresh } from './components/refresh.vue'
 export { default as ListEmpty } from './components/empty.vue'
 
-export type { ListEmits, ListProps } from './types'
+export type { VueListEmits, VueListProps } from './types'
 export type * from '@7span/list-types'
 export { useListContext, LIST_CONTEXT_KEY } from './composables/use-list-context'

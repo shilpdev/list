@@ -17,18 +17,18 @@ import type {
   SortOrder,
   StateManagerContext,
 } from '@7span/list-types'
-import type { ListEmits, ListProps } from '../types'
+import type { VueListEmits, VueListProps } from '../types'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'
 import { attrSerializer } from '../utils'
 
 defineOptions({
-  name: 'List',
+  name: 'VueList',
 })
 
-type ListComponentProps = Omit<ListProps, 'filters'>
+type VueListComponentProps = Omit<VueListProps, 'filters'>
 
-const props = withDefaults(defineProps<ListComponentProps>(), {
+const props = withDefaults(defineProps<VueListComponentProps>(), {
   page: 1,
   perPage: 25,
   sortBy: '',
@@ -42,14 +42,14 @@ const props = withDefaults(defineProps<ListComponentProps>(), {
   hasPaginationHistory: undefined,
 })
 
-const emit = defineEmits<ListEmits>()
+const emit = defineEmits<VueListEmits>()
 const filters = defineModel<Filters>('filters', { default: () => ({}) })
 
 const route = useRoute()
 const router = useRouter()
 
 if (!props.requestHandler) {
-  throw new Error('List: requestHandler is required.')
+  throw new Error('VueList: requestHandler is required.')
 }
 
 const requestHandler = props.requestHandler

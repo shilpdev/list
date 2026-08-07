@@ -13,7 +13,7 @@ export function useListContext<T = unknown>(): VueListInstanceContext<T> {
   const context = inject(LIST_CONTEXT_KEY, undefined)
 
   if (!context) {
-    throw new Error('useListContext must be used within a List component tree')
+    throw new Error('useListContext must be used within a VueList component tree')
   }
 
   return context as VueListInstanceContext<T>

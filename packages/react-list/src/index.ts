@@ -1,5 +1,5 @@
-export type { ListProps } from "./components/list";
-export { default } from "./components/list";
+export type { ReactListProps } from "./components/list";
+export { default, default as ReactList } from "./components/list";
 export { ListGoTo } from "./components/go-to";
 export { ListError } from "./components/error";
 export { ListEmpty } from "./components/empty";
