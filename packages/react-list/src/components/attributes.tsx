@@ -6,13 +6,13 @@ import type {
 } from "@7span/list-types";
 import { useListContext } from "../context/list-context";
 
-type ReactListAttributesProps = {
+type ListAttributesProps = {
   children?: ReactNode | ((scope: AttributesScope) => ReactNode);
   renderAttribute?: (args: RenderAttributeArgs) => ReactNode;
 };
 
-export const ReactListAttributes = memo(
-  ({ children, renderAttribute }: ReactListAttributesProps) => {
+export const ListAttributes = memo(
+  ({ children, renderAttribute }: ListAttributesProps) => {
     const { listState } = useListContext();
     const { attrs, attrSettings, updateAttr } = listState;
 

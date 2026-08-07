@@ -1,14 +1,14 @@
 import ReactList, {
-  ReactListEmpty,
-  ReactListError,
-  ReactListGoTo,
-  ReactListInitialLoader,
-  ReactListItems,
-  ReactListLoader,
-  ReactListPagination,
-  ReactListPerPage,
-  ReactListSearch,
-  ReactListSummary,
+  ListEmpty,
+  ListError,
+  ListGoTo,
+  ListInitialLoader,
+  ListItems,
+  ListLoader,
+  ListPagination,
+  ListPerPage,
+  ListSearch,
+  ListSummary,
 } from '@7span/react-list';
 import type {
   ErrorScope,
@@ -53,7 +53,7 @@ const ListWrapper = () => {
       >
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center">
-              <ReactListSearch>
+              <ListSearch>
                 {({ search, setSearch }: SearchScope) => (
                   <div className="relative w-60">
                     <input
@@ -65,7 +65,7 @@ const ListWrapper = () => {
                     />
                   </div>
                 )}
-              </ReactListSearch>
+              </ListSearch>
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
@@ -123,7 +123,7 @@ const ListWrapper = () => {
           </div>
 
           <div className="my-6">
-            <ReactListInitialLoader>
+            <ListInitialLoader>
               <div className="w-full overflow-hidden rounded-md border border-slate-200 bg-white">
                 <div className="w-full">
                   <div className="flex w-full">
@@ -146,9 +146,9 @@ const ListWrapper = () => {
                   ))}
                 </div>
               </div>
-            </ReactListInitialLoader>
+            </ListInitialLoader>
 
-            <ReactListEmpty>
+            <ListEmpty>
               <div className="flex flex-col items-center justify-center rounded-lg border border-slate-100 bg-white px-4 py-16">
                 <div className="relative mb-8">
                   <div className="absolute inset-0 animate-pulse rounded-full bg-slate-50 opacity-30" />
@@ -177,9 +177,9 @@ const ListWrapper = () => {
                   Refresh
                 </button>
               </div>
-            </ReactListEmpty>
+            </ListEmpty>
 
-            <ReactListError>
+            <ListError>
               {({ error }: ErrorScope) => (
                 <div className="flex flex-col items-center justify-center px-4 py-16">
                   <div className="mb-4 rounded-full bg-red-100 p-6">
@@ -209,19 +209,19 @@ const ListWrapper = () => {
                   </button>
                 </div>
               )}
-            </ReactListError>
+            </ListError>
 
-            <ReactListItems>
+            <ListItems>
               {({ items, sort, setSort }) => (
                 <div className="relative max-h-[70vh] w-full overflow-y-auto rounded-md border border-slate-200">
-                  <ReactListLoader>
+                  <ListLoader>
                     <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-[1px]">
                       <Icon
                         icon="svg-spinners:blocks-shuffle-3"
                         className="h-12 w-12 animate-pulse text-primary-500"
                       />
                     </div>
-                  </ReactListLoader>
+                  </ListLoader>
 
                   <table className="w-full whitespace-nowrap border-collapse">
                     <thead>
@@ -307,23 +307,23 @@ const ListWrapper = () => {
                   </table>
                 </div>
               )}
-            </ReactListItems>
+            </ListItems>
 
             <div className="flex w-full flex-col items-center justify-between gap-4 rounded-b-lg border-t border-slate-200 bg-slate-50 px-4 py-5 md:flex-row">
               <div className="flex w-full flex-wrap items-center gap-6">
                 <div className="flex items-center gap-2">
-                  <ReactListSummary>
+                  <ListSummary>
                     {({ count, from, to }: SummaryScope) => (
                       <span className="font-medium text-slate-700">
                         {from} - {to} of {count} Results
                       </span>
                     )}
-                  </ReactListSummary>
+                  </ListSummary>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <span className="text-slate-500">Page Size:</span>
-                  <ReactListPerPage>
+                  <ListPerPage>
                     {({ perPage, setPerPage, options }: PerPageScope) => (
                       <div className="relative">
                         <select
@@ -345,10 +345,10 @@ const ListWrapper = () => {
                         </div>
                       </div>
                     )}
-                  </ReactListPerPage>
+                  </ListPerPage>
                 </div>
 
-                <ReactListGoTo>
+                <ListGoTo>
                   {({ setPage, page, pagesCount }: GoToScope) => (
                     <div className="flex items-center gap-2">
                       <span className="text-slate-500">Go to:</span>
@@ -363,10 +363,10 @@ const ListWrapper = () => {
                       <span className="text-slate-500">of {pagesCount}</span>
                     </div>
                   )}
-                </ReactListGoTo>
+                </ListGoTo>
               </div>
 
-              <ReactListPagination>
+              <ListPagination>
                 {({
                   page,
                   pagesToDisplay,
@@ -447,7 +447,7 @@ const ListWrapper = () => {
                     </button>
                   </div>
                 )}
-              </ReactListPagination>
+              </ListPagination>
             </div>
           </div>
         </ReactList>

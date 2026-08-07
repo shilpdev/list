@@ -2,11 +2,11 @@ import { memo, useMemo, type ReactNode } from "react";
 import type { SummaryScope } from "@7span/list-types";
 import { useListContext } from "../context/list-context";
 
-type ReactListSummaryProps = {
+type ListSummaryProps = {
   children?: (scope: SummaryScope) => ReactNode;
 };
 
-export const ReactListSummary = memo(({ children }: ReactListSummaryProps) => {
+export const ListSummary = memo(({ children }: ListSummaryProps) => {
   const { listState } = useListContext();
   const { data, count, pagination, loader, error } = listState;
   const { page, perPage } = pagination;

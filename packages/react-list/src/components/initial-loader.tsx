@@ -2,12 +2,12 @@ import { memo, useMemo, type ReactNode } from "react";
 import type { InitialLoaderScope } from "@7span/list-types";
 import { useListContext } from "../context/list-context";
 
-type ReactListInitialLoaderProps = {
+type ListInitialLoaderProps = {
   children?: ReactNode | ((scope: InitialLoaderScope) => ReactNode);
 };
 
-export const ReactListInitialLoader = memo(
-  ({ children }: ReactListInitialLoaderProps) => {
+export const ListInitialLoader = memo(
+  ({ children }: ListInitialLoaderProps) => {
     const { listState } = useListContext();
     const { loader } = listState;
     const { initialLoading } = loader;

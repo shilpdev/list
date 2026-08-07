@@ -5,12 +5,12 @@ import type {
 } from "@7span/list-types";
 import { useListContext } from "../context/list-context";
 
-type ReactListPerPageProps = PerPageComponentOptions & {
+type ListPerPageProps = PerPageComponentOptions & {
   children?: (scope: PerPageScope) => ReactNode;
 };
 
-export const ReactListPerPage = memo(
-  ({ children, options = [10, 25, 50, 100] }: ReactListPerPageProps) => {
+export const ListPerPage = memo(
+  ({ children, options = [10, 25, 50, 100] }: ListPerPageProps) => {
     const { listState } = useListContext();
     const { data, pagination, setPerPage, loader, error } = listState;
     const { perPage } = pagination;

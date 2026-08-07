@@ -26,7 +26,7 @@ type LocalInternalListState<T> = Omit<InternalListState<T>, "page"> & {
   page: number | string;
 };
 
-export type ReactListProps<T = unknown> = ListOptions<T> &
+export type ListProps<T = unknown> = ListOptions<T> &
   ListProviderConfig<T> & {
     children?: ReactNode | ((state: ListRenderScope<T>) => ReactNode);
   };
@@ -51,10 +51,10 @@ function buildDefaultAttrSettings(
 }
 
 /**
- * ReactList component for handling data fetching, pagination, and state management.
- * Provides list context to child components (`ReactListSearch`, `ReactListPagination`, etc.).
+ * List component for handling data fetching, pagination, and state management.
+ * Provides list context to child components (`ListSearch`, `ListPagination`, etc.).
  */
-function ReactList<T = unknown>({
+function List<T = unknown>({
   initialItems = [],
   children,
   endpoint,
@@ -74,9 +74,9 @@ function ReactList<T = unknown>({
   onResponse,
   afterPageChange,
   afterLoadMore,
-}: ReactListProps<T>) {
+}: ListProps<T>) {
   if (!requestHandler) {
-    throw new Error("ReactList: requestHandler is required.");
+    throw new Error("List: requestHandler is required.");
   }
 
   const initRef = useRef(false);
@@ -443,6 +443,6 @@ function ReactList<T = unknown>({
   );
 }
 
-export default ReactList as <T = unknown>(
-  props: ReactListProps<T>
+export default List as <T = unknown>(
+  props: ListProps<T>
 ) => ReactNode;

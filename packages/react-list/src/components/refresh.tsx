@@ -2,11 +2,11 @@ import { memo, useCallback, useMemo, type ReactNode } from "react";
 import type { RefreshScope } from "@7span/list-types";
 import { useListContext } from "../context/list-context";
 
-type ReactListRefreshProps = {
+type ListRefreshProps = {
   children?: (scope: RefreshScope) => ReactNode;
 };
 
-export const ReactListRefresh = memo(({ children }: ReactListRefreshProps) => {
+export const ListRefresh = memo(({ children }: ListRefreshProps) => {
   const { listState } = useListContext();
   const { loader, refresh } = listState;
   const { isLoading, initialLoading } = loader;

@@ -24,7 +24,7 @@ export function ListContextProvider<T = unknown>({
 export function useListContext<T = unknown>(): ListInstanceContext<T> {
   const context = useContext(ListContext);
   if (!context) {
-    throw new Error("useListContext must be used within a ReactList");
+    throw new Error("useListContext must be used within a List");
   }
   return context as ListInstanceContext<T>;
 }

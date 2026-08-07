@@ -5,12 +5,12 @@ import type {
 } from "@7span/list-types";
 import { useListContext } from "../context/list-context";
 
-type ReactListSearchProps = SearchComponentOptions & {
+type ListSearchProps = SearchComponentOptions & {
   children?: (scope: SearchScope) => ReactNode;
 };
 
-export const ReactListSearch = memo(
-  ({ children, debounceTime = 500 }: ReactListSearchProps) => {
+export const ListSearch = memo(
+  ({ children, debounceTime = 500 }: ListSearchProps) => {
     const { listState } = useListContext();
     const { search, setSearch } = listState;
     const [localSearch, setLocalSearch] = useState(search ?? "");

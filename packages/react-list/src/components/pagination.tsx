@@ -6,7 +6,7 @@ import type {
 } from "@7span/list-types";
 import { useListContext } from "../context/list-context";
 
-type ReactListPaginationProps = PaginationComponentOptions & {
+type ListPaginationProps = PaginationComponentOptions & {
   children?: (scope: PaginationScope) => ReactNode;
   renderFirst?: (scope: PaginationScope) => ReactNode;
   renderPrev?: (scope: PaginationScope) => ReactNode;
@@ -16,7 +16,7 @@ type ReactListPaginationProps = PaginationComponentOptions & {
   renderLast?: (scope: PaginationScope) => ReactNode;
 };
 
-export const ReactListPagination = memo(
+export const ListPagination = memo(
   ({
     children,
     pageLinks = 5,
@@ -26,7 +26,7 @@ export const ReactListPagination = memo(
     renderPage,
     renderNext,
     renderLast,
-  }: ReactListPaginationProps) => {
+  }: ListPaginationProps) => {
     const { listState } = useListContext();
     const { data, count, pagination, setPage, loader, error } = listState;
     const { page, perPage } = pagination;

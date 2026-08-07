@@ -5,12 +5,12 @@ import type {
 } from "@7span/list-types";
 import { useListContext } from "../context/list-context";
 
-type ReactListLoaderProps = LoaderComponentOptions & {
+type ListLoaderProps = LoaderComponentOptions & {
   children?: ReactNode | ((scope: LoaderScope) => ReactNode);
 };
 
-export const ReactListLoader = memo(
-  ({ children, position = "overlay" }: ReactListLoaderProps) => {
+export const ListLoader = memo(
+  ({ children, position = "overlay" }: ListLoaderProps) => {
     const { listState } = useListContext();
     const { loader } = listState;
     const { isLoading, initialLoading } = loader;

@@ -2,11 +2,11 @@ import { memo, useCallback, useMemo, type ReactNode } from "react";
 import type { GoToScope } from "@7span/list-types";
 import { useListContext } from "../context/list-context";
 
-type ReactListGoToProps = {
+type ListGoToProps = {
   children?: (scope: GoToScope) => ReactNode;
 };
 
-export const ReactListGoTo = memo(({ children }: ReactListGoToProps) => {
+export const ListGoTo = memo(({ children }: ListGoToProps) => {
   const { listState } = useListContext();
   const { data, count, pagination, setPage, loader, error } = listState;
   const { page, perPage } = pagination;

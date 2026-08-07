@@ -5,15 +5,15 @@ import type {
 } from "@7span/list-types";
 import { useListContext } from "../context/list-context";
 
-type ReactListItemsProps<T = unknown> = {
+type ListItemsProps<T = unknown> = {
   children?: (scope: ItemsScope<T>) => ReactNode;
   renderItem?: (args: RenderItemArgs<T>) => ReactNode;
 };
 
-function ReactListItemsInner<T = unknown>({
+function ListItemsInner<T = unknown>({
   children,
   renderItem,
-}: ReactListItemsProps<T>) {
+}: ListItemsProps<T>) {
   const { listState } = useListContext<T>();
   const {
     data: items = [],
@@ -86,6 +86,6 @@ function ReactListItemsInner<T = unknown>({
   );
 }
 
-export const ReactListItems = memo(
-  ReactListItemsInner
-) as typeof ReactListItemsInner;
+export const ListItems = memo(
+  ListItemsInner
+) as typeof ListItemsInner;

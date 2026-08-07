@@ -1,11 +1,11 @@
 import { memo, type ReactNode } from "react";
 import { useListContext } from "../context/list-context";
 
-type ReactListEmptyProps = {
+type ListEmptyProps = {
   children?: ReactNode;
 };
 
-export const ReactListEmpty = memo(({ children }: ReactListEmptyProps) => {
+export const ListEmpty = memo(({ children }: ListEmptyProps) => {
   const { listState } = useListContext();
   const { data: items, loader, error } = listState;
   const { isLoading, initialLoading } = loader;
