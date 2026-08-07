@@ -16,7 +16,7 @@ import type { ItemsScope } from '@7span/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListItems',
+  name: 'ListItems',
 })
 
 const { listState } = useListContext()

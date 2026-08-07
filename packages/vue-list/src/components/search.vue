@@ -18,7 +18,7 @@ import type { SearchComponentOptions, SearchScope } from '@7span/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListSearch',
+  name: 'ListSearch',
 })
 
 const props = withDefaults(defineProps<SearchComponentOptions>(), {

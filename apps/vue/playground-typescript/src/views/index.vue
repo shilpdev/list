@@ -1,24 +1,30 @@
 <template>
   <div class="py">
     <UContainer>
-      <VueList endpoint="skills" :per-page="5" pagination-mode="pagination" :request-handler="requestHandlerFn">
+      <List
+        endpoint="skills"
+        :per-page="5"
+        pagination-mode="pagination"
+        :request-handler="vueListConfig.requestHandler"
+        :state-manager="vueListConfig.stateManager"
+      >
         <template #default="listState">
           <div class="grid grid-cols-3 h-screen gap-5 p-5">
             <div class="col-span-2 overflow-y-auto p-1">
-              <VueListInitialLoader />
-              <VueListLoader />
+              <ListInitialLoader />
+              <ListLoader />
 
-              <VueListError />
-              <VueListError v-slot="{ error }">
+              <ListError />
+              <ListError v-slot="{ error }">
                 <pre>{{ error.name }}</pre>
                 <pre>{{ error.message }}</pre>
-              </VueListError>
-              <VueListItems>
+              </ListError>
+              <ListItems>
                 <template #item="{ item }">
-                  <UCard>{{ (item as Skill).name }}</UCard>
+                  <UCard>{{ (item as unknown as Skill).name }}</UCard>
                 </template>
-              </VueListItems>
-              <VueListEmpty />
+              </ListItems>
+              <ListEmpty />
             </div>
             <div class="col-span-1 overflow-y-auto p-1">
               <p class="mb-2 text-xs text-gray-500">
@@ -26,68 +32,82 @@
               </p>
               <UAccordion :items="components">
                 <template #pagination>
-                  <VueListPagination />
-                  <VueListPagination v-slot="scope">
+                  <ListPagination />
+                  <ListPagination v-slot="scope">
                     <pre class="text-xs">{{ scope }}</pre>
-                  </VueListPagination>
+                  </ListPagination>
                 </template>
                 <template #loadmore>
-                  <VueListLoadMore />
-                  <VueListLoadMore v-slot="scope">
+                  <ListLoadMore />
+                  <ListLoadMore v-slot="scope">
                     <pre class="text-xs">{{ scope }}</pre>
-                  </VueListLoadMore>
+                  </ListLoadMore>
                 </template>
                 <template #search>
-                  <VueListSearch />
-                  <VueListSearch v-slot="scope">
+                  <ListSearch />
+                  <ListSearch v-slot="scope">
                     <pre class="text-xs">{{ scope }}</pre>
-                  </VueListSearch>
+                  </ListSearch>
                 </template>
                 <template #summary>
-                  <VueListSummary />
-                  <VueListSummary v-slot="scope">
+                  <ListSummary />
+                  <ListSummary v-slot="scope">
                     <pre class="text-xs">{{ scope }}</pre>
-                  </VueListSummary>
+                  </ListSummary>
                 </template>
                 <template #goto>
-                  <VueListGoTo />
-                  <VueListGoTo v-slot="scope">
+                  <ListGoTo />
+                  <ListGoTo v-slot="scope">
                     <pre class="text-xs">{{ scope }}</pre>
-                  </VueListGoTo>
+                  </ListGoTo>
                 </template>
                 <template #perpage>
-                  <VueListPerPage />
-                  <VueListPerPage v-slot="scope">
+                  <ListPerPage />
+                  <ListPerPage v-slot="scope">
                     <pre class="text-xs">{{ scope }}</pre>
-                  </VueListPerPage>
+                  </ListPerPage>
                 </template>
                 <template #attributes>
-                  <VueListAttributes />
-                  <VueListAttributes v-slot="{ attrs, attrSettings, updateAttr }">
-                    <pre class="text-xs">{{ { attrs, attrSettings, updateAttr: !!updateAttr } }}</pre>
-                  </VueListAttributes>
+                  <ListAttributes />
+                  <ListAttributes v-slot="scope">
+                    <pre class="text-xs">{{ scope }}</pre>
+                  </ListAttributes>
                 </template>
                 <template #refresh>
-                  <VueListRefresh />
+                  <ListRefresh />
                 </template>
               </UAccordion>
             </div>
           </div>
         </template>
-      </VueList>
+      </List>
     </UContainer>
   </div>
 </template>
 
 <script setup lang="ts">
+import {
+  List,
+  ListAttributes,
+  ListEmpty,
+  ListError,
+  ListGoTo,
+  ListInitialLoader,
+  ListItems,
+  ListLoadMore,
+  ListLoader,
+  ListPagination,
+  ListPerPage,
+  ListRefresh,
+  ListSearch,
+  ListSummary,
+} from '@7span/vue-list'
 import type { Skill } from '@/types/skill'
-import requestHandler from '@/api/request-handler'
+import vueListConfig from '@/api/vue-list-config'
 
 defineOptions({
   name: 'PlaygroundIndexView',
 })
-
-const requestHandlerFn = requestHandler
 
 const components = [
   { label: 'Pagination', slot: 'pagination' },

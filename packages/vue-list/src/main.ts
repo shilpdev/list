@@ -1,58 +1,17 @@
-import type { App } from 'vue'
-import type { VueListPluginOptions } from '@7span/list-types'
-import defaultOptions from './options'
-
-//Components
-import Root from './components/list.vue'
-import Items from './components/items.vue'
-import InitialLoader from './components/initial-loader.vue'
-import Loader from './components/loader.vue'
-import Err from './components/error.vue'
-import Pagination from './components/pagination.vue'
-import Summary from './components/summary.vue'
-import PerPage from './components/per-page.vue'
-import Attributes from './components/attributes.vue'
-import Search from './components/search.vue'
-import LoadMore from './components/load-more.vue'
-import GoTo from './components/go-to.vue'
-import Refresh from './components/refresh.vue'
-import Empty from './components/empty.vue'
-
-const install = (app: App, userOptions: Partial<VueListPluginOptions> = {}) => {
-  const options = Object.assign({}, defaultOptions, userOptions)
-  const prefix = options.componentPrefix
-
-  app.provide('vueList', options)
-
-  app.component(`${prefix}VueList`, Root)
-  app.component(`${prefix}VueListInitialLoader`, InitialLoader)
-  app.component(`${prefix}VueListLoader`, Loader)
-  app.component(`${prefix}VueListItems`, Items)
-  app.component(`${prefix}VueListError`, Err)
-  app.component(`${prefix}VueListPagination`, Pagination)
-  app.component(`${prefix}VueListSummary`, Summary)
-  app.component(`${prefix}VueListPerPage`, PerPage)
-  app.component(`${prefix}VueListSearch`, Search)
-  app.component(`${prefix}VueListLoadMore`, LoadMore)
-  app.component(`${prefix}VueListGoTo`, GoTo)
-  app.component(`${prefix}VueListRefresh`, Refresh)
-  app.component(`${prefix}VueListAttributes`, Attributes)
-  app.component(`${prefix}VueListEmpty`, Empty)
-}
-
-const plugin = {
-  install,
-}
-
-export default plugin
+export { default as List } from './components/list.vue'
+export { default as ListItems } from './components/items.vue'
+export { default as ListInitialLoader } from './components/initial-loader.vue'
+export { default as ListLoader } from './components/loader.vue'
+export { default as ListError } from './components/error.vue'
+export { default as ListPagination } from './components/pagination.vue'
+export { default as ListSummary } from './components/summary.vue'
+export { default as ListPerPage } from './components/per-page.vue'
+export { default as ListAttributes } from './components/attributes.vue'
+export { default as ListSearch } from './components/search.vue'
+export { default as ListLoadMore } from './components/load-more.vue'
+export { default as ListGoTo } from './components/go-to.vue'
+export { default as ListRefresh } from './components/refresh.vue'
+export { default as ListEmpty } from './components/empty.vue'
 
 export type * from '@7span/list-types'
 export { useListContext, LIST_CONTEXT_KEY } from './composables/use-list-context'
-
-const globalWindow = window as typeof window & {
-  Vue?: { use: (p: typeof plugin) => void }
-}
-
-if (typeof window !== 'undefined' && globalWindow.Vue) {
-  globalWindow.Vue.use(plugin)
-}

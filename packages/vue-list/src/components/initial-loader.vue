@@ -12,7 +12,7 @@ import type { InitialLoaderScope } from '@7span/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListInitialLoader',
+  name: 'ListInitialLoader',
 })
 
 const { listState } = useListContext()

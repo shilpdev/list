@@ -11,7 +11,7 @@ import { computed } from 'vue'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListEmpty',
+  name: 'ListEmpty',
 })
 
 const { listState } = useListContext()

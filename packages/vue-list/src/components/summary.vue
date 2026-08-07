@@ -16,7 +16,7 @@ import type { SummaryScope } from '@7span/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListSummary',
+  name: 'ListSummary',
 })
 
 const { listState } = useListContext()

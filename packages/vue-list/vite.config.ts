@@ -12,7 +12,7 @@ export default defineConfig({
     vue(),
     vueDevTools(),
     dts({
-      include: ['src/main.ts', 'src/options.ts'],
+      include: ['src'],
       rollupTypes: true,
       tsconfigPath: './tsconfig.json',
       skipDiagnostics: true,

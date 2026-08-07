@@ -37,7 +37,7 @@ import type { PaginationComponentOptions, PaginationScope } from '@7span/list-ty
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListPagination',
+  name: 'ListPagination',
 })
 
 const props = withDefaults(defineProps<PaginationComponentOptions>(), {

@@ -1,13 +1,20 @@
-import { inject, type InjectionKey } from 'vue'
+import { inject, type ComputedRef, type InjectionKey } from 'vue'
+import type { ListState } from '@7span/list-types'
 
-export const LIST_CONTEXT_KEY: InjectionKey<{ listState: unknown }> = Symbol('vue-list-context')
+export interface VueListInstanceContext<T = unknown> {
+  listState: ComputedRef<ListState<T>>
+}
 
-export function useListContext() {
+export const LIST_CONTEXT_KEY: InjectionKey<VueListInstanceContext> = Symbol(
+  'vue-list-context',
+)
+
+export function useListContext<T = unknown>(): VueListInstanceContext<T> {
   const context = inject(LIST_CONTEXT_KEY, undefined)
 
   if (!context) {
-    throw new Error('useListContext must be used within a VueList component tree')
+    throw new Error('useListContext must be used within a List component tree')
   }
 
-  return context
+  return context as VueListInstanceContext<T>
 }

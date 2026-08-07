@@ -1,9 +1,9 @@
 import type { Filters, MetaRecord, PaginationMode, SortOrder } from '../core';
 import type { AttrSettings, ListAttribute, UpdateAttrFn } from '../attributes';
-import type { ListProviderConfig, StateManager } from '../config';
+import type { ListProviderConfig } from '../config';
 import type { RequestContextPatch } from '../context';
 import type { ListOptions } from '../options';
-import type { RequestHandler, ListResponse } from '../response';
+import type { ListResponse } from '../response';
 import type {
   AttributesScope,
   ErrorScope,
@@ -22,33 +22,13 @@ export interface VueRef<T> {
   value: T;
 }
 
-export interface VueListPluginOptions<T = unknown> extends ListProviderConfig<T> {
-  componentPrefix?: string;
-}
-
-export interface VueListGlobalOptions<T = unknown> extends VueListPluginOptions<T> {
-  componentPrefix: string;
-  requestHandler: RequestHandler<T>;
-  stateManager: StateManager;
-}
-
-export interface VueListApp {
-  provide(key: string | symbol, value: unknown): void;
-  component(name: string, component: unknown): void;
-}
-
-export interface VueListPlugin {
-  install(app: VueListApp, options?: VueListPluginOptions): void;
-}
-
-export type VueListInjectKeyGlobal = 'vueList';
-
 export type VueListOmittedListOptions = 'onResponse' | 'afterPageChange' | 'afterLoadMore';
 
-export interface VueListProps<T = unknown> extends Omit<ListOptions<T>, VueListOmittedListOptions> {
-  endpoint: string;
-  requestHandler?: RequestHandler<T>;
+export interface VueListProps<T = unknown>
+  extends Omit<ListOptions<T>, VueListOmittedListOptions>,
+    ListProviderConfig<T> {
   hasPaginationHistory?: boolean;
+  syncPageToUrl?: boolean;
 }
 
 export interface VueListPropDefaults {
@@ -74,7 +54,6 @@ export interface VueListRequestContext extends RequestContextPatch {
 }
 
 export type VueListInjectKey =
-  | 'vueList'
   | 'attrSettings'
   | 'items'
   | 'count'
@@ -111,7 +90,6 @@ export type VueListSetItems<T = unknown> = (response: ListResponse<T>) => void;
 export type VueListRefresh = (context?: RequestContextPatch) => void;
 
 export interface VueListInjectionMap<T = unknown> {
-  vueList: VueListGlobalOptions<T>;
   attrSettings: VueRef<AttrSettings | undefined>;
   items: VueRef<T[]>;
   count: VueRef<number>;
@@ -217,5 +195,3 @@ export interface VueListExpose<T = unknown> {
   refresh: VueListRefresh;
   loadMore: () => void;
 }
-
-export const VUE_LIST_INJECT_KEY = 'vueList' as const;

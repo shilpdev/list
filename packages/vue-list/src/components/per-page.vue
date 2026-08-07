@@ -23,7 +23,7 @@ import type { PerPageComponentOptions, PerPageScope } from '@7span/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListPerPage',
+  name: 'ListPerPage',
 })
 
 const props = withDefaults(defineProps<PerPageComponentOptions>(), {

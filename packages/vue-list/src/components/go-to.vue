@@ -19,7 +19,7 @@ import type { GoToScope } from '@7span/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListGoTo',
+  name: 'ListGoTo',
 })
 
 const { listState } = useListContext()

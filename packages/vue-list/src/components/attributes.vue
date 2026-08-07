@@ -29,7 +29,7 @@ import type { AttributesScope, ListAttribute } from '@7span/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListAttributes',
+  name: 'ListAttributes',
 })
 
 const { listState } = useListContext()

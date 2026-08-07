@@ -16,7 +16,7 @@ import type { LoaderComponentOptions, LoaderScope } from '@7span/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListLoader',
+  name: 'ListLoader',
 })
 
 const props = withDefaults(defineProps<LoaderComponentOptions>(), {

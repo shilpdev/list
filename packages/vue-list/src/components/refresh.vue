@@ -14,7 +14,7 @@ import type { RefreshScope } from '@7span/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListRefresh',
+  name: 'ListRefresh',
 })
 
 const { listState } = useListContext()

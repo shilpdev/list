@@ -13,7 +13,7 @@ import type { LoadMoreScope } from '@7span/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListLoadMore',
+  name: 'ListLoadMore',
 })
 
 const { listState } = useListContext()

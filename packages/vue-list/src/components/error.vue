@@ -13,7 +13,7 @@
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'VueListError',
+  name: 'ListError',
 })
 
 const { listState } = useListContext()

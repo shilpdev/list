@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, provide, watch } from 'vue'
+import { ref, computed, provide, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type {
   AttrSettings,
@@ -17,7 +17,6 @@ import type {
   SortOrder,
   StateManagerContext,
   VueListEmits,
-  VueListPluginOptions,
   VueListProps,
 } from '@7span/list-types'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
@@ -25,7 +24,7 @@ import { deepEqual, hasActiveFilters } from '../list-utils'
 import { attrSerializer } from '../utils'
 
 defineOptions({
-  name: 'VueList',
+  name: 'List',
 })
 
 type VueListComponentProps = Omit<VueListProps, 'filters'>
@@ -50,16 +49,12 @@ const filters = defineModel<Filters>('filters', { default: () => ({}) })
 const route = useRoute()
 const router = useRouter()
 
-const globalOptions = inject<VueListPluginOptions>('vueList')
-
-if (!globalOptions?.requestHandler) {
-  throw new Error(
-    'VueList: requestHandler is required. Register the plugin with app.use(VueList, options).',
-  )
+if (!props.requestHandler) {
+  throw new Error('List: requestHandler is required.')
 }
 
-const requestHandler = props.requestHandler ?? globalOptions.requestHandler
-const stateManager = globalOptions.stateManager
+const requestHandler = props.requestHandler
+const stateManager = props.stateManager
 const defaultFilters = ref<Filters>({ ...(filters.value ?? {}) })
 
 const syncPageToUrl = computed(
@@ -134,17 +129,14 @@ const serializedAttrs = computed(() => {
 const isEmpty = computed(() => items.value.length === 0)
 
 function notifyResponse(res: ListResponse) {
-  props.onResponse?.(res)
   emit('onResponse', res)
 }
 
 function notifyAfterPageChange(res: ListResponse) {
-  props.afterPageChange?.(res)
   emit('afterPageChange', res)
 }
 
 function notifyAfterLoadMore(res: ListResponse) {
-  props.afterLoadMore?.(res)
   emit('afterLoadMore', res)
 }
 
