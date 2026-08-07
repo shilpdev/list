@@ -3,7 +3,7 @@ import type {
   PerPageComponentOptions,
   PerPageScope,
 } from "@7span/list-types";
-import { useListContext } from "../context/list-provider";
+import { useListContext } from "../context/list-context";
 
 type ReactListPerPageProps = PerPageComponentOptions & {
   children?: (scope: PerPageScope) => ReactNode;

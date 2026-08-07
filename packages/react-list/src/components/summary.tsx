@@ -1,6 +1,6 @@
 import { memo, useMemo, type ReactNode } from "react";
 import type { SummaryScope } from "@7span/list-types";
-import { useListContext } from "../context/list-provider";
+import { useListContext } from "../context/list-context";
 
 type ReactListSummaryProps = {
   children?: (scope: SummaryScope) => ReactNode;

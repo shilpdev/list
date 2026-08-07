@@ -4,7 +4,7 @@ import type {
   ListAttribute,
   RenderAttributeArgs,
 } from "@7span/list-types";
-import { useListContext } from "../context/list-provider";
+import { useListContext } from "../context/list-context";
 
 type ReactListAttributesProps = {
   children?: ReactNode | ((scope: AttributesScope) => ReactNode);

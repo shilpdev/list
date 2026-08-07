@@ -4,7 +4,7 @@ import type {
   PaginationScope,
   RenderPageArgs,
 } from "@7span/list-types";
-import { useListContext } from "../context/list-provider";
+import { useListContext } from "../context/list-context";
 
 type ReactListPaginationProps = PaginationComponentOptions & {
   children?: (scope: PaginationScope) => ReactNode;

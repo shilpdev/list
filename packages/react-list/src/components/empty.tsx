@@ -1,5 +1,5 @@
 import { memo, type ReactNode } from "react";
-import { useListContext } from "../context/list-provider";
+import { useListContext } from "../context/list-context";
 
 type ReactListEmptyProps = {
   children?: ReactNode;

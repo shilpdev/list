@@ -11,13 +11,14 @@ import type {
   InternalListState,
   ListAttribute,
   ListOptions,
+  ListProviderConfig,
   ListRenderScope,
   ListState,
   RequestContextPatch,
   SavedListState,
   StateManagerContext,
 } from "@7span/list-types";
-import { useListContext } from "../context/list-provider";
+import { ListContextProvider } from "../context/list-context";
 import { hasActiveFilters } from "./utils";
 import { isEqual } from "../utils";
 
@@ -25,9 +26,10 @@ type LocalInternalListState<T> = Omit<InternalListState<T>, "page"> & {
   page: number | string;
 };
 
-type ReactListProps<T> = ListOptions<T> & {
-  children?: ReactNode | ((state: ListRenderScope<T>) => ReactNode);
-};
+export type ReactListProps<T = unknown> = ListOptions<T> &
+  ListProviderConfig<T> & {
+    children?: ReactNode | ((state: ListRenderScope<T>) => ReactNode);
+  };
 
 const toError = (err: unknown): Error =>
   err instanceof Error ? err : new Error(String(err));
@@ -49,7 +51,8 @@ function buildDefaultAttrSettings(
 }
 
 /**
- * ReactList component for handling data fetching, pagination, and state management
+ * ReactList component for handling data fetching, pagination, and state management.
+ * Provides list context to child components (`ReactListSearch`, `ReactListPagination`, etc.).
  */
 function ReactList<T = unknown>({
   initialItems = [],
@@ -65,11 +68,16 @@ function ReactList<T = unknown>({
   version = 1,
   paginationMode = "pagination",
   meta = {},
+  count: initialCount = 0,
+  requestHandler,
+  stateManager = {},
   onResponse,
   afterPageChange,
   afterLoadMore,
 }: ReactListProps<T>) {
-  const { requestHandler, setListState, stateManager } = useListContext<T>();
+  if (!requestHandler) {
+    throw new Error("ReactList: requestHandler is required.");
+  }
 
   const initRef = useRef(false);
 
@@ -136,7 +144,7 @@ function ReactList<T = unknown>({
       selection: [],
       error: null,
       response: null,
-      count: 0,
+      count: initialItems.length ? initialCount || initialItems.length : initialCount,
       isLoading: false,
       initializingState: !initialItems.length,
       confirmedPage: null,
@@ -151,6 +159,7 @@ function ReactList<T = unknown>({
     filters,
     isLoadMore,
     initialItems,
+    initialCount,
   ]);
 
   const [state, setState] = useState(initializeState);
@@ -383,6 +392,11 @@ function ReactList<T = unknown>({
     ]
   );
 
+  const contextValue = useMemo(
+    () => ({ listState: memoizedState }),
+    [memoizedState]
+  );
+
   useEffect(() => {
     if (Object.keys(state.attrSettings).length > 0) {
       return;
@@ -422,23 +436,11 @@ function ReactList<T = unknown>({
     }
   }, [filters]);
 
-  useEffect(() => {
-    setListState(memoizedState);
-  }, [
-    setListState,
-    state.items,
-    state.count,
-    state.error,
-    state.isLoading,
-    state.selection,
-    state.page,
-    state.perPage,
-    state.sortBy,
-    state.sortOrder,
-    state.attrSettings,
-  ]);
-
-  return typeof children === "function" ? children(memoizedState) : children;
+  return (
+    <ListContextProvider value={contextValue}>
+      {typeof children === "function" ? children(memoizedState) : children}
+    </ListContextProvider>
+  );
 }
 
 export default ReactList as <T = unknown>(

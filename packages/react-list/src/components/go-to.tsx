@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, type ReactNode } from "react";
 import type { GoToScope } from "@7span/list-types";
-import { useListContext } from "../context/list-provider";
+import { useListContext } from "../context/list-context";
 
 type ReactListGoToProps = {
   children?: (scope: GoToScope) => ReactNode;

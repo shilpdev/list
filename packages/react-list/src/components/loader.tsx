@@ -3,7 +3,7 @@ import type {
   LoaderComponentOptions,
   LoaderScope,
 } from "@7span/list-types";
-import { useListContext } from "../context/list-provider";
+import { useListContext } from "../context/list-context";
 
 type ReactListLoaderProps = LoaderComponentOptions & {
   children?: ReactNode | ((scope: LoaderScope) => ReactNode);

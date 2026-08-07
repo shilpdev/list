@@ -9,18 +9,10 @@ export interface StateManager {
   set?: (context: StateManagerContext) => void;
 }
 
-/** Configuration passed to the list provider / plugin setup. */
+/** Configuration for list data fetching and optional state persistence. */
 export interface ListProviderConfig<T = unknown> {
   requestHandler: RequestHandler<T>;
   stateManager?: StateManager;
-}
-
-/** Internal provider context value shared across list instances. */
-export interface ListProviderContextValue<T = unknown> {
-  requestHandler: RequestHandler<T>;
-  stateManager?: StateManager;
-  listState: ListState<T>;
-  setListState: (state: ListState<T>) => void;
 }
 
 /** Context value provided by a list instance to its child components. */

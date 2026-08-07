@@ -3,7 +3,7 @@ import type {
   ItemsScope,
   RenderItemArgs,
 } from "@7span/list-types";
-import { useListContext } from "../context/list-provider";
+import { useListContext } from "../context/list-context";
 
 type ReactListItemsProps<T = unknown> = {
   children?: (scope: ItemsScope<T>) => ReactNode;

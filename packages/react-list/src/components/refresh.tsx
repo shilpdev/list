@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, type ReactNode } from "react";
 import type { RefreshScope } from "@7span/list-types";
-import { useListContext } from "../context/list-provider";
+import { useListContext } from "../context/list-context";
 
 type ReactListRefreshProps = {
   children?: (scope: RefreshScope) => ReactNode;

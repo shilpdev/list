@@ -3,7 +3,7 @@ import type {
   SearchComponentOptions,
   SearchScope,
 } from "@7span/list-types";
-import { useListContext } from "../context/list-provider";
+import { useListContext } from "../context/list-context";
 
 type ReactListSearchProps = SearchComponentOptions & {
   children?: (scope: SearchScope) => ReactNode;

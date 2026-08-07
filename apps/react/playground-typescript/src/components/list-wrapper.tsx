@@ -7,7 +7,6 @@ import ReactList, {
   ReactListLoader,
   ReactListPagination,
   ReactListPerPage,
-  ReactListProvider,
   ReactListSearch,
   ReactListSummary,
 } from '@7span/react-list';
@@ -42,16 +41,16 @@ const ListWrapper = () => {
         React List Playground (TypeScript)
       </h2>
 
-      <ReactListProvider config={reactListConfig}>
-        <ReactList
-          count={30}
-          endpoint="skills"
-          search=""
-          page={1}
-          perPage={10}
-          filters={filters}
-          paginationMode="pagination"
-        >
+      <ReactList
+        endpoint="skills"
+        search=""
+        page={1}
+        perPage={10}
+        filters={filters}
+        paginationMode="pagination"
+        requestHandler={reactListConfig.requestHandler}
+        stateManager={reactListConfig.stateManager}
+      >
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center">
               <ReactListSearch>
@@ -86,9 +85,9 @@ const ListWrapper = () => {
                     }}
                   >
                     <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="pending">Pending</option>
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="archived">Archived</option>
                   </select>
                   <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-500">
                     <Icon icon="mdi:chevron-down" className="h-4 w-4" />
@@ -452,7 +451,6 @@ const ListWrapper = () => {
             </div>
           </div>
         </ReactList>
-      </ReactListProvider>
     </div>
   );
 };
