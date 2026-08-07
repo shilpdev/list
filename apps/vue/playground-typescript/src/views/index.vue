@@ -1,7 +1,7 @@
 <template>
   <div class="py">
     <UContainer>
-      <List
+      <VueList
         endpoint="skills"
         :per-page="5"
         pagination-mode="pagination"
@@ -80,14 +80,14 @@
             </div>
           </div>
         </template>
-      </List>
+      </VueList>
     </UContainer>
   </div>
 </template>
 
 <script setup lang="ts">
 import {
-  List,
+  VueList,
   ListAttributes,
   ListEmpty,
   ListError,
