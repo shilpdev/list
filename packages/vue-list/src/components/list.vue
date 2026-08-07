@@ -371,7 +371,7 @@ stateManager?.init?.(buildContext())
 
 if (props.initialItems.length) {
   items.value = [...props.initialItems]
-  count.value = props.initialCount ?? props.count ?? props.initialItems.length
+  count.value = props.count ?? props.initialItems.length
   initializingState.value = false
 } else {
   setPage(localPage.value)

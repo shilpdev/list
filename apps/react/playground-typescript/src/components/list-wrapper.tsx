@@ -37,7 +37,7 @@ const ListWrapper = () => {
   const [filters, setFilters] = useState<SkillFilters>({});
 
   return (
-    <div className="w-full max-w-[1400px] rounded-xl bg-white p-8 text-slate-800 shadow-lg">
+    <div className="w-full max-w-350 rounded-xl bg-white p-8 text-slate-800 shadow-lg">
       <h2 className="mb-6 text-3xl font-bold text-slate-700">
         React List Playground (TypeScript)
       </h2>
@@ -76,12 +76,12 @@ const ListWrapper = () => {
                     Status:
                   </label>
                   <select
-                    className="min-w-[120px] appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                    className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                     onChange={(e) => {
                       const value = e.target.value;
                       setFilters((prev) => ({
                         ...prev,
-                        status: value === 'all' ? undefined : value,
+                        status: value === "all" ? undefined : value,
                       }));
                     }}
                   >
@@ -100,12 +100,12 @@ const ListWrapper = () => {
                     Color:
                   </label>
                   <select
-                    className="min-w-[120px] appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                    className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                     onChange={(e) => {
                       const value = e.target.value;
                       setFilters((prev) => ({
                         ...prev,
-                        color: value === 'all' ? undefined : value,
+                        color: value === "all" ? undefined : value,
                       }));
                     }}
                   >
@@ -140,7 +140,7 @@ const ListWrapper = () => {
                       {[...Array(4)].map((_, cellIndex) => (
                         <div
                           key={`cell-${rowIndex}-${cellIndex}`}
-                          className="m-2 h-10 flex-1 animate-pulse rounded bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100"
+                          className="m-2 h-10 flex-1 animate-pulse rounded bg-linear-to-r from-slate-100 via-slate-200 to-slate-100"
                         />
                       ))}
                     </div>
@@ -153,7 +153,7 @@ const ListWrapper = () => {
               <div className="flex flex-col items-center justify-center rounded-lg border border-slate-100 bg-white px-4 py-16">
                 <div className="relative mb-8">
                   <div className="absolute inset-0 animate-pulse rounded-full bg-slate-50 opacity-30" />
-                  <div className="relative rounded-full bg-gradient-to-br from-slate-50 to-slate-100 p-8 shadow-inner">
+                  <div className="relative rounded-full bg-linear-to-br from-slate-50 to-slate-100 p-8 shadow-inner">
                     <Icon
                       icon="mdi:file-search-outline"
                       className="h-16 w-16 text-accent-400"
@@ -194,10 +194,10 @@ const ListWrapper = () => {
                   </h3>
                   <p className="mb-4 max-w-md text-center text-slate-500">
                     {error.message ||
-                      'An unexpected error occurred while fetching data.'}
+                      "An unexpected error occurred while fetching data."}
                   </p>
                   <div className="mb-6 w-full max-w-md rounded-md bg-slate-50 p-4">
-                    <p className="break-words font-mono text-sm text-slate-600">
+                    <p className="wrap-break-word font-mono text-sm text-slate-600">
                       {error.name}: {error.message}
                     </p>
                   </div>
@@ -238,18 +238,18 @@ const ListWrapper = () => {
                               onClick={() => {
                                 const sorting = nextSortOrder(sort.sortOrder);
                                 setSort({
-                                  by: 'name',
-                                  order: sorting as 'asc' | 'desc',
+                                  by: "name",
+                                  order: sorting as "asc" | "desc",
                                 });
                               }}
                             >
                               <Icon
                                 icon={
-                                  sort.sortOrder === ''
-                                    ? 'mi:sort'
-                                    : sort.sortOrder === 'asc'
-                                      ? 'lucide:sort-asc'
-                                      : 'lucide:sort-desc'
+                                  sort.sortOrder === ""
+                                    ? "mi:sort"
+                                    : sort.sortOrder === "asc"
+                                      ? "lucide:sort-asc"
+                                      : "lucide:sort-desc"
                                 }
                                 className="size-5 cursor-pointer text-white"
                               />
@@ -267,18 +267,18 @@ const ListWrapper = () => {
                               onClick={() => {
                                 const sorting = nextSortOrder(sort.sortOrder);
                                 setSort({
-                                  by: 'date_updated',
-                                  order: sorting as 'asc' | 'desc',
+                                  by: "date_updated",
+                                  order: sorting as "asc" | "desc",
                                 });
                               }}
                             >
                               <Icon
                                 icon={
-                                  sort.sortOrder === ''
-                                    ? 'mi:sort'
-                                    : sort.sortOrder === 'asc'
-                                      ? 'lucide:sort-asc'
-                                      : 'lucide:sort-desc'
+                                  sort.sortOrder === ""
+                                    ? "mi:sort"
+                                    : sort.sortOrder === "asc"
+                                      ? "lucide:sort-asc"
+                                      : "lucide:sort-desc"
                                 }
                                 className="size-5 cursor-pointer text-white"
                               />
@@ -314,9 +314,9 @@ const ListWrapper = () => {
               <div className="flex w-full flex-wrap items-center gap-6">
                 <div className="flex items-center gap-2">
                   <ReactListSummary>
-                    {({ visibleCount }: SummaryScope) => (
+                    {({ count, from, to }: SummaryScope) => (
                       <span className="font-medium text-slate-700">
-                        {visibleCount} Results
+                        {from} - {to} of {count} Results
                       </span>
                     )}
                   </ReactListSummary>
@@ -387,7 +387,10 @@ const ListWrapper = () => {
                       title="First Page"
                       className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <Icon icon="mdi:chevron-double-left" className="h-4 w-4" />
+                      <Icon
+                        icon="mdi:chevron-double-left"
+                        className="h-4 w-4"
+                      />
                     </button>
 
                     <button
@@ -411,8 +414,8 @@ const ListWrapper = () => {
                             onClick={() => setPage(item)}
                             className={`h-8 min-w-8 rounded-md border px-2 text-sm font-medium transition ${
                               isActive
-                                ? 'border-primary-600 bg-primary-500 text-white'
-                                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                                ? "border-primary-600 bg-primary-500 text-white"
+                                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
                             }`}
                           >
                             {item}
@@ -438,7 +441,10 @@ const ListWrapper = () => {
                       title="Last Page"
                       className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <Icon icon="mdi:chevron-double-right" className="h-4 w-4" />
+                      <Icon
+                        icon="mdi:chevron-double-right"
+                        className="h-4 w-4"
+                      />
                     </button>
                   </div>
                 )}

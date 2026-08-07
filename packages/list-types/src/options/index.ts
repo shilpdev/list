@@ -20,11 +20,6 @@ export interface ListOptions<T = unknown> extends ListLifecycleCallbacks<T> {
   perPage?: number;
   sortBy?: string;
   sortOrder?: SortOrder;
-  /** Initial total count when using `initialItems` (e.g. SSR hydration). */
-  initialCount?: number;
-  /**
-   * @deprecated Use `initialCount` instead.
-   */
   count?: number;
   search?: string;
   filters?: Filters;
