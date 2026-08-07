@@ -27,6 +27,7 @@ export interface ListOptions<T = unknown> extends ListLifecycleCallbacks<T> {
   version?: number | string;
   paginationMode?: PaginationMode;
   meta?: MetaRecord;
+  syncPageToUrl?: boolean;
 }
 
 /** Options for the search input component. */

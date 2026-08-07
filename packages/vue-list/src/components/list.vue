@@ -38,8 +38,7 @@ const props = withDefaults(defineProps<VueListComponentProps>(), {
   paginationMode: 'pagination',
   meta: () => ({}),
   initialItems: () => [],
-  syncPageToUrl: undefined,
-  hasPaginationHistory: undefined,
+  syncPageToUrl: true,
 })
 
 const emit = defineEmits<VueListEmits>()
@@ -56,9 +55,7 @@ const requestHandler = props.requestHandler
 const stateManager = props.stateManager
 const defaultFilters = ref<Filters>({ ...(filters.value ?? {}) })
 
-const syncPageToUrl = computed(
-  () => props.syncPageToUrl ?? props.hasPaginationHistory ?? true,
-)
+const syncPageToUrl = computed(() => props.syncPageToUrl ?? true)
 
 const isLoadMore = computed(() => props.paginationMode === 'loadMore')
 

@@ -21,6 +21,7 @@ import type {
 import { ListContextProvider } from "../context/list-context";
 import { hasActiveFilters } from "./utils";
 import { isEqual } from "../utils";
+import { getPageFromUrl, updatePageInUrl } from "../utils/url-sync";
 
 type LocalInternalListState<T> = Omit<InternalListState<T>, "page"> & {
   page: number | string;
@@ -71,6 +72,7 @@ function ReactList<T = unknown>({
   count: initialCount = 0,
   requestHandler,
   stateManager = {},
+  syncPageToUrl,
   onResponse,
   afterPageChange,
   afterLoadMore,
@@ -82,6 +84,7 @@ function ReactList<T = unknown>({
   const initRef = useRef(false);
 
   const isLoadMore = paginationMode === "loadMore";
+  const shouldSyncPageToUrl = !isLoadMore && (syncPageToUrl ?? true);
 
   const getContext = useCallback(
     (currentState?: LocalInternalListState<T>): StateManagerContext => {
@@ -123,10 +126,13 @@ function ReactList<T = unknown>({
 
   const initializeState = useCallback((): LocalInternalListState<T> => {
     const savedState = getSavedState();
+    const urlPage = shouldSyncPageToUrl ? getPageFromUrl() : null;
 
     let initialPage: number | string = page;
     if (isLoadMore) {
       initialPage = 1;
+    } else if (urlPage != null) {
+      initialPage = urlPage;
     } else if (savedState.page != null) {
       initialPage = savedState.page;
     }
@@ -160,6 +166,7 @@ function ReactList<T = unknown>({
     isLoadMore,
     initialItems,
     initialCount,
+    shouldSyncPageToUrl,
   ]);
 
   const [state, setState] = useState(initializeState);
@@ -222,6 +229,10 @@ function ReactList<T = unknown>({
 
         updateStateManager(updatedState);
 
+        if (shouldSyncPageToUrl) {
+          updatePageInUrl(updatedState.page);
+        }
+
         setState(updatedState);
       } catch (err) {
         setState((prev) => ({
@@ -246,6 +257,7 @@ function ReactList<T = unknown>({
       afterLoadMore,
       afterPageChange,
       updateStateManager,
+      shouldSyncPageToUrl,
     ]
   );
 
@@ -344,6 +356,12 @@ function ReactList<T = unknown>({
     [fetchData, isLoadMore, state, filters, updateStateManager]
   );
 
+  const handlersRef = useRef(handlers);
+  handlersRef.current = handlers;
+
+  const pageRef = useRef(state.page);
+  pageRef.current = state.page;
+
   const memoizedState = useMemo(
     (): ListState<T> => ({
       data: state.items,
@@ -435,6 +453,22 @@ function ReactList<T = unknown>({
       fetchData({}, newState);
     }
   }, [filters]);
+
+  useEffect(() => {
+    if (!shouldSyncPageToUrl) return;
+
+    const onPopState = () => {
+      const urlPage = getPageFromUrl();
+      const nextPage = urlPage ?? 1;
+
+      if (Number(pageRef.current) === nextPage) return;
+
+      handlersRef.current.setPage(nextPage);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [shouldSyncPageToUrl]);
 
   return (
     <ListContextProvider value={contextValue}>

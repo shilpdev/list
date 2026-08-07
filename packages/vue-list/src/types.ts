@@ -5,10 +5,7 @@ type OmittedListOptions = 'onResponse' | 'afterPageChange' | 'afterLoadMore'
 /** Props for the VueList root component. */
 export interface VueListProps<T = unknown>
   extends Omit<ListOptions<T>, OmittedListOptions>,
-    ListProviderConfig<T> {
-  hasPaginationHistory?: boolean
-  syncPageToUrl?: boolean
-}
+    ListProviderConfig<T> {}
 
 /** Emits for the VueList root component. */
 export interface VueListEmits<T = unknown> {
