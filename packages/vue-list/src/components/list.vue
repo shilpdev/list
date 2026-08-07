@@ -16,9 +16,8 @@ import type {
   SavedListState,
   SortOrder,
   StateManagerContext,
-  VueListEmits,
-  VueListProps,
 } from '@7span/list-types'
+import type { ListEmits, ListProps } from '../types'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'
 import { attrSerializer } from '../utils'
@@ -27,9 +26,9 @@ defineOptions({
   name: 'List',
 })
 
-type VueListComponentProps = Omit<VueListProps, 'filters'>
+type ListComponentProps = Omit<ListProps, 'filters'>
 
-const props = withDefaults(defineProps<VueListComponentProps>(), {
+const props = withDefaults(defineProps<ListComponentProps>(), {
   page: 1,
   perPage: 25,
   sortBy: '',
@@ -43,7 +42,7 @@ const props = withDefaults(defineProps<VueListComponentProps>(), {
   hasPaginationHistory: undefined,
 })
 
-const emit = defineEmits<VueListEmits>()
+const emit = defineEmits<ListEmits>()
 const filters = defineModel<Filters>('filters', { default: () => ({}) })
 
 const route = useRoute()

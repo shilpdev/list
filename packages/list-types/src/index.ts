@@ -7,4 +7,3 @@ export type * from './handlers';
 export type * from './attributes';
 export type * from './scopes';
 export type * from './options';
-export type * from './vue';
