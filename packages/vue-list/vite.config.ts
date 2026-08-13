@@ -30,11 +30,10 @@ export default defineConfig({
       name: 'VueList',
     },
     rollupOptions: {
-      external: ['vue', 'vue-router', '@7span/list-types'],
+      external: ['vue', '@7span/list-types'],
       output: {
         globals: {
           vue: 'Vue',
-          'vue-router': 'VueRouter',
         },
       },
     },

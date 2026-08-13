@@ -38,6 +38,7 @@
               <select
                 id="status-filter"
                 class="appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                :value="filters.status ?? 'all'"
                 @change="onStatusChange(($event.target as HTMLSelectElement).value)"
               >
                 <option value="all">All Status</option>
@@ -59,6 +60,7 @@
               <select
                 id="color-filter"
                 class="appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                :value="filters.color ?? 'all'"
                 @change="onColorChange(($event.target as HTMLSelectElement).value)"
               >
                 <option value="all">All Colors</option>
@@ -383,13 +385,13 @@ import {
 } from '@7span/vue-list'
 import type { ListSort } from '@7span/list-types'
 import type { Skill, SkillFilters } from '@/types/skill'
-import vueListConfig from '@/api/vue-list-config'
+import vueListConfig, { getStateFromSearchParams } from '@/api/vue-list-config'
 
 defineOptions({
   name: 'playground-index-view',
 })
 
-const filters = ref<SkillFilters>({})
+const filters = ref<SkillFilters>(getStateFromSearchParams()?.filters ?? {})
 
 function onStatusChange(value: string) {
   filters.value = {

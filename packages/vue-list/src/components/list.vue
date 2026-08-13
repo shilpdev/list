@@ -6,7 +6,6 @@
 
 <script setup lang="ts">
 import { ref, computed, provide, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import type {
   AttrSettings,
   Filters,
@@ -38,14 +37,10 @@ const props = withDefaults(defineProps<VueListComponentProps>(), {
   paginationMode: 'pagination',
   meta: () => ({}),
   initialItems: () => [],
-  syncPageToUrl: true,
 })
 
 const emit = defineEmits<VueListEmits>()
 const filters = defineModel<Filters>('filters', { default: () => ({}) })
-
-const route = useRoute()
-const router = useRouter()
 
 if (!props.requestHandler) {
   throw new Error('VueList: requestHandler is required.')
@@ -54,8 +49,6 @@ if (!props.requestHandler) {
 const requestHandler = props.requestHandler
 const stateManager = props.stateManager
 const defaultFilters = ref<Filters>({ ...(filters.value ?? {}) })
-
-const syncPageToUrl = computed(() => props.syncPageToUrl ?? true)
 
 const isLoadMore = computed(() => props.paginationMode === 'loadMore')
 
@@ -95,8 +88,6 @@ const savedState = getSavedState()
 
 if (isLoadMore.value) {
   localPage.value = 1
-} else if (syncPageToUrl.value && route.query.page) {
-  localPage.value = Number(route.query.page)
 } else if (savedState.page != null) {
   localPage.value = savedState.page
 }
@@ -172,7 +163,6 @@ function getData(addContext: RequestContextPatch = {}) {
       updateStateManager()
       selection.value = []
       setItems(res)
-      updateUrl()
       initializingState.value = false
     })
     .catch((err: unknown) => {
@@ -266,21 +256,6 @@ function updateAttr(name: string, prop: string, value: boolean | unknown) {
   updateStateManager()
 }
 
-function updateUrl() {
-  if (
-    !isLoadMore.value &&
-    syncPageToUrl.value &&
-    route.query.page != String(localPage.value)
-  ) {
-    router.push({
-      query: {
-        ...(route.query || {}),
-        page: localPage.value,
-      },
-    })
-  }
-}
-
 const listState = computed(
   (): ListState => ({
     data: items.value,
@@ -333,19 +308,6 @@ watch(filters, (newValue, oldValue) => {
 watch(selection, (newValue, oldValue) => {
   emit('onItemSelect', newValue, oldValue ?? [])
 })
-
-watch(
-  () => route.query.page,
-  (newValue) => {
-    if (!syncPageToUrl.value || isLoadMore.value) return
-
-    if (!newValue) {
-      setPage(1)
-    } else if (localPage.value !== Number(newValue)) {
-      setPage(Number(newValue))
-    }
-  },
-)
 
 if (!attrSettings.value) {
   const settings: AttrSettings = {}

@@ -24,7 +24,7 @@ import { Icon } from '@iconify/react';
 import { useState } from 'react';
 
 import type { Skill, SkillFilters } from '../types/skill';
-import reactListConfig from './react-list-config';
+import reactListConfig, { getStateFromSearchParams } from './react-list-config';
 
 function nextSortOrder(current: SortOrder): 'asc' | 'desc' | '' {
   if (current === '') return 'asc';
@@ -33,7 +33,9 @@ function nextSortOrder(current: SortOrder): 'asc' | 'desc' | '' {
 }
 
 const ListWrapper = () => {
-  const [filters, setFilters] = useState<SkillFilters>({});
+  const [filters, setFilters] = useState<SkillFilters>(
+    () => getStateFromSearchParams()?.filters ?? {},
+  );
 
   return (
     <div className="w-full max-w-350 rounded-xl bg-white p-8 text-slate-800 shadow-lg">
@@ -76,11 +78,12 @@ const ListWrapper = () => {
                   </label>
                   <select
                     className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                    value={filters.status ?? 'all'}
                     onChange={(e) => {
                       const value = e.target.value;
                       setFilters((prev) => ({
                         ...prev,
-                        status: value === "all" ? undefined : value,
+                        status: value === 'all' ? undefined : value,
                       }));
                     }}
                   >
@@ -100,11 +103,12 @@ const ListWrapper = () => {
                   </label>
                   <select
                     className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                    value={filters.color ?? 'all'}
                     onChange={(e) => {
                       const value = e.target.value;
                       setFilters((prev) => ({
                         ...prev,
-                        color: value === "all" ? undefined : value,
+                        color: value === 'all' ? undefined : value,
                       }));
                     }}
                   >
