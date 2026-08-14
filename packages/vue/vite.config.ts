@@ -30,7 +30,7 @@ export default defineConfig({
       name: 'VueList',
     },
     rollupOptions: {
-      external: ['vue', '@7span/list-types'],
+      external: ['vue', '@shilp.dev/list-types'],
       output: {
         globals: {
           vue: 'Vue',

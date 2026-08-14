@@ -15,7 +15,7 @@ import type {
   SavedListState,
   SortOrder,
   StateManagerContext,
-} from '@7span/list-types'
+} from '@shilp.dev/list-types'
 import type { VueListEmits, VueListProps } from '../types'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'

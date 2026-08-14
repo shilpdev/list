@@ -3,7 +3,7 @@ import {
   useContext,
   type ReactNode,
 } from "react";
-import type { ListInstanceContext } from "@7span/list-types";
+import type { ListInstanceContext } from "@shilp.dev/list-types";
 
 const ListContext = createContext<ListInstanceContext<unknown> | null>(null);
 

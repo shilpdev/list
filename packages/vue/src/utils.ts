@@ -1,5 +1,5 @@
 import { startCase } from 'lodash-es'
-import type { ListAttribute } from '@7span/list-types'
+import type { ListAttribute } from '@shilp.dev/list-types'
 
 type AttrInput = string | (ListAttribute & { attrs?: AttrInput[] })
 

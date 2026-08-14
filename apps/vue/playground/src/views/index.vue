@@ -382,8 +382,8 @@ import {
   ListRefresh,
   ListSearch,
   ListSummary,
-} from '@7span/vue-list'
-import type { ListSort } from '@7span/list-types'
+} from '@shilp.dev/vue-list'
+import type { ListSort } from '@shilp.dev/list-types'
 import type { Skill, SkillFilters } from '@/types/skill'
 import vueListConfig, { getStateFromSearchParams } from '@/api/vue-list-config'
 

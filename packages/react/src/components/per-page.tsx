@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo, type ReactNode } from "react";
 import type {
   PerPageComponentOptions,
   PerPageScope,
-} from "@7span/list-types";
+} from "@shilp.dev/list-types";
 import { useListContext } from "../context/list-context";
 
 type ListPerPageProps = PerPageComponentOptions & {

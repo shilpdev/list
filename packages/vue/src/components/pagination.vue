@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { PaginationComponentOptions, PaginationScope } from '@7span/list-types'
+import type { PaginationComponentOptions, PaginationScope } from '@shilp.dev/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

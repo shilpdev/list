@@ -1,5 +1,5 @@
 import { inject, type ComputedRef, type InjectionKey } from 'vue'
-import type { ListState } from '@7span/list-types'
+import type { ListState } from '@shilp.dev/list-types'
 
 export interface VueListInstanceContext<T = unknown> {
   listState: ComputedRef<ListState<T>>

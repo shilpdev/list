@@ -3,7 +3,7 @@ import type {
   AttributesScope,
   ListAttribute,
   RenderAttributeArgs,
-} from "@7span/list-types";
+} from "@shilp.dev/list-types";
 import { useListContext } from "../context/list-context";
 
 type ListAttributesProps = {

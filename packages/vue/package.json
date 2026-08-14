@@ -1,10 +1,10 @@
 {
-  "name": "@7span/vue-list",
-  "version": "2.0.1",
+  "name": "@shilp.dev/vue-list",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "pnpm --filter @7span/list-types build",
+    "prebuild": "pnpm --filter @shilp.dev/list-types build",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --fix",
@@ -33,10 +33,10 @@
   },
   "peerDependencies": {
     "vue": "^3.5.0",
-    "@7span/list-types": "^1.0.0"
+    "@shilp.dev/list-types": "^1.0.0"
   },
   "peerDependenciesMeta": {
-    "@7span/list-types": {
+    "@shilp.dev/list-types": {
       "optional": true
     }
   },
@@ -44,7 +44,7 @@
     "lodash-es": "^4.18.1"
   },
   "devDependencies": {
-    "@7span/list-types": "workspace:*",
+    "@shilp.dev/list-types": "workspace:*",
     "@eslint/js": "^9.22.0",
     "@types/lodash-es": "^4.17.12",
     "@vitejs/plugin-vue": "^5.2.3",

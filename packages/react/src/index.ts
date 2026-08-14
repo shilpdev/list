@@ -15,4 +15,4 @@ export { ListInitialLoader } from "./components/initial-loader";
 export { ListItems } from "./components/items";
 export { useListContext } from "./context/list-context";
 
-export type * from "@7span/list-types";
+export type * from "@shilp.dev/list-types";

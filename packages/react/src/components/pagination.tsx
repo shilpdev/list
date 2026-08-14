@@ -3,7 +3,7 @@ import type {
   PaginationComponentOptions,
   PaginationScope,
   RenderPageArgs,
-} from "@7span/list-types";
+} from "@shilp.dev/list-types";
 import { useListContext } from "../context/list-context";
 
 type ListPaginationProps = PaginationComponentOptions & {

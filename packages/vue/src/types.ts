@@ -1,4 +1,4 @@
-import type { ListOptions, ListProviderConfig, ListResponse } from '@7span/list-types'
+import type { ListOptions, ListProviderConfig, ListResponse } from '@shilp.dev/list-types'
 
 type OmittedListOptions = 'onResponse' | 'afterPageChange' | 'afterLoadMore'
 

@@ -1,4 +1,4 @@
-import type { Filters } from '@7span/list-types'
+import type { Filters } from '@shilp.dev/list-types'
 
 export function deepEqual(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b)

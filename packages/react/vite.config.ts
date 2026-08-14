@@ -16,7 +16,7 @@ export default defineConfig({
         "react",
         "react-dom",
         "react/jsx-runtime",
-        "@7span/list-types",
+        "@shilp.dev/list-types",
       ],
       output: {
         globals: {

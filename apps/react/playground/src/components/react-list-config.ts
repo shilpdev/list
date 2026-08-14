@@ -4,7 +4,7 @@ import type {
   SavedListState,
   SortOrder,
   StateManagerContext,
-} from '@7span/list-types';
+} from '@shilp.dev/list-types';
 
 import requestHandler from '../api/request-handler';
 import type { Skill } from '../types/skill';

@@ -9,7 +9,7 @@ import ReactList, {
   ListPerPage,
   ListSearch,
   ListSummary,
-} from '@7span/react-list';
+} from '@shilp.dev/react-list';
 import type {
   ErrorScope,
   GoToScope,
@@ -19,7 +19,7 @@ import type {
   SerializedListItem,
   SortOrder,
   SummaryScope,
-} from '@7span/list-types';
+} from '@shilp.dev/list-types';
 import { Icon } from '@iconify/react';
 import { useState } from 'react';
 

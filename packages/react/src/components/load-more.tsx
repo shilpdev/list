@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, type ReactNode } from "react";
-import type { LoadMoreScope } from "@7span/list-types";
+import type { LoadMoreScope } from "@shilp.dev/list-types";
 import { useListContext } from "../context/list-context";
 
 type ListLoadMoreProps = {

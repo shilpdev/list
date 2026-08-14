@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState, type ReactNode } from "react";
 import type {
   SearchComponentOptions,
   SearchScope,
-} from "@7span/list-types";
+} from "@shilp.dev/list-types";
 import { useListContext } from "../context/list-context";
 
 type ListSearchProps = SearchComponentOptions & {

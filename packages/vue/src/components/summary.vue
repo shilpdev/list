@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { SummaryScope } from '@7span/list-types'
+import type { SummaryScope } from '@shilp.dev/list-types'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

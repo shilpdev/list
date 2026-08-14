@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, type ReactNode } from "react";
-import type { RefreshScope } from "@7span/list-types";
+import type { RefreshScope } from "@shilp.dev/list-types";
 import { useListContext } from "../context/list-context";
 
 type ListRefreshProps = {

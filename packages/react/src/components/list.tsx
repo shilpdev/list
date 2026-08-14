@@ -17,7 +17,7 @@ import type {
   RequestContextPatch,
   SavedListState,
   StateManagerContext,
-} from "@7span/list-types";
+} from "@shilp.dev/list-types";
 import { ListContextProvider } from "../context/list-context";
 import { hasActiveFilters } from "./utils";
 import { isEqual } from "../utils";
