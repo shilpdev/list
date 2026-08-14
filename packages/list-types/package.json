@@ -1,0 +1,55 @@
+{
+  "name": "@7span/list-types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for @7span/react-list and @7span/vue-list",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts"
+    },
+    "./context": {
+      "types": "./dist/context/index.d.ts"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts"
+    },
+    "./response": {
+      "types": "./dist/response/index.d.ts"
+    },
+    "./state": {
+      "types": "./dist/state/index.d.ts"
+    },
+    "./handlers": {
+      "types": "./dist/handlers/index.d.ts"
+    },
+    "./attributes": {
+      "types": "./dist/attributes/index.d.ts"
+    },
+    "./scopes": {
+      "types": "./dist/scopes/index.d.ts"
+    },
+    "./options": {
+      "types": "./dist/options/index.d.ts"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
