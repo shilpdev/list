@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── Build shared packages ───────────────────────────────────────────────────
+  build-packages:
+    name: Build packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build types + list packages
+        run: pnpm build:packages
+
+      - name: Cache built packages
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            packages/types/dist
+            packages/react/dist
+            packages/vue/dist
+          key: packages-${{ github.sha }}
+
+  # ─── React Storybook tests ───────────────────────────────────────────────────
+  test-react-story:
+    name: Test · React Storybook
+    needs: build-packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore built packages
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            packages/types/dist
+            packages/react/dist
+            packages/vue/dist
+          key: packages-${{ github.sha }}
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter react-story exec playwright install chromium --with-deps
+
+      - name: Run Storybook tests
+        run: pnpm test:react:story
+
+  # ─── Vue Storybook tests ─────────────────────────────────────────────────────
+  test-vue-story:
+    name: Test · Vue Storybook
+    needs: build-packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore built packages
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            packages/types/dist
+            packages/react/dist
+            packages/vue/dist
+          key: packages-${{ github.sha }}
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter vue-story exec playwright install chromium --with-deps
+
+      - name: Run Storybook tests
+        run: pnpm test:vue:story
+
+  # ─── Full build gate ─────────────────────────────────────────────────────────
+  build-all:
+    name: Build all apps
+    needs: [test-react-story, test-vue-story]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore built packages
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            packages/types/dist
+            packages/react/dist
+            packages/vue/dist
+          key: packages-${{ github.sha }}
+
+      - name: Build all apps
+        run: pnpm build

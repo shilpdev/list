@@ -35,7 +35,14 @@
     "build:types": "pnpm --filter @shilp.dev/list-types build",
     "build:react-list": "pnpm build:types && pnpm --filter @shilp.dev/react-list build",
     "build:vue-list": "pnpm build:types && pnpm --filter @shilp.dev/vue-list build",
-    "build:packages": "pnpm build:types && pnpm --filter @shilp.dev/react-list build && pnpm --filter @shilp.dev/vue-list build"
+    "build:packages": "pnpm build:types && pnpm --filter @shilp.dev/react-list build && pnpm --filter @shilp.dev/vue-list build",
+    "test:setup": "pnpm --filter react-story exec playwright install chromium",
+    "test:story": "pnpm test:setup && pnpm --filter react-story --filter vue-story run --parallel test",
+    "test:react:story": "pnpm test:setup && pnpm --filter react-story run test",
+    "test:vue:story": "pnpm test:setup && pnpm --filter vue-story run test"
+  },
+  "overrides": {
+    "aria-query": "5.3.2"
   },
   "keywords": [],
   "author": "",

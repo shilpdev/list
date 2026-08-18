@@ -232,7 +232,9 @@ function ReactList<T = unknown>({
           initializingState: false,
           isLoading: false,
         }));
-        throw err;
+        // The list UI already surfaces the error via `state.error`.
+        // Re-throwing here creates unhandled promise rejections that break
+        // Storybook/Vitest integration.
       }
     },
     [
