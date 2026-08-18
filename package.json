@@ -2,6 +2,7 @@
   "name": "react-list",
   "version": "0.0.1",
   "description": "",
+  "packageManager": "pnpm@11.9.0",
   "main": "index.js",
   "scripts": {
     "dev": "pnpm --filter \"./apps/react/*\" --filter \"./apps/vue/*\" run --parallel dev",
