@@ -170,7 +170,8 @@ function getData(addContext: RequestContextPatch = {}) {
       items.value = []
       count.value = 0
       initializingState.value = false
-      throw toError(err)
+      // The list UI already surfaces the error via `error`.
+      // Re-throwing here creates unhandled promise rejections.
     })
     .finally(() => {
       isLoading.value = false
