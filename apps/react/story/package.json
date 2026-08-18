@@ -1,0 +1,38 @@
+{
+  "name": "react-story",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6007",
+    "build-storybook": "storybook build",
+    "preview-storybook": "vite preview --outDir storybook-static --port 6007"
+  },
+  "dependencies": {
+    "@shilp.dev/list-types": "workspace:*",
+    "@shilp.dev/react-list": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@chromatic-com/storybook": "latest",
+    "@storybook/addon-a11y": "^10.5.7",
+    "@storybook/addon-docs": "^10.5.7",
+    "@storybook/addon-vitest": "^10.5.7",
+    "@storybook/react-vite": "^10.5.7",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/browser-playwright": "latest",
+    "@vitest/coverage-v8": "latest",
+    "playwright": "latest",
+    "storybook": "^10.5.7",
+    "typescript": "~5.8.3",
+    "vite": "^8.2.0",
+    "vitest": "latest"
+  }
+}

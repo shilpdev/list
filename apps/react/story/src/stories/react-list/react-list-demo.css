@@ -1,0 +1,105 @@
+.react-list-demo {
+  font-family: system-ui, sans-serif;
+  color: #1e293b;
+}
+
+.react-list-demo__toolbar,
+.react-list-demo__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.react-list-demo__input,
+.react-list-demo__select {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.react-list-demo__filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.react-list-demo__table-wrap {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.react-list-demo__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  background: rgb(255 255 255 / 70%);
+}
+
+.react-list-demo__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.react-list-demo__table th,
+.react-list-demo__table td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.react-list-demo__table th {
+  background: #f8fafc;
+}
+
+.react-list-demo__sort {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.react-list-demo__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.react-list-demo__button {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.react-list-demo__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.react-list-demo__button--active {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.react-list-demo__message,
+.react-list-demo__error {
+  padding: 24px;
+  text-align: center;
+}
+
+.react-list-demo__error {
+  color: #b91c1c;
+}
