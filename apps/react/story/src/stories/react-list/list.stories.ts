@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { createMockRequestHandler } from '@/mocks/mock-request-handler'
-import { mockItems } from '@/mocks/mock-items'
+import { createRequestHandler, requestHandler } from '@/api/request-handler'
+import { sampleSkills } from '@/types/skill'
 import { ReactListDemo } from './react-list-demo'
 
 const meta = {
@@ -20,52 +20,52 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    endpoint: 'items',
+    endpoint: 'skills',
     page: 1,
     perPage: 10,
     paginationMode: 'pagination',
-    requestHandler: createMockRequestHandler(),
+    requestHandler,
   },
 }
 
 export const WithInitialItems: Story = {
   args: {
-    endpoint: 'items',
+    endpoint: 'skills',
     page: 1,
     perPage: 10,
     paginationMode: 'pagination',
-    initialItems: mockItems.slice(0, 5),
-    count: mockItems.length,
-    requestHandler: createMockRequestHandler(),
+    initialItems: sampleSkills,
+    count: sampleSkills.length,
+    requestHandler,
   },
 }
 
 export const LoadMore: Story = {
   args: {
-    endpoint: 'items',
+    endpoint: 'skills',
     page: 1,
     perPage: 8,
     paginationMode: 'loadMore',
-    requestHandler: createMockRequestHandler(),
+    requestHandler,
   },
 }
 
 export const Empty: Story = {
   args: {
-    endpoint: 'items',
+    endpoint: 'skills',
     page: 1,
     perPage: 10,
     paginationMode: 'pagination',
-    requestHandler: createMockRequestHandler({ items: [] }),
+    requestHandler: createRequestHandler({ forceEmpty: true }),
   },
 }
 
 export const ErrorState: Story = {
   args: {
-    endpoint: 'items',
+    endpoint: 'skills',
     page: 1,
     perPage: 10,
     paginationMode: 'pagination',
-    requestHandler: createMockRequestHandler({ shouldFail: true }),
+    requestHandler: createRequestHandler({ shouldFail: true }),
   },
 }

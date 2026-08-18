@@ -13,7 +13,7 @@ import ReactList, {
   ListSummary,
 } from '@shilp.dev/react-list'
 import type { ListSort, RequestHandler } from '@shilp.dev/list-types'
-import { formatMockDate, type MockItem } from '@/mocks/mock-items'
+import { formatSkillDate, type Skill } from '@/types/skill'
 import './react-list-demo.css'
 
 export interface ReactListDemoProps {
@@ -21,8 +21,8 @@ export interface ReactListDemoProps {
   page?: number
   perPage?: number
   paginationMode?: 'pagination' | 'loadMore'
-  requestHandler: RequestHandler<MockItem>
-  initialItems?: MockItem[]
+  requestHandler: RequestHandler<Skill>
+  initialItems?: Skill[]
   count?: number
 }
 
@@ -37,7 +37,7 @@ function toggleSort(
 }
 
 export function ReactListDemo({
-  endpoint = 'items',
+  endpoint = 'skills',
   page = 1,
   perPage = 10,
   paginationMode = 'pagination',
@@ -73,7 +73,7 @@ export function ReactListDemo({
                 type="search"
                 className="react-list-demo__input"
                 value={search}
-                placeholder="Search items..."
+                placeholder="Search skills..."
                 onChange={(event) => setSearch(event.target.value)}
               />
             )}
@@ -98,7 +98,7 @@ export function ReactListDemo({
         </ListInitialLoader>
 
         <ListEmpty>
-          <p className="react-list-demo__message">No items found.</p>
+          <p className="react-list-demo__message">No skills found.</p>
         </ListEmpty>
 
         <ListError>
@@ -154,12 +154,12 @@ export function ReactListDemo({
                   </tr>
                 </thead>
                 <tbody>
-                  {(items as unknown as MockItem[]).map((item) => (
+                  {(items as unknown as Skill[]).map((item) => (
                     <tr key={item.id}>
                       <td>{item.id}</td>
                       <td>{item.name}</td>
                       <td>{item.status}</td>
-                      <td>{formatMockDate(item.date_updated)}</td>
+                      <td>{formatSkillDate(item.date_updated)}</td>
                     </tr>
                   ))}
                 </tbody>

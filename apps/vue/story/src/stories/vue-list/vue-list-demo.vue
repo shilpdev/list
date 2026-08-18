@@ -17,7 +17,7 @@
             type="search"
             class="vue-list-demo__input"
             :value="search"
-            placeholder="Search items..."
+            placeholder="Search skills..."
             @input="setSearch(($event.target as HTMLInputElement).value)"
           />
         </ListSearch>
@@ -41,7 +41,7 @@
       </ListInitialLoader>
 
       <ListEmpty>
-        <p class="vue-list-demo__message">No items found.</p>
+        <p class="vue-list-demo__message">No skills found.</p>
       </ListEmpty>
 
       <ListError v-slot="{ error }">
@@ -83,11 +83,11 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in items as unknown as MockItem[]" :key="item.id">
+              <tr v-for="item in items as unknown as Skill[]" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.status }}</td>
-                <td>{{ formatMockDate(item.date_updated) }}</td>
+                <td>{{ formatSkillDate(item.date_updated) }}</td>
               </tr>
             </tbody>
           </table>
@@ -170,7 +170,7 @@ import {
   ListSummary,
   VueList,
 } from '@shilp.dev/vue-list'
-import { formatMockDate, type MockItem } from '@/mocks/mock-items'
+import { formatSkillDate, type Skill } from '@/types/skill'
 
 defineOptions({
   name: 'vue-list-demo',
@@ -182,12 +182,12 @@ withDefaults(
     page?: number
     perPage?: number
     paginationMode?: 'pagination' | 'loadMore'
-    requestHandler: RequestHandler<MockItem>
-    initialItems?: MockItem[]
+    requestHandler: RequestHandler<Skill>
+    initialItems?: Skill[]
     count?: number
   }>(),
   {
-    endpoint: 'items',
+    endpoint: 'skills',
     page: 1,
     perPage: 10,
     paginationMode: 'pagination',
