@@ -29,25 +29,21 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
 
-    // Table structure renders
+    // Wait for data to load and table + rows to appear
     await waitFor(() => {
       expect(canvas.getByRole('table')).toBeInTheDocument()
-    })
+      expect(canvas.getAllByRole('row').length).toBeGreaterThan(1)
+    }, { timeout: 15000 })
 
     // Column headers are present
     expect(canvas.getByText('ID')).toBeInTheDocument()
     expect(canvas.getByText('Name')).toBeInTheDocument()
     expect(canvas.getByText('Updated')).toBeInTheDocument()
 
-    // At least one row renders after fetch
-    await waitFor(() => {
-      expect(canvas.getAllByRole('row').length).toBeGreaterThan(1)
-    }, { timeout: 10000 })
-
     // Summary shows item count
     await waitFor(() => {
       expect(canvas.getByText(/of \d+/)).toBeInTheDocument()
-    })
+    }, { timeout: 5000 })
 
     // Pagination controls are present
     expect(canvas.getByRole('button', { name: /prev/i })).toBeInTheDocument()
