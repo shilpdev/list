@@ -34,9 +34,9 @@
     "access": "public"
   },
   "peerDependencies": {
+    "@shilp.dev/list-types": "^1.0.0",
     "react": "^18.2.0 || ^19.0.0",
-    "react-dom": "^18.2.0 || ^19.0.0",
-    "@shilp.dev/list-types": "^1.0.0"
+    "react-dom": "^18.2.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {
     "@shilp.dev/list-types": {
@@ -47,6 +47,7 @@
     "@shilp.dev/list-types": "workspace:*",
     "@types/react": "^19.0.10",
     "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.39.5",
     "typescript": "^5.8.3",
     "vite": "^6.3.1",
     "vite-plugin-dts": "^4.5.0"

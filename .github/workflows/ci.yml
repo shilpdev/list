@@ -51,6 +51,7 @@ jobs:
   # ─── Typecheck ───────────────────────────────────────────────────────────────
   typecheck:
     name: Typecheck
+    needs: build-packages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -67,6 +68,15 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Restore built packages
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            packages/types/dist
+            packages/react/dist
+            packages/vue/dist
+          key: packages-${{ github.sha }}
 
       - name: Typecheck packages
         run: pnpm typecheck
@@ -74,6 +84,7 @@ jobs:
   # ─── Lint ────────────────────────────────────────────────────────────────────
   lint:
     name: Lint
+    needs: build-packages
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -90,6 +101,15 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Restore built packages
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            packages/types/dist
+            packages/react/dist
+            packages/vue/dist
+          key: packages-${{ github.sha }}
 
       - name: Lint packages
         run: pnpm --filter @shilp.dev/react-list lint && pnpm --filter @shilp.dev/vue-list lint
