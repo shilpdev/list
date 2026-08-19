@@ -9,11 +9,7 @@
               type="checkbox"
               :checked="scope.attrSettings?.[attr.name]?.visible"
               @change="
-                scope.updateAttr(
-                  attr.name,
-                  'visible',
-                  ($event.target as HTMLInputElement).checked,
-                )
+                scope.updateAttr(attr.name, 'visible', ($event.target as HTMLInputElement).checked)
               "
             />
           </label>

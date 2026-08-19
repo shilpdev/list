@@ -34,11 +34,7 @@ const { listState } = useListContext()
 
 const showContent = computed(() => {
   const state = listState.value
-  return (
-    !state.loader.initialLoading &&
-    state.data.length > 0 &&
-    !state.error
-  )
+  return !state.loader.initialLoading && state.data.length > 0 && !state.error
 })
 
 const serializedOptions = computed(() => {
@@ -53,9 +49,11 @@ const serializedOptions = computed(() => {
   })
 })
 
-const scope = computed((): PerPageScope => ({
-  perPage: listState.value.pagination.perPage,
-  setPerPage: listState.value.setPerPage,
-  options: serializedOptions.value,
-}))
+const scope = computed(
+  (): PerPageScope => ({
+    perPage: listState.value.pagination.perPage,
+    setPerPage: listState.value.setPerPage,
+    options: serializedOptions.value,
+  }),
+)
 </script>

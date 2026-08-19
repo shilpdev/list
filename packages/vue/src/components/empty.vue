@@ -18,11 +18,6 @@ const { listState } = useListContext()
 
 const showEmpty = computed(() => {
   const state = listState.value
-  return (
-    !state.loader.initialLoading &&
-    !state.loader.isLoading &&
-    state.isEmpty &&
-    !state.error
-  )
+  return !state.loader.initialLoading && !state.loader.isLoading && state.isEmpty && !state.error
 })
 </script>

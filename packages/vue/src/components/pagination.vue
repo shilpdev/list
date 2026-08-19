@@ -48,11 +48,7 @@ const { listState } = useListContext()
 
 const showContent = computed(() => {
   const state = listState.value
-  return (
-    !state.loader.initialLoading &&
-    state.data.length > 0 &&
-    !state.error
-  )
+  return !state.loader.initialLoading && state.data.length > 0 && !state.error
 })
 
 const scope = computed((): PaginationScope => {

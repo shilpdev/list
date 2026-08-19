@@ -1,41 +1,41 @@
-import { memo, useMemo, type ReactNode } from "react";
-import type { SummaryScope } from "@shilp.dev/list-types";
-import { useListContext } from "../context/list-context";
+import { memo, useMemo, type ReactNode } from 'react'
+import type { SummaryScope } from '@shilp.dev/list-types'
+import { useListContext } from '../context/list-context'
 
 type ListSummaryProps = {
-  children?: (scope: SummaryScope) => ReactNode;
-};
+  children?: (scope: SummaryScope) => ReactNode
+}
 
 export const ListSummary = memo(({ children }: ListSummaryProps) => {
-  const { listState } = useListContext();
-  const { data, count, pagination, loader, error } = listState;
-  const { page, perPage } = pagination;
-  const { initialLoading } = loader;
+  const { listState } = useListContext()
+  const { data, count, pagination, loader, error } = listState
+  const { page, perPage } = pagination
+  const { initialLoading } = loader
 
   const summaryData = useMemo(() => {
-    const from = page * perPage - perPage + 1;
-    const to = Math.min(page * perPage, count);
-    const visibleCount = data?.length || 0;
+    const from = page * perPage - perPage + 1
+    const to = Math.min(page * perPage, count)
+    const visibleCount = data?.length || 0
 
-    return { from, to, visibleCount };
-  }, [page, perPage, count, data]);
+    return { from, to, visibleCount }
+  }, [page, perPage, count, data])
 
   const scope = useMemo(
     (): SummaryScope => ({
       ...summaryData,
       count,
     }),
-    [summaryData, count]
-  );
+    [summaryData, count],
+  )
 
-  if (initialLoading) return null;
+  if (initialLoading) return null
 
   if (!data || data.length === 0) {
-    return null;
+    return null
   }
 
   if (error) {
-    return null;
+    return null
   }
 
   return (
@@ -52,5 +52,5 @@ export const ListSummary = memo(({ children }: ListSummaryProps) => {
         </span>
       )}
     </div>
-  );
-});
+  )
+})

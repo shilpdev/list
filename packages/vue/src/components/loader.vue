@@ -27,7 +27,9 @@ const { listState } = useListContext()
 
 const positionClass = computed(() => `vue-list__loader--${props.position}`)
 
-const scope = computed((): LoaderScope => ({
-  isLoading: listState.value.loader.isLoading,
-}))
+const scope = computed(
+  (): LoaderScope => ({
+    isLoading: listState.value.loader.isLoading,
+  }),
+)
 </script>

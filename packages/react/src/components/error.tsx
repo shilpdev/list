@@ -1,23 +1,23 @@
-import { memo, type ReactNode } from "react";
-import type { ErrorScope } from "@shilp.dev/list-types";
-import { useListContext } from "../context/list-context";
+import { memo, type ReactNode } from 'react'
+import type { ErrorScope } from '@shilp.dev/list-types'
+import { useListContext } from '../context/list-context'
 
 type ListErrorProps = {
-  children?: ReactNode | ((scope: ErrorScope) => ReactNode);
-};
+  children?: ReactNode | ((scope: ErrorScope) => ReactNode)
+}
 
 export const ListError = memo(({ children }: ListErrorProps) => {
-  const { listState } = useListContext();
-  const { error, loader } = listState;
-  const { isLoading } = loader;
+  const { listState } = useListContext()
+  const { error, loader } = listState
+  const { isLoading } = loader
 
   if (!error || isLoading) {
-    return null;
+    return null
   }
 
   return (
     <div className="react-list-error">
-      {typeof children === "function"
+      {typeof children === 'function'
         ? children({ error })
         : children || (
             <div>
@@ -28,5 +28,5 @@ export const ListError = memo(({ children }: ListErrorProps) => {
             </div>
           )}
     </div>
-  );
-});
+  )
+})

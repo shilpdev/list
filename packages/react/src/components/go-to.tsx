@@ -1,29 +1,29 @@
-import { memo, useCallback, useMemo, type ReactNode } from "react";
-import type { GoToScope } from "@shilp.dev/list-types";
-import { useListContext } from "../context/list-context";
+import { memo, useCallback, useMemo, type ReactNode } from 'react'
+import type { GoToScope } from '@shilp.dev/list-types'
+import { useListContext } from '../context/list-context'
 
 type ListGoToProps = {
-  children?: (scope: GoToScope) => ReactNode;
-};
+  children?: (scope: GoToScope) => ReactNode
+}
 
 export const ListGoTo = memo(({ children }: ListGoToProps) => {
-  const { listState } = useListContext();
-  const { data, count, pagination, setPage, loader, error } = listState;
-  const { page, perPage } = pagination;
-  const { initialLoading } = loader;
+  const { listState } = useListContext()
+  const { data, count, pagination, setPage, loader, error } = listState
+  const { page, perPage } = pagination
+  const { initialLoading } = loader
 
   const { pages, pagesCount } = useMemo(() => {
-    const pagesCount = Math.ceil(count / perPage);
-    const pages = Array.from({ length: pagesCount }, (_, i) => i + 1);
-    return { pages, pagesCount };
-  }, [count, perPage]);
+    const pagesCount = Math.ceil(count / perPage)
+    const pages = Array.from({ length: pagesCount }, (_, i) => i + 1)
+    return { pages, pagesCount }
+  }, [count, perPage])
 
   const handlePageChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setPage(Number(e.target.value));
+      setPage(Number(e.target.value))
     },
-    [setPage]
-  );
+    [setPage],
+  )
 
   const scope = useMemo(
     (): GoToScope => ({
@@ -32,17 +32,17 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
       pages,
       pagesCount,
     }),
-    [setPage, page, pages, pagesCount]
-  );
+    [setPage, page, pages, pagesCount],
+  )
 
-  if (initialLoading) return null;
+  if (initialLoading) return null
 
   if (!data || data.length === 0) {
-    return null;
+    return null
   }
 
   if (error) {
-    return null;
+    return null
   }
 
   return (
@@ -59,5 +59,5 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
         </select>
       )}
     </div>
-  );
-});
+  )
+})

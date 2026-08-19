@@ -58,8 +58,7 @@ const localSortOrder = ref<SortOrder>(props.sortOrder)
 const localSearch = ref<string>(props.search ?? '')
 const attrSettings = ref<AttrSettings>()
 
-const toError = (err: unknown): Error =>
-  err instanceof Error ? err : new Error(String(err))
+const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
 
 const buildContext = (): StateManagerContext => ({
   endpoint: props.endpoint,
@@ -107,8 +106,7 @@ const isLoading = ref(false)
 const initializingState = ref(true)
 
 const serializedAttrs = computed(() => {
-  const attrs =
-    props.attrs || Object.keys((items.value[0] as Record<string, unknown>) || {})
+  const attrs = props.attrs || Object.keys((items.value[0] as Record<string, unknown>) || {})
   return attrSerializer(attrs)
 })
 

@@ -19,8 +19,10 @@ defineOptions({
 
 const { listState } = useListContext()
 
-const scope = computed((): RefreshScope => ({
-  isLoading: listState.value.loader.isLoading,
-  refresh: () => listState.value.refresh({ isRefresh: true }),
-}))
+const scope = computed(
+  (): RefreshScope => ({
+    isLoading: listState.value.loader.isLoading,
+    refresh: () => listState.value.refresh({ isRefresh: true }),
+  }),
+)
 </script>
