@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { expect, waitFor, within } from '@storybook/test'
-import { createRequestHandler, requestHandler } from '@/api/request-handler'
-import { sampleSkills } from '@/types/skill'
+import { createRequestHandler } from '@/api/request-handler'
 import VueListDemo from './vue-list-demo.vue'
 
 const meta = {
@@ -26,8 +25,6 @@ export const Default: Story = {
     perPage: 10,
     paginationMode: 'pagination',
     requestHandler: createRequestHandler({ forceEmpty: false }),
-    initialItems: sampleSkills,
-    count: sampleSkills.length,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
@@ -42,10 +39,10 @@ export const Default: Story = {
     expect(canvas.getByText('Name')).toBeInTheDocument()
     expect(canvas.getByText('Updated')).toBeInTheDocument()
 
-    // At least one skill row renders
+    // At least one row renders after fetch
     await waitFor(() => {
-      expect(canvas.getByText('Sample Skill')).toBeInTheDocument()
-    })
+      expect(canvas.getAllByRole('row').length).toBeGreaterThan(1)
+    }, { timeout: 10000 })
 
     // Summary shows item count
     await waitFor(() => {
@@ -64,31 +61,6 @@ export const Default: Story = {
   },
 }
 
-export const WithInitialItems: Story = {
-  args: {
-    endpoint: 'skills',
-    page: 1,
-    perPage: 10,
-    paginationMode: 'pagination',
-    initialItems: sampleSkills,
-    count: sampleSkills.length,
-    requestHandler,
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
-
-    // Items render immediately from initialItems — no async fetch needed
-    expect(canvas.getByText('Sample Skill')).toBeInTheDocument()
-    expect(canvas.getByText('Another Skill')).toBeInTheDocument()
-    expect(canvas.getByText('Archived Skill')).toBeInTheDocument()
-
-    // Draft / published / archived statuses display
-    expect(canvas.getByText('draft')).toBeInTheDocument()
-    expect(canvas.getByText('published')).toBeInTheDocument()
-    expect(canvas.getByText('archived')).toBeInTheDocument()
-  },
-}
-
 export const LoadMore: Story = {
   args: {
     endpoint: 'skills',
@@ -96,8 +68,6 @@ export const LoadMore: Story = {
     perPage: 8,
     paginationMode: 'loadMore',
     requestHandler: createRequestHandler({ forceEmpty: false }),
-    initialItems: sampleSkills,
-    count: sampleSkills.length,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)

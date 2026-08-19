@@ -55,7 +55,6 @@ function buildDefaultAttrSettings(
  * Provides list context to child components (`ListSearch`, `ListPagination`, etc.).
  */
 function ReactList<T = unknown>({
-  initialItems = [],
   children,
   endpoint,
   page = 1,
@@ -140,13 +139,13 @@ function ReactList<T = unknown>({
       search: savedState.search != null ? savedState.search : search,
       filters: savedState.filters != null ? savedState.filters : filters,
       attrSettings: (savedState.attrSettings ?? {}) as AttrSettings,
-      items: initialItems,
+      items: [],
       selection: [],
       error: null,
       response: null,
-      count: initialItems.length ? initialCount || initialItems.length : initialCount,
+      count: initialCount,
       isLoading: false,
-      initializingState: !initialItems.length,
+      initializingState: true,
       confirmedPage: null,
     };
   }, [
@@ -158,7 +157,6 @@ function ReactList<T = unknown>({
     sortOrder,
     filters,
     isLoadMore,
-    initialItems,
     initialCount,
   ]);
 
@@ -234,7 +232,6 @@ function ReactList<T = unknown>({
         }));
         // The list UI already surfaces the error via `state.error`.
         // Re-throwing here creates unhandled promise rejections that break
-        // Storybook/Vitest integration.
       }
     },
     [
@@ -424,7 +421,7 @@ function ReactList<T = unknown>({
         stateManager.init(context);
       }
 
-      if (!initialItems.length) handlers.setPage(state.page as number);
+      handlers.setPage(state.page as number);
     }
   }, []);
 

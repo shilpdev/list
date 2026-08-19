@@ -6,7 +6,6 @@
       :per-page="perPage"
       :pagination-mode="paginationMode"
       :request-handler="requestHandler"
-      :initial-items="initialItems"
       :count="count"
       :sync-page-to-url="false"
       v-model:filters="filters"
@@ -183,7 +182,6 @@ withDefaults(
     perPage?: number
     paginationMode?: 'pagination' | 'loadMore'
     requestHandler: RequestHandler<Skill>
-    initialItems?: Skill[]
     count?: number
   }>(),
   {
@@ -191,7 +189,6 @@ withDefaults(
     page: 1,
     perPage: 10,
     paginationMode: 'pagination',
-    initialItems: () => [],
   },
 )
 

@@ -22,7 +22,6 @@ export interface ReactListDemoProps {
   perPage?: number
   paginationMode?: 'pagination' | 'loadMore'
   requestHandler: RequestHandler<Skill>
-  initialItems?: Skill[]
   count?: number
 }
 
@@ -42,7 +41,6 @@ export function ReactListDemo({
   perPage = 10,
   paginationMode = 'pagination',
   requestHandler,
-  initialItems = [],
   count,
 }: ReactListDemoProps) {
   const [filters, setFilters] = useState<Record<string, string | undefined>>({})
@@ -62,7 +60,6 @@ export function ReactListDemo({
         perPage={perPage}
         paginationMode={paginationMode}
         requestHandler={requestHandler}
-        initialItems={initialItems}
         count={count}
         filters={filters}
       >

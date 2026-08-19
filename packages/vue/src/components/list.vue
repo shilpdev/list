@@ -36,7 +36,6 @@ const props = withDefaults(defineProps<VueListComponentProps>(), {
   version: 1,
   paginationMode: 'pagination',
   meta: () => ({}),
-  initialItems: () => [],
 })
 
 const emit = defineEmits<VueListEmits>()
@@ -105,7 +104,7 @@ const error = ref<Error | null>(null)
 const response = ref<ListResponse | null>(null)
 const count = ref(0)
 const isLoading = ref(false)
-const initializingState = ref(!props.initialItems.length)
+const initializingState = ref(true)
 
 const serializedAttrs = computed(() => {
   const attrs =
@@ -320,13 +319,7 @@ if (!attrSettings.value) {
 
 stateManager?.init?.(buildContext())
 
-if (props.initialItems.length) {
-  items.value = [...props.initialItems]
-  count.value = props.count ?? props.initialItems.length
-  initializingState.value = false
-} else {
-  setPage(localPage.value)
-}
+setPage(localPage.value)
 
 defineExpose({
   items,

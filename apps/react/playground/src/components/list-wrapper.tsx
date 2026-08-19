@@ -9,7 +9,7 @@ import ReactList, {
   ListPerPage,
   ListSearch,
   ListSummary,
-} from '@shilp.dev/react-list';
+} from "@shilp.dev/react-list";
 import type {
   ErrorScope,
   GoToScope,
@@ -19,17 +19,17 @@ import type {
   SerializedListItem,
   SortOrder,
   SummaryScope,
-} from '@shilp.dev/list-types';
-import { Icon } from '@iconify/react';
-import { useState } from 'react';
+} from "@shilp.dev/list-types";
+import { Icon } from "@iconify/react";
+import { useState } from "react";
 
-import type { Skill, SkillFilters } from '../types/skill';
-import reactListConfig, { getStateFromSearchParams } from './react-list-config';
+import type { Skill, SkillFilters } from "../types/skill";
+import reactListConfig, { getStateFromSearchParams } from "./react-list-config";
 
-function nextSortOrder(current: SortOrder): 'asc' | 'desc' | '' {
-  if (current === '') return 'asc';
-  if (current === 'asc') return 'desc';
-  return '';
+function nextSortOrder(current: SortOrder): "asc" | "desc" | "" {
+  if (current === "") return "asc";
+  if (current === "asc") return "desc";
+  return "";
 }
 
 const ListWrapper = () => {
@@ -53,170 +53,171 @@ const ListWrapper = () => {
         requestHandler={reactListConfig.requestHandler}
         stateManager={reactListConfig.stateManager}
       >
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center">
-              <ListSearch>
-                {({ search, setSearch }: SearchScope) => (
-                  <div className="relative w-60">
-                    <input
-                      type="text"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search skills..."
-                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                    />
-                  </div>
-                )}
-              </ListSearch>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="relative flex items-center gap-2">
-                  <label className="whitespace-nowrap text-sm text-slate-500">
-                    Status:
-                  </label>
-                  <select
-                    className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                    value={filters.status ?? 'all'}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setFilters((prev) => ({
-                        ...prev,
-                        status: value === 'all' ? undefined : value,
-                      }));
-                    }}
-                  >
-                    <option value="all">All Status</option>
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                    <option value="archived">Archived</option>
-                  </select>
-                  <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-500">
-                    <Icon icon="mdi:chevron-down" className="h-4 w-4" />
-                  </div>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center">
+            <ListSearch>
+              {({ search, setSearch }: SearchScope) => (
+                <div className="relative w-60">
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search skills..."
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  />
                 </div>
+              )}
+            </ListSearch>
+          </div>
 
-                <div className="relative flex items-center gap-2">
-                  <label className="whitespace-nowrap text-sm text-slate-500">
-                    Color:
-                  </label>
-                  <select
-                    className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                    value={filters.color ?? 'all'}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setFilters((prev) => ({
-                        ...prev,
-                        color: value === 'all' ? undefined : value,
-                      }));
-                    }}
-                  >
-                    <option value="all">All Colors</option>
-                    <option value="red">Red</option>
-                    <option value="blue">Blue</option>
-                    <option value="green">Green</option>
-                    <option value="yellow">Yellow</option>
-                  </select>
-                  <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-500">
-                    <Icon icon="mdi:chevron-down" className="h-4 w-4" />
-                  </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex items-center gap-2">
+                <label className="whitespace-nowrap text-sm text-slate-500">
+                  Status:
+                </label>
+                <select
+                  className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  value={filters.status ?? "all"}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFilters((prev) => ({
+                      ...prev,
+                      status: value === "all" ? undefined : value,
+                    }));
+                  }}
+                >
+                  <option value="all">All Status</option>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                </select>
+                <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-500">
+                  <Icon icon="mdi:chevron-down" className="h-4 w-4" />
+                </div>
+              </div>
+
+              <div className="relative flex items-center gap-2">
+                <label className="whitespace-nowrap text-sm text-slate-500">
+                  Color:
+                </label>
+                <select
+                  className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  value={filters.color ?? "all"}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFilters((prev) => ({
+                      ...prev,
+                      color: value === "all" ? undefined : value,
+                    }));
+                  }}
+                >
+                  <option value="all">All Colors</option>
+                  <option value="red">Red</option>
+                  <option value="blue">Blue</option>
+                  <option value="green">Green</option>
+                  <option value="yellow">Yellow</option>
+                </select>
+                <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-500">
+                  <Icon icon="mdi:chevron-down" className="h-4 w-4" />
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="my-6">
-            <ListInitialLoader>
-              <div className="w-full overflow-hidden rounded-md border border-slate-200 bg-white">
-                <div className="w-full">
-                  <div className="flex w-full">
-                    {[...Array(4)].map((_, index) => (
+        <div className="my-6">
+          <ListInitialLoader>
+            <div className="w-full overflow-hidden rounded-md border border-slate-200 bg-white">
+              <div className="w-full">
+                <div className="flex w-full">
+                  {[...Array(4)].map((_, index) => (
+                    <div
+                      key={`header-${index}`}
+                      className="m-2 h-12 flex-1 animate-pulse rounded bg-slate-200"
+                    />
+                  ))}
+                </div>
+                {[...Array(5)].map((_, rowIndex) => (
+                  <div key={`row-${rowIndex}`} className="flex w-full">
+                    {[...Array(4)].map((_, cellIndex) => (
                       <div
-                        key={`header-${index}`}
-                        className="m-2 h-12 flex-1 animate-pulse rounded bg-slate-200"
+                        key={`cell-${rowIndex}-${cellIndex}`}
+                        className="m-2 h-10 flex-1 animate-pulse rounded bg-linear-to-r from-slate-100 via-slate-200 to-slate-100"
                       />
                     ))}
                   </div>
-                  {[...Array(5)].map((_, rowIndex) => (
-                    <div key={`row-${rowIndex}`} className="flex w-full">
-                      {[...Array(4)].map((_, cellIndex) => (
-                        <div
-                          key={`cell-${rowIndex}-${cellIndex}`}
-                          className="m-2 h-10 flex-1 animate-pulse rounded bg-linear-to-r from-slate-100 via-slate-200 to-slate-100"
-                        />
-                      ))}
-                    </div>
-                  ))}
+                ))}
+              </div>
+            </div>
+          </ListInitialLoader>
+
+          <ListEmpty>
+            <div className="flex flex-col items-center justify-center rounded-lg border border-slate-100 bg-white px-4 py-16">
+              <div className="relative mb-8">
+                <div className="absolute inset-0 animate-pulse rounded-full bg-slate-50 opacity-30" />
+                <div className="relative rounded-full bg-linear-to-br from-slate-50 to-slate-100 p-8 shadow-inner">
+                  <Icon
+                    icon="mdi:file-search-outline"
+                    className="h-16 w-16 text-accent-400"
+                  />
                 </div>
               </div>
-            </ListInitialLoader>
 
-            <ListEmpty>
-              <div className="flex flex-col items-center justify-center rounded-lg border border-slate-100 bg-white px-4 py-16">
-                <div className="relative mb-8">
-                  <div className="absolute inset-0 animate-pulse rounded-full bg-slate-50 opacity-30" />
-                  <div className="relative rounded-full bg-linear-to-br from-slate-50 to-slate-100 p-8 shadow-inner">
-                    <Icon
-                      icon="mdi:file-search-outline"
-                      className="h-16 w-16 text-accent-400"
-                    />
-                  </div>
+              <h3 className="mb-3 text-2xl font-medium text-slate-800">
+                No Data Found
+              </h3>
+
+              <p className="mb-6 max-w-md text-center leading-relaxed text-slate-500">
+                We couldn&apos;t find any matching records. Try adjusting your
+                search or filters.
+              </p>
+
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded border border-primary-600 bg-primary-500 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-600 hover:shadow"
+              >
+                <Icon icon="mdi:refresh" className="h-5 w-5" />
+                Refresh
+              </button>
+            </div>
+          </ListEmpty>
+
+          <ListError>
+            {({ error }: ErrorScope) => (
+              <div className="flex flex-col items-center justify-center px-4 py-16">
+                <div className="mb-4 rounded-full bg-red-100 p-6">
+                  <Icon
+                    icon="mdi:alert-circle-outline"
+                    className="h-12 w-12 text-red-500"
+                  />
                 </div>
-
-                <h3 className="mb-3 text-2xl font-medium text-slate-800">
-                  No Data Found
+                <h3 className="mb-2 text-xl font-medium text-slate-800">
+                  Something went wrong
                 </h3>
-
-                <p className="mb-6 max-w-md text-center leading-relaxed text-slate-500">
-                  We couldn&apos;t find any matching records. Try adjusting your
-                  search or filters.
+                <p className="mb-4 max-w-md text-center text-slate-500">
+                  {error.message ||
+                    "An unexpected error occurred while fetching data."}
                 </p>
-
+                <div className="mb-6 w-full max-w-md rounded-md bg-slate-50 p-4">
+                  <p className="wrap-break-word font-mono text-sm text-slate-600">
+                    {error.name}: {error.message}
+                  </p>
+                </div>
                 <button
                   type="button"
                   className="flex items-center gap-2 rounded border border-primary-600 bg-primary-500 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-600 hover:shadow"
                 >
                   <Icon icon="mdi:refresh" className="h-5 w-5" />
-                  Refresh
+                  Try Again
                 </button>
               </div>
-            </ListEmpty>
+            )}
+          </ListError>
 
-            <ListError>
-              {({ error }: ErrorScope) => (
-                <div className="flex flex-col items-center justify-center px-4 py-16">
-                  <div className="mb-4 rounded-full bg-red-100 p-6">
-                    <Icon
-                      icon="mdi:alert-circle-outline"
-                      className="h-12 w-12 text-red-500"
-                    />
-                  </div>
-                  <h3 className="mb-2 text-xl font-medium text-slate-800">
-                    Something went wrong
-                  </h3>
-                  <p className="mb-4 max-w-md text-center text-slate-500">
-                    {error.message ||
-                      "An unexpected error occurred while fetching data."}
-                  </p>
-                  <div className="mb-6 w-full max-w-md rounded-md bg-slate-50 p-4">
-                    <p className="wrap-break-word font-mono text-sm text-slate-600">
-                      {error.name}: {error.message}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 rounded border border-primary-600 bg-primary-500 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-600 hover:shadow"
-                  >
-                    <Icon icon="mdi:refresh" className="h-5 w-5" />
-                    Try Again
-                  </button>
-                </div>
-              )}
-            </ListError>
-
-            <ListItems>
-              {({ items, sort, setSort }) => (
+          <ListItems>
+            {({ items, sort, setSort }) => {
+              return (
                 <div className="relative max-h-[70vh] w-full overflow-y-auto rounded-md border border-slate-200">
                   <ListLoader>
                     <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-[1px]">
@@ -310,151 +311,146 @@ const ListWrapper = () => {
                     </tbody>
                   </table>
                 </div>
-              )}
-            </ListItems>
+              );
+            }}
+          </ListItems>
 
-            <div className="flex w-full flex-col items-center justify-between gap-4 rounded-b-lg border-t border-slate-200 bg-slate-50 px-4 py-5 md:flex-row">
-              <div className="flex w-full flex-wrap items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <ListSummary>
-                    {({ count, from, to }: SummaryScope) => (
-                      <span className="font-medium text-slate-700">
-                        {from} - {to} of {count} Results
-                      </span>
-                    )}
-                  </ListSummary>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-slate-500">Page Size:</span>
-                  <ListPerPage>
-                    {({ perPage, setPerPage, options }: PerPageScope) => (
-                      <div className="relative">
-                        <select
-                          value={String(perPage)}
-                          onChange={(e) => setPerPage(Number(e.target.value))}
-                          className="w-20 appearance-none rounded-md border border-slate-300 bg-white py-1.5 pl-3 pr-8 text-sm text-slate-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                        >
-                          {options.map((option) => (
-                            <option
-                              key={`page-size-${option.value}`}
-                              value={String(option.value)}
-                            >
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
-                          <Icon icon="mdi:chevron-down" className="h-4 w-4" />
-                        </div>
-                      </div>
-                    )}
-                  </ListPerPage>
-                </div>
-
-                <ListGoTo>
-                  {({ setPage, page, pagesCount }: GoToScope) => (
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-500">Go to:</span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={pagesCount}
-                        value={page}
-                        onChange={(e) => setPage(Number(e.target.value))}
-                        className="w-16 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-center text-sm font-medium shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                      />
-                      <span className="text-slate-500">of {pagesCount}</span>
-                    </div>
+          <div className="flex w-full flex-col items-center justify-between gap-4 rounded-b-lg border-t border-slate-200 bg-slate-50 px-4 py-5 md:flex-row">
+            <div className="flex w-full flex-wrap items-center gap-6">
+              <div className="flex items-center gap-2">
+                <ListSummary>
+                  {({ count, from, to }: SummaryScope) => (
+                    <span className="font-medium text-slate-700">
+                      {from} - {to} of {count} Results
+                    </span>
                   )}
-                </ListGoTo>
+                </ListSummary>
               </div>
 
-              <ListPagination>
-                {({
-                  page,
-                  pagesToDisplay,
-                  hasNext,
-                  hasPrev,
-                  prev,
-                  next,
-                  first,
-                  last,
-                  setPage,
-                }: PaginationScope) => (
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={first}
-                      disabled={!hasPrev}
-                      title="First Page"
-                      className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Icon
-                        icon="mdi:chevron-double-left"
-                        className="h-4 w-4"
-                      />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={prev}
-                      disabled={!hasPrev}
-                      title="Previous Page"
-                      className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Icon icon="mdi:chevron-left" className="h-4 w-4" />
-                    </button>
-
-                    <div className="mx-1 flex items-center gap-1">
-                      {pagesToDisplay.map((item, index) => {
-                        const isActive = item === page;
-
-                        return (
-                          <button
-                            key={index}
-                            type="button"
-                            onClick={() => setPage(item)}
-                            className={`h-8 min-w-8 rounded-md border px-2 text-sm font-medium transition ${
-                              isActive
-                                ? "border-primary-600 bg-primary-500 text-white"
-                                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
-                            }`}
+              <div className="flex items-center gap-2">
+                <span className="text-slate-500">Page Size:</span>
+                <ListPerPage>
+                  {({ perPage, setPerPage, options }: PerPageScope) => (
+                    <div className="relative">
+                      <select
+                        value={String(perPage)}
+                        onChange={(e) => setPerPage(Number(e.target.value))}
+                        className="w-20 appearance-none rounded-md border border-slate-300 bg-white py-1.5 pl-3 pr-8 text-sm text-slate-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                      >
+                        {options.map((option) => (
+                          <option
+                            key={`page-size-${option.value}`}
+                            value={String(option.value)}
                           >
-                            {item}
-                          </button>
-                        );
-                      })}
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2">
+                        <Icon icon="mdi:chevron-down" className="h-4 w-4" />
+                      </div>
                     </div>
+                  )}
+                </ListPerPage>
+              </div>
 
-                    <button
-                      type="button"
-                      onClick={next}
-                      disabled={!hasNext}
-                      title="Next Page"
-                      className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Icon icon="mdi:chevron-right" className="h-4 w-4" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={last}
-                      disabled={!hasNext}
-                      title="Last Page"
-                      className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Icon
-                        icon="mdi:chevron-double-right"
-                        className="h-4 w-4"
-                      />
-                    </button>
+              <ListGoTo>
+                {({ setPage, page, pagesCount }: GoToScope) => (
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500">Go to:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={pagesCount}
+                      value={page}
+                      onChange={(e) => setPage(Number(e.target.value))}
+                      className="w-16 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-center text-sm font-medium shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                    />
+                    <span className="text-slate-500">of {pagesCount}</span>
                   </div>
                 )}
-              </ListPagination>
+              </ListGoTo>
             </div>
+
+            <ListPagination>
+              {({
+                page,
+                pagesToDisplay,
+                hasNext,
+                hasPrev,
+                prev,
+                next,
+                first,
+                last,
+                setPage,
+              }: PaginationScope) => (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={first}
+                    disabled={!hasPrev}
+                    title="First Page"
+                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Icon icon="mdi:chevron-double-left" className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={prev}
+                    disabled={!hasPrev}
+                    title="Previous Page"
+                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Icon icon="mdi:chevron-left" className="h-4 w-4" />
+                  </button>
+
+                  <div className="mx-1 flex items-center gap-1">
+                    {pagesToDisplay.map((item, index) => {
+                      const isActive = item === page;
+
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => setPage(item)}
+                          className={`h-8 min-w-8 rounded-md border px-2 text-sm font-medium transition ${
+                            isActive
+                              ? "border-primary-600 bg-primary-500 text-white"
+                              : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          {item}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={next}
+                    disabled={!hasNext}
+                    title="Next Page"
+                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Icon icon="mdi:chevron-right" className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={last}
+                    disabled={!hasNext}
+                    title="Last Page"
+                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Icon icon="mdi:chevron-double-right" className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </ListPagination>
           </div>
-        </ReactList>
+        </div>
+      </ReactList>
     </div>
   );
 };
