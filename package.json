@@ -37,6 +37,8 @@
     "build:react-list": "pnpm build:types && pnpm --filter @shilp.dev/react-list build",
     "build:vue-list": "pnpm build:types && pnpm --filter @shilp.dev/vue-list build",
     "build:packages": "pnpm build:types && pnpm --filter @shilp.dev/react-list build && pnpm --filter @shilp.dev/vue-list build",
+    "typecheck": "pnpm --filter @shilp.dev/list-types typecheck && pnpm --filter @shilp.dev/react-list typecheck && pnpm --filter @shilp.dev/vue-list typecheck",
+    "lint": "pnpm --filter @shilp.dev/react-list lint && pnpm --filter @shilp.dev/vue-list lint",
     "test:setup": "pnpm --filter react-story exec playwright install chromium",
     "test:story": "pnpm test:setup && pnpm --filter react-story --filter vue-story run --parallel test",
     "test:react:story": "pnpm test:setup && pnpm --filter react-story run test",

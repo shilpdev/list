@@ -340,6 +340,9 @@ importers:
       vue:
         specifier: ^3.5.13
         version: 3.5.41(typescript@5.8.3)
+      vue-tsc:
+        specifier: ^3.3.10
+        version: 3.3.10(typescript@5.8.3)
 
 packages:
 
@@ -8698,6 +8701,12 @@ snapshots:
     dependencies:
       '@volar/typescript': 2.4.15
       '@vue/language-core': 2.2.12(typescript@5.8.3)
+      typescript: 5.8.3
+
+  vue-tsc@3.3.10(typescript@5.8.3):
+    dependencies:
+      '@volar/typescript': 2.4.28
+      '@vue/language-core': 3.3.10
       typescript: 5.8.3
 
   vue-tsc@3.3.10(typescript@6.0.3):
