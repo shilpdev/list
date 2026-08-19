@@ -1,20 +1,20 @@
-import { memo, useMemo, type ReactNode } from "react";
+import { memo, useMemo, type ReactNode } from 'react'
 import type {
   PaginationComponentOptions,
   PaginationScope,
   RenderPageArgs,
-} from "@shilp.dev/list-types";
-import { useListContext } from "../context/list-context";
+} from '@shilp.dev/list-types'
+import { useListContext } from '../context/list-context'
 
 type ListPaginationProps = PaginationComponentOptions & {
-  children?: (scope: PaginationScope) => ReactNode;
-  renderFirst?: (scope: PaginationScope) => ReactNode;
-  renderPrev?: (scope: PaginationScope) => ReactNode;
-  renderPages?: (scope: PaginationScope) => ReactNode;
-  renderPage?: (scope: RenderPageArgs) => ReactNode;
-  renderNext?: (scope: PaginationScope) => ReactNode;
-  renderLast?: (scope: PaginationScope) => ReactNode;
-};
+  children?: (scope: PaginationScope) => ReactNode
+  renderFirst?: (scope: PaginationScope) => ReactNode
+  renderPrev?: (scope: PaginationScope) => ReactNode
+  renderPages?: (scope: PaginationScope) => ReactNode
+  renderPage?: (scope: RenderPageArgs) => ReactNode
+  renderNext?: (scope: PaginationScope) => ReactNode
+  renderLast?: (scope: PaginationScope) => ReactNode
+}
 
 export const ListPagination = memo(
   ({
@@ -27,31 +27,31 @@ export const ListPagination = memo(
     renderNext,
     renderLast,
   }: ListPaginationProps) => {
-    const { listState } = useListContext();
-    const { data, count, pagination, setPage, loader, error } = listState;
-    const { page, perPage } = pagination;
-    const { initialLoading } = loader;
+    const { listState } = useListContext()
+    const { data, count, pagination, setPage, loader, error } = listState
+    const { page, perPage } = pagination
+    const { initialLoading } = loader
 
     const paginationState = useMemo(() => {
-      const pagesCount = Math.ceil(count / perPage);
-      const halfWay = Math.floor(pageLinks / 2);
-      const hasNext = page * perPage < count;
-      const hasPrev = page !== 1;
-      return { pagesCount, halfWay, hasNext, hasPrev };
-    }, [count, perPage, page, pageLinks]);
+      const pagesCount = Math.ceil(count / perPage)
+      const halfWay = Math.floor(pageLinks / 2)
+      const hasNext = page * perPage < count
+      const hasPrev = page !== 1
+      return { pagesCount, halfWay, hasNext, hasPrev }
+    }, [count, perPage, page, pageLinks])
 
     const pagesToDisplay = useMemo(() => {
-      const { pagesCount, halfWay } = paginationState;
-      const pages = Array.from({ length: Math.min(pageLinks, pagesCount) });
+      const { pagesCount, halfWay } = paginationState
+      const pages = Array.from({ length: Math.min(pageLinks, pagesCount) })
 
       if (page <= halfWay) {
-        return pages.map((_, index) => index + 1);
+        return pages.map((_, index) => index + 1)
       } else if (pagesCount - page < halfWay) {
-        return pages.map((_, index) => pagesCount - index).reverse();
+        return pages.map((_, index) => pagesCount - index).reverse()
       } else {
-        return pages.map((_, index) => page - halfWay + index);
+        return pages.map((_, index) => page - halfWay + index)
       }
-    }, [page, pageLinks, paginationState]);
+    }, [page, pageLinks, paginationState])
 
     const navigation = useMemo(
       () => ({
@@ -61,8 +61,8 @@ export const ListPagination = memo(
         last: () => setPage(paginationState.pagesCount),
         setPage: (newPage: number) => setPage(newPage),
       }),
-      [setPage, page, paginationState.pagesCount]
-    );
+      [setPage, page, paginationState.pagesCount],
+    )
 
     const scope = useMemo(
       (): PaginationScope => ({
@@ -73,21 +73,21 @@ export const ListPagination = memo(
         pagesToDisplay,
         ...navigation,
       }),
-      [page, perPage, count, paginationState, pagesToDisplay, navigation]
-    );
+      [page, perPage, count, paginationState, pagesToDisplay, navigation],
+    )
 
-    if (initialLoading) return null;
+    if (initialLoading) return null
 
     if (!data || data.length === 0) {
-      return null;
+      return null
     }
 
     if (error) {
-      return null;
+      return null
     }
 
     if (children) {
-      return children(scope);
+      return children(scope)
     }
 
     return (
@@ -95,11 +95,7 @@ export const ListPagination = memo(
         {renderFirst ? (
           renderFirst(scope)
         ) : (
-          <button
-            type="button"
-            disabled={!paginationState.hasPrev}
-            onClick={navigation.first}
-          >
+          <button type="button" disabled={!paginationState.hasPrev} onClick={navigation.first}>
             First
           </button>
         )}
@@ -107,11 +103,7 @@ export const ListPagination = memo(
         {renderPrev ? (
           renderPrev(scope)
         ) : (
-          <button
-            type="button"
-            disabled={!paginationState.hasPrev}
-            onClick={navigation.prev}
-          >
+          <button type="button" disabled={!paginationState.hasPrev} onClick={navigation.prev}>
             Prev
           </button>
         )}
@@ -121,8 +113,8 @@ export const ListPagination = memo(
         ) : (
           <div>
             {pagesToDisplay.map((pageNum) => {
-              const isActive = pageNum === page;
-              const pageScope: RenderPageArgs = { ...scope, page: pageNum, isActive };
+              const isActive = pageNum === page
+              const pageScope: RenderPageArgs = { ...scope, page: pageNum, isActive }
 
               return renderPage ? (
                 renderPage(pageScope)
@@ -131,15 +123,12 @@ export const ListPagination = memo(
                   {isActive ? (
                     <span>{pageNum}</span>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => navigation.setPage(pageNum)}
-                    >
+                    <button type="button" onClick={() => navigation.setPage(pageNum)}>
                       {pageNum}
                     </button>
                   )}
                 </div>
-              );
+              )
             })}
           </div>
         )}
@@ -147,11 +136,7 @@ export const ListPagination = memo(
         {renderNext ? (
           renderNext(scope)
         ) : (
-          <button
-            type="button"
-            disabled={!paginationState.hasNext}
-            onClick={navigation.next}
-          >
+          <button type="button" disabled={!paginationState.hasNext} onClick={navigation.next}>
             Next
           </button>
         )}
@@ -159,15 +144,11 @@ export const ListPagination = memo(
         {renderLast ? (
           renderLast(scope)
         ) : (
-          <button
-            type="button"
-            disabled={!paginationState.hasNext}
-            onClick={navigation.last}
-          >
+          <button type="button" disabled={!paginationState.hasNext} onClick={navigation.last}>
             Last
           </button>
         )}
       </div>
-    );
-  }
-);
+    )
+  },
+)

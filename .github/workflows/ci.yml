@@ -48,6 +48,72 @@ jobs:
             packages/vue/dist
           key: packages-${{ github.sha }}
 
+  # ─── Typecheck ───────────────────────────────────────────────────────────────
+  typecheck:
+    name: Typecheck
+    needs: build-packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore built packages
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            packages/types/dist
+            packages/react/dist
+            packages/vue/dist
+          key: packages-${{ github.sha }}
+
+      - name: Typecheck packages
+        run: pnpm typecheck
+
+  # ─── Lint ────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    needs: build-packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore built packages
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            packages/types/dist
+            packages/react/dist
+            packages/vue/dist
+          key: packages-${{ github.sha }}
+
+      - name: Lint packages
+        run: pnpm --filter @shilp.dev/react-list lint && pnpm --filter @shilp.dev/vue-list lint
+
   # ─── React Storybook tests ───────────────────────────────────────────────────
   test-react-story:
     name: Test · React Storybook
@@ -123,7 +189,7 @@ jobs:
   # ─── Full build gate ─────────────────────────────────────────────────────────
   build-all:
     name: Build all apps
-    needs: [test-react-story, test-vue-story]
+    needs: [build-packages, typecheck, lint, test-react-story, test-vue-story]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -150,5 +216,14 @@ jobs:
             packages/vue/dist
           key: packages-${{ github.sha }}
 
-      - name: Build all apps
-        run: pnpm build
+      - name: Build React playground
+        run: pnpm build:react:playground
+
+      - name: Build Vue playground
+        run: pnpm build:vue:playground
+
+      - name: Build React Storybook
+        run: pnpm build:react:story
+
+      - name: Build Vue Storybook
+        run: pnpm build:vue:story

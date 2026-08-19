@@ -267,6 +267,9 @@ importers:
         specifier: ^18.2.0 || ^19.0.0
         version: 19.2.8(react@19.2.8)
     devDependencies:
+      '@eslint/js':
+        specifier: ^9.39.5
+        version: 9.39.5
       '@shilp.dev/list-types':
         specifier: workspace:*
         version: link:../types
@@ -276,9 +279,21 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.3.4
         version: 4.7.0(vite@6.4.3(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0))
+      '@vue/eslint-config-prettier':
+        specifier: ^10.2.0
+        version: 10.2.0(eslint@9.39.5(jiti@2.7.0))(prettier@3.5.3)
+      eslint:
+        specifier: ^9.39.5
+        version: 9.39.5(jiti@2.7.0)
+      prettier:
+        specifier: 3.5.3
+        version: 3.5.3
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.67.0
+        version: 8.67.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.8.3)
       vite:
         specifier: ^6.3.1
         version: 6.4.3(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0)
@@ -328,6 +343,9 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.67.0
+        version: 8.67.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.8.3)
       vite:
         specifier: ^6.2.4
         version: 6.4.3(@types/node@24.13.3)(jiti@2.7.0)(lightningcss@1.33.0)
@@ -340,6 +358,9 @@ importers:
       vue:
         specifier: ^3.5.13
         version: 3.5.41(typescript@5.8.3)
+      vue-tsc:
+        specifier: ^3.3.10
+        version: 3.3.10(typescript@5.8.3)
 
 packages:
 
@@ -8698,6 +8719,12 @@ snapshots:
     dependencies:
       '@volar/typescript': 2.4.15
       '@vue/language-core': 2.2.12(typescript@5.8.3)
+      typescript: 5.8.3
+
+  vue-tsc@3.3.10(typescript@5.8.3):
+    dependencies:
+      '@volar/typescript': 2.4.28
+      '@vue/language-core': 3.3.10
       typescript: 5.8.3
 
   vue-tsc@3.3.10(typescript@6.0.3):

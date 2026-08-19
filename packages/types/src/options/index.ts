@@ -12,8 +12,6 @@ export interface ListLifecycleCallbacks<T = unknown> {
 
 /** Root list configuration shared by React and Vue implementations. */
 export interface ListOptions<T = unknown> extends ListLifecycleCallbacks<T> {
-  /** Preloaded items to skip the initial fetch. */
-  initialItems?: T[];
   /** Unique identifier for the data source (API route or key). */
   endpoint: string;
   page?: number;

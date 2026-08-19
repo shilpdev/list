@@ -46,8 +46,10 @@ function handleInput(value: string) {
   debouncedSetSearch(value)
 }
 
-const scope = computed((): SearchScope => ({
-  search: localSearch.value,
-  setSearch: handleInput,
-}))
+const scope = computed(
+  (): SearchScope => ({
+    search: localSearch.value,
+    setSearch: handleInput,
+  }),
+)
 </script>

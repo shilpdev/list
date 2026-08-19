@@ -3,7 +3,8 @@
     <slot v-bind="scope">
       <span>
         Showing <span>{{ scope.visibleCount }}</span> items (
-        <span>{{ scope.from }} - {{ scope.to }}</span>) out of
+        <span>{{ scope.from }} - {{ scope.to }}</span
+        >) out of
         <span>{{ scope.count }}</span>
       </span>
     </slot>

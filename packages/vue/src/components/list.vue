@@ -36,7 +36,6 @@ const props = withDefaults(defineProps<VueListComponentProps>(), {
   version: 1,
   paginationMode: 'pagination',
   meta: () => ({}),
-  initialItems: () => [],
 })
 
 const emit = defineEmits<VueListEmits>()
@@ -59,8 +58,7 @@ const localSortOrder = ref<SortOrder>(props.sortOrder)
 const localSearch = ref<string>(props.search ?? '')
 const attrSettings = ref<AttrSettings>()
 
-const toError = (err: unknown): Error =>
-  err instanceof Error ? err : new Error(String(err))
+const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
 
 const buildContext = (): StateManagerContext => ({
   endpoint: props.endpoint,
@@ -105,11 +103,10 @@ const error = ref<Error | null>(null)
 const response = ref<ListResponse | null>(null)
 const count = ref(0)
 const isLoading = ref(false)
-const initializingState = ref(!props.initialItems.length)
+const initializingState = ref(true)
 
 const serializedAttrs = computed(() => {
-  const attrs =
-    props.attrs || Object.keys((items.value[0] as Record<string, unknown>) || {})
+  const attrs = props.attrs || Object.keys((items.value[0] as Record<string, unknown>) || {})
   return attrSerializer(attrs)
 })
 
@@ -320,13 +317,7 @@ if (!attrSettings.value) {
 
 stateManager?.init?.(buildContext())
 
-if (props.initialItems.length) {
-  items.value = [...props.initialItems]
-  count.value = props.count ?? props.initialItems.length
-  initializingState.value = false
-} else {
-  setPage(localPage.value)
-}
+setPage(localPage.value)
 
 defineExpose({
   items,

@@ -1,17 +1,17 @@
-import { memo, type ReactNode } from "react";
-import { useListContext } from "../context/list-context";
+import { memo, type ReactNode } from 'react'
+import { useListContext } from '../context/list-context'
 
 type ListEmptyProps = {
-  children?: ReactNode;
-};
+  children?: ReactNode
+}
 
 export const ListEmpty = memo(({ children }: ListEmptyProps) => {
-  const { listState } = useListContext();
-  const { data: items, loader, error } = listState;
-  const { isLoading, initialLoading } = loader;
+  const { listState } = useListContext()
+  const { data: items, loader, error } = listState
+  const { isLoading, initialLoading } = loader
 
   if (items?.length > 0 || initialLoading || isLoading || error) {
-    return null;
+    return null
   }
 
   return (
@@ -22,5 +22,5 @@ export const ListEmpty = memo(({ children }: ListEmptyProps) => {
         </div>
       )}
     </div>
-  );
-});
+  )
+})
