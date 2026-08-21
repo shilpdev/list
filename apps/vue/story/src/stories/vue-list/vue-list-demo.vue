@@ -1,11 +1,12 @@
 <template>
   <div class="vue-list-demo">
     <VueList
+      :key="listKey"
       :endpoint="endpoint"
       :page="page"
       :per-page="perPage"
       :pagination-mode="paginationMode"
-      :request-handler="requestHandler"
+      :request-handler="handler"
       :count="count"
       :sync-page-to-url="false"
       v-model:filters="filters"
@@ -98,7 +99,7 @@
           <span>{{ from }} - {{ to }} of {{ total }}</span>
         </ListSummary>
 
-        <ListPerPage v-slot="{ perPage: currentPerPage, setPerPage, options }">
+        <ListPerPage :options="perPageOptions" v-slot="{ perPage: currentPerPage, setPerPage, options }">
           <label class="vue-list-demo__filter">
             Per page
             <select
@@ -153,8 +154,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { ListSort, RequestHandler } from '@shilp.dev/list-types'
+import { computed, ref, watch } from 'vue'
+import type { ListSort } from '@shilp.dev/list-types'
 import {
   ListEmpty,
   ListError,
@@ -169,19 +170,29 @@ import {
   ListSummary,
   VueList,
 } from '@shilp.dev/vue-list'
+import {
+  createRequestHandler,
+  type CreateRequestHandlerOptions,
+} from '@/api/request-handler'
 import { formatSkillDate, type Skill } from '@/types/skill'
+
+const PER_PAGE_OPTIONS = [8, 10, 15, 25, 50, 100]
 
 defineOptions({
   name: 'vue-list-demo',
 })
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     endpoint?: string
     page?: number
     perPage?: number
     paginationMode?: 'pagination' | 'loadMore'
-    requestHandler: RequestHandler<Skill>
+    /**
+     * Serializable options for the demo request handler.
+     * Sample JSON: `{ "forceEmpty": false, "shouldFail": false }`
+     */
+    requestHandler?: CreateRequestHandlerOptions
     count?: number
   }>(),
   {
@@ -189,10 +200,37 @@ withDefaults(
     page: 1,
     perPage: 10,
     paginationMode: 'pagination',
+    requestHandler: () => ({ forceEmpty: false, shouldFail: false }),
   },
 )
 
 const filters = ref<Record<string, string | undefined>>({})
+
+const listKey = computed(() =>
+  [
+    props.endpoint,
+    props.page,
+    props.perPage,
+    props.paginationMode,
+    props.count,
+    props.requestHandler?.forceEmpty,
+    props.requestHandler?.shouldFail,
+  ].join(':'),
+)
+
+const handler = computed(() => createRequestHandler(props.requestHandler ?? {}))
+
+const perPageOptions = computed(() => {
+  if (PER_PAGE_OPTIONS.includes(props.perPage)) {
+    return PER_PAGE_OPTIONS
+  }
+
+  return [...PER_PAGE_OPTIONS, props.perPage].sort((a, b) => a - b)
+})
+
+watch(listKey, () => {
+  filters.value = {}
+})
 
 function onStatusChange(value: string) {
   filters.value = {

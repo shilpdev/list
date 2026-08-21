@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import ReactList, {
   ListEmpty,
   ListError,
@@ -12,16 +12,26 @@ import ReactList, {
   ListSearch,
   ListSummary,
 } from '@shilp.dev/react-list'
-import type { ListSort, RequestHandler } from '@shilp.dev/list-types'
+import type { ListSort } from '@shilp.dev/list-types'
+import {
+  createRequestHandler,
+  type CreateRequestHandlerOptions,
+} from '@/api/request-handler'
 import { formatSkillDate, type Skill } from '@/types/skill'
 import './react-list-demo.css'
+
+const PER_PAGE_OPTIONS = [8, 10, 15, 25, 50, 100]
 
 export interface ReactListDemoProps {
   endpoint?: string
   page?: number
   perPage?: number
   paginationMode?: 'pagination' | 'loadMore'
-  requestHandler: RequestHandler<Skill>
+  /**
+   * Serializable options for the demo request handler.
+   * Sample JSON: `{ "forceEmpty": false, "shouldFail": false }`
+   */
+  requestHandler?: CreateRequestHandlerOptions
   count?: number
 }
 
@@ -35,7 +45,21 @@ function toggleSort(
   setSort({ by, order })
 }
 
-export function ReactListDemo({
+export function ReactListDemo(props: ReactListDemoProps) {
+  const listKey = [
+    props.endpoint,
+    props.page,
+    props.perPage,
+    props.paginationMode,
+    props.count,
+    props.requestHandler?.forceEmpty,
+    props.requestHandler?.shouldFail,
+  ].join(':')
+
+  return <ReactListDemoInner key={listKey} {...props} />
+}
+
+function ReactListDemoInner({
   endpoint = 'skills',
   page = 1,
   perPage = 10,
@@ -44,6 +68,17 @@ export function ReactListDemo({
   count,
 }: ReactListDemoProps) {
   const [filters, setFilters] = useState<Record<string, string | undefined>>({})
+  const handler = useMemo(
+    () => createRequestHandler(requestHandler ?? {}),
+    [requestHandler],
+  )
+  const perPageOptions = useMemo(() => {
+    if (PER_PAGE_OPTIONS.includes(perPage)) {
+      return PER_PAGE_OPTIONS
+    }
+
+    return [...PER_PAGE_OPTIONS, perPage].sort((a, b) => a - b)
+  }, [perPage])
 
   function onStatusChange(value: string) {
     setFilters((current) => ({
@@ -59,7 +94,7 @@ export function ReactListDemo({
         page={page}
         perPage={perPage}
         paginationMode={paginationMode}
-        requestHandler={requestHandler}
+        requestHandler={handler}
         count={count}
         filters={filters}
       >
@@ -174,7 +209,7 @@ export function ReactListDemo({
             )}
           </ListSummary>
 
-          <ListPerPage>
+          <ListPerPage options={perPageOptions}>
             {({ perPage: currentPerPage, setPerPage, options }) => (
               <label className="react-list-demo__filter">
                 Per page
