@@ -16,7 +16,7 @@ const config: StorybookConfig = {
   framework: '@storybook/react-vite',
   async viteFinal(config) {
     return mergeConfig(config, {
-      base: '/open-source/react-list-story/',
+      base: '/react-list-story/',
       resolve: {
         alias: {
           '@': path.resolve(dirname, '../src'),
