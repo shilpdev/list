@@ -1,16 +1,57 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { expect, waitFor, within } from '@storybook/test'
-import { createRequestHandler } from '@/api/request-handler'
 import VueListDemo from './vue-list-demo.vue'
+
+/**
+ * Sample JSON for the `requestHandler` control:
+ * `{ "forceEmpty": false, "shouldFail": false }`
+ *
+ * - `forceEmpty: true` returns an empty list
+ * - `shouldFail: true` throws and shows the error state
+ */
+const sampleRequestHandler = {
+  forceEmpty: false,
+  shouldFail: false,
+}
 
 const meta = {
   title: 'Vue List/List',
   component: VueListDemo,
   tags: ['autodocs'],
+  args: {
+    endpoint: 'skills',
+    page: 1,
+    perPage: 10,
+    paginationMode: 'pagination',
+    requestHandler: sampleRequestHandler,
+  },
   argTypes: {
+    endpoint: {
+      control: 'text',
+      description: 'API collection to fetch.',
+    },
+    page: {
+      control: { type: 'number', min: 1 },
+      description: 'Initial page. Changing this remounts the list.',
+    },
+    perPage: {
+      control: 'select',
+      options: [8, 10, 15, 25, 50, 100],
+      description: 'Items fetched per page.',
+    },
     paginationMode: {
       control: 'select',
       options: ['pagination', 'loadMore'],
+      description: 'Switch between numbered pages and load-more.',
+    },
+    count: {
+      control: { type: 'number', min: 0 },
+      description: 'Initial count shown before the first response.',
+    },
+    requestHandler: {
+      control: 'object',
+      description:
+        'Demo request-handler options (JSON). Sample: `{ "forceEmpty": false, "shouldFail": false }`.',
     },
   },
 } satisfies Meta<typeof VueListDemo>
@@ -19,13 +60,6 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  args: {
-    endpoint: 'skills',
-    page: 1,
-    perPage: 10,
-    paginationMode: 'pagination',
-    requestHandler: createRequestHandler({ forceEmpty: false }),
-  },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
 
@@ -59,11 +93,8 @@ export const Default: Story = {
 
 export const LoadMore: Story = {
   args: {
-    endpoint: 'skills',
-    page: 1,
     perPage: 8,
     paginationMode: 'loadMore',
-    requestHandler: createRequestHandler({ forceEmpty: false }),
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
@@ -82,11 +113,7 @@ export const LoadMore: Story = {
 
 export const Empty: Story = {
   args: {
-    endpoint: 'skills',
-    page: 1,
-    perPage: 10,
-    paginationMode: 'pagination',
-    requestHandler: createRequestHandler({ forceEmpty: true }),
+    requestHandler: { forceEmpty: true, shouldFail: false },
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)
@@ -102,11 +129,7 @@ export const Empty: Story = {
 
 export const ErrorState: Story = {
   args: {
-    endpoint: 'skills',
-    page: 1,
-    perPage: 10,
-    paginationMode: 'pagination',
-    requestHandler: createRequestHandler({ shouldFail: true }),
+    requestHandler: { forceEmpty: false, shouldFail: true },
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement)

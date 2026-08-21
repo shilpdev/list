@@ -16,6 +16,7 @@ const config: StorybookConfig = {
   framework: '@storybook/vue3-vite',
   async viteFinal(config) {
     return mergeConfig(config, {
+      base: '/vue-list-story/',
       resolve: {
         alias: {
           '@': path.resolve(dirname, '../src'),
