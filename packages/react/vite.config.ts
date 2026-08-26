@@ -29,7 +29,7 @@ export default defineConfig({
     lib: {
       entry: "src/index.ts",
       name: "ReactList",
-      fileName: "react-list",
+      fileName: "index",
       formats: ["es", "cjs"],
     },
   },

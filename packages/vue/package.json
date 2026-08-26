@@ -12,18 +12,14 @@
     "format": "prettier --write src/",
     "prepublishOnly": "npm run build"
   },
-  "main": "dist/vue-list.js",
-  "types": "dist/vue-list.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/vue-list.d.ts",
-        "default": "./dist/vue-list.js"
-      },
-      "require": {
-        "types": "./dist/vue-list.d.ts",
-        "default": "./dist/vue-list.umd.cjs"
-      }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [

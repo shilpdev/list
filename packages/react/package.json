@@ -13,19 +13,14 @@
     "preview": "vite preview",
     "prepublishOnly": "npm run build"
   },
-  "main": "dist/react-list.js",
-  "module": "dist/react-list.js",
-  "types": "dist/react-list.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/react-list.d.ts",
-        "default": "./dist/react-list.js"
-      },
-      "require": {
-        "types": "./dist/react-list.d.ts",
-        "default": "./dist/react-list.cjs"
-      }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [

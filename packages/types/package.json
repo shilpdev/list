@@ -34,9 +34,6 @@
     },
     "./options": {
       "types": "./dist/options/index.d.ts"
-    },
-    "./vue": {
-      "types": "./dist/vue/index.d.ts"
     }
   },
   "files": [
