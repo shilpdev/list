@@ -9,9 +9,9 @@
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "../..",
     "skipLibCheck": true,
     "isolatedModules": true
   },
-  "include": ["src"]
+  "include": ["src", "../../shared"]
 }

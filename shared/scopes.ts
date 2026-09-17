@@ -1,5 +1,5 @@
-import type { ListAttribute, AttrSettings, UpdateAttrFn } from '../attributes';
-import type { ListState, ListSort, SerializedListItem } from '../state';
+import type { ListAttribute, AttrSettings, UpdateAttrFn } from './attributes';
+import type { ListState, ListSort, SerializedListItem } from './state';
 
 /** Scope for items list slot. */
 export interface ItemsScope<T = unknown> {

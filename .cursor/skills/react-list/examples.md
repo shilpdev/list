@@ -14,7 +14,7 @@ import ReactList, {
   ListSearch,
   ListSummary,
 } from '@shilp.dev/react-list'
-import type { RequestHandler } from '@shilp.dev/list-types'
+import type { RequestHandler } from '@shilp.dev/react-list'
 
 type Skill = { id: number; name: string; status: string }
 
@@ -48,12 +48,7 @@ export function SkillList() {
   const [filters, setFilters] = useState<Record<string, string | undefined>>({})
 
   return (
-    <ReactList
-      endpoint="skills"
-      perPage={10}
-      requestHandler={requestHandler}
-      filters={filters}
-    >
+    <ReactList endpoint="skills" perPage={10} requestHandler={requestHandler} filters={filters}>
       <ListSearch>
         {({ search, setSearch }) => (
           <input
@@ -85,9 +80,7 @@ export function SkillList() {
         <p>No skills found.</p>
       </ListEmpty>
 
-      <ListError>
-        {({ error }) => <p>{error.message}</p>}
-      </ListError>
+      <ListError>{({ error }) => <p>{error.message}</p>}</ListError>
 
       <ListItems>
         {({ items, sort, setSort }) => (
@@ -104,7 +97,8 @@ export function SkillList() {
                       onClick={() =>
                         setSort({
                           by: 'name',
-                          order: sort.sortBy === 'name' && sort.sortOrder === 'asc' ? 'desc' : 'asc',
+                          order:
+                            sort.sortBy === 'name' && sort.sortOrder === 'asc' ? 'desc' : 'asc',
                         })
                       }
                     >
@@ -160,11 +154,7 @@ export function SkillList() {
 ## Load more
 
 ```tsx
-<ReactList
-  endpoint="skills"
-  paginationMode="loadMore"
-  requestHandler={requestHandler}
->
+<ReactList endpoint="skills" paginationMode="loadMore" requestHandler={requestHandler}>
   <ListItems>{({ items }) => /* ... */ null}</ListItems>
   <ListLoadMore>
     {({ loadMore, hasMoreItems, isLoading }) => (
@@ -199,7 +189,7 @@ function SkillRow({ item }: { item: Skill }) {
   )
 }
 
-<ListItems renderItem={({ item }) => <SkillRow item={item} />} />
+;<ListItems renderItem={({ item }) => <SkillRow item={item} />} />
 ```
 
 ## Persist UI state

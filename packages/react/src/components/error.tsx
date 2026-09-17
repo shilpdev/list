@@ -1,5 +1,5 @@
 import { memo, type ReactNode } from 'react'
-import type { ErrorScope } from '@shilp.dev/list-types'
+import type { ErrorScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListErrorProps = {

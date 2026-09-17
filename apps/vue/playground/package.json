@@ -12,7 +12,6 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@shilp.dev/list-types": "workspace:*",
     "@shilp.dev/vue-list": "workspace:*",
     "@nuxt/ui": "^3.0.2",
     "@tailwindcss/vite": "^4.1.3",

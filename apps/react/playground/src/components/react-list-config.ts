@@ -4,7 +4,7 @@ import type {
   SavedListState,
   SortOrder,
   StateManagerContext,
-} from '@shilp.dev/list-types';
+} from '@shilp.dev/react-list';
 
 import requestHandler from '../api/request-handler';
 import type { Skill } from '../types/skill';

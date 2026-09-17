@@ -12,7 +12,7 @@ import ReactList, {
   ListSearch,
   ListSummary,
 } from '@shilp.dev/react-list'
-import type { ListSort } from '@shilp.dev/list-types'
+import type { ListSort } from '@shilp.dev/react-list'
 import {
   createRequestHandler,
   type CreateRequestHandlerOptions,

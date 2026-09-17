@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "pnpm --filter @shilp.dev/list-types build",
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
@@ -29,20 +28,13 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@shilp.dev/list-types": "^1.0.0",
     "vue": "^3.5.0"
-  },
-  "peerDependenciesMeta": {
-    "@shilp.dev/list-types": {
-      "optional": true
-    }
   },
   "dependencies": {
     "lodash-es": "^4.18.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
-    "@shilp.dev/list-types": "workspace:*",
     "@types/lodash-es": "^4.17.12",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/eslint-config-prettier": "^10.2.0",

@@ -6,18 +6,13 @@ export default defineConfig({
   plugins: [
     react(),
     dts({
-      include: ["src"],
+      include: ["src", "../../shared"],
       rollupTypes: true,
     }),
   ],
   build: {
     rollupOptions: {
-      external: [
-        "react",
-        "react-dom",
-        "react/jsx-runtime",
-        "@shilp.dev/list-types",
-      ],
+      external: ["react", "react-dom", "react/jsx-runtime"],
       output: {
         globals: {
           react: "React",

@@ -14,5 +14,5 @@ export { default as ListRefresh } from './components/refresh.vue'
 export { default as ListEmpty } from './components/empty.vue'
 
 export type { VueListEmits, VueListProps } from './types'
-export type * from '@shilp.dev/list-types'
+export type * from '../../../shared'
 export { useListContext, LIST_CONTEXT_KEY } from './composables/use-list-context'

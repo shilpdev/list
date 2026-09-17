@@ -1,4 +1,4 @@
-import type { Filters } from '@shilp.dev/list-types';
+import type { Filters } from '@shilp.dev/react-list';
 
 export interface Skill {
   id: string | number;

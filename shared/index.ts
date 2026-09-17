@@ -1,3 +1,6 @@
+/**
+ * Shared TypeScript types for @shilp.dev/react-list and @shilp.dev/vue-list.
+ */
 export type * from './core';
 export type * from './context';
 export type * from './config';

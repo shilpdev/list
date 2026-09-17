@@ -36,14 +36,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build types + list packages
+      - name: Build list packages
         run: pnpm build:packages
 
       - name: Cache built packages
         uses: actions/cache/save@v4
         with:
           path: |
-            packages/types/dist
             packages/react/dist
             packages/vue/dist
           key: packages-${{ github.sha }}
@@ -73,7 +72,6 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            packages/types/dist
             packages/react/dist
             packages/vue/dist
           key: packages-${{ github.sha }}
@@ -106,7 +104,6 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            packages/types/dist
             packages/react/dist
             packages/vue/dist
           key: packages-${{ github.sha }}
@@ -139,7 +136,6 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            packages/types/dist
             packages/react/dist
             packages/vue/dist
           key: packages-${{ github.sha }}
@@ -175,7 +171,6 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            packages/types/dist
             packages/react/dist
             packages/vue/dist
           key: packages-${{ github.sha }}
@@ -211,7 +206,6 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            packages/types/dist
             packages/react/dist
             packages/vue/dist
           key: packages-${{ github.sha }}

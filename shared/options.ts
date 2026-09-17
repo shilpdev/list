@@ -1,7 +1,7 @@
-import type { Filters, MetaRecord, PaginationMode, SortOrder } from '../core';
-import type { ListResponse } from '../response';
-import type { ListAttribute } from '../attributes';
-import type { PaginationScope } from '../scopes';
+import type { Filters, MetaRecord, PaginationMode, SortOrder } from './core';
+import type { ListResponse } from './response';
+import type { ListAttribute } from './attributes';
+import type { PaginationScope } from './scopes';
 
 /** Lifecycle hooks shared by React props and Vue emits. */
 export interface ListLifecycleCallbacks<T = unknown> {

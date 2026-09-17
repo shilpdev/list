@@ -19,7 +19,7 @@ import type {
   SerializedListItem,
   SortOrder,
   SummaryScope,
-} from "@shilp.dev/list-types";
+} from "@shilp.dev/react-list";
 import { Icon } from "@iconify/react";
 import { useState } from "react";
 

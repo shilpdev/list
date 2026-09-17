@@ -1,4 +1,4 @@
-import type { ListResponse, RequestHandler } from '@shilp.dev/list-types'
+import type { ListResponse, RequestHandler } from '@shilp.dev/vue-list'
 import type { Skill } from '../types/skill'
 
 const EVEREST_ITEMS_BASE_URL = 'https://everest.7span.in/items'

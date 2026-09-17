@@ -1,5 +1,5 @@
 import { memo, useMemo, type ReactNode } from 'react'
-import type { ItemsScope, RenderItemArgs } from '@shilp.dev/list-types'
+import type { ItemsScope, RenderItemArgs } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListItemsProps<T = unknown> = {

@@ -1,5 +1,5 @@
-import type { MetaRecord } from '../core';
-import type { RequestContext } from '../context';
+import type { MetaRecord } from './core';
+import type { RequestContext } from './context';
 
 /** Standard shape returned by `requestHandler`. */
 export interface ListResponse<T = unknown> {
