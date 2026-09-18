@@ -9,7 +9,8 @@ import ReactList, {
   ListPerPage,
   ListSearch,
   ListSummary,
-} from "@shilp.dev/react-list";
+  useListContext,
+} from '@shilp.dev/react-list'
 import type {
   ErrorScope,
   GoToScope,
@@ -19,35 +20,56 @@ import type {
   SerializedListItem,
   SortOrder,
   SummaryScope,
-} from "@shilp.dev/list-types";
-import { Icon } from "@iconify/react";
-import { useState } from "react";
+} from '@shilp.dev/react-list'
+import { Icon } from '@iconify/react'
+import { useState } from 'react'
 
-import type { Skill, SkillFilters } from "../types/skill";
-import reactListConfig, { getStateFromSearchParams } from "./react-list-config";
+import type { Skill, SkillFilters } from '../types/skill'
+import reactListConfig, { getStateFromSearchParams } from './react-list-config'
 
-function nextSortOrder(current: SortOrder): "asc" | "desc" | "" {
-  if (current === "") return "asc";
-  if (current === "asc") return "desc";
-  return "";
+function nextSortOrder(current: SortOrder): 'asc' | 'desc' | '' {
+  if (current === '') return 'asc'
+  if (current === 'asc') return 'desc'
+  return ''
+}
+
+function PatchRowButton({ id }: { id: Skill['id'] }) {
+  const { listState } = useListContext<Skill>()
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        listState.updateItemById(
+          {
+            name: `Patched ${new Date().toLocaleTimeString()}`,
+            date_updated: new Date().toISOString(),
+          },
+          id,
+        )
+      }
+      className="rounded border border-primary-600 bg-primary-500 px-2 py-1 text-xs font-medium text-white transition hover:bg-primary-600"
+    >
+      Patch
+    </button>
+  )
 }
 
 const ListWrapper = () => {
   const [filters, setFilters] = useState<SkillFilters>(
     () => getStateFromSearchParams()?.filters ?? {},
-  );
+  )
 
   return (
     <div className="w-full max-w-350 rounded-xl bg-white p-8 text-slate-800 shadow-lg">
-      <h2 className="mb-6 text-3xl font-bold text-slate-700">
-        React List Playground (TypeScript)
-      </h2>
+      <h2 className="mb-6 text-3xl font-bold text-slate-700">React List Playground (TypeScript)</h2>
 
       <ReactList
         endpoint="skills"
         search=""
         page={1}
         perPage={10}
+        idKey="id"
         filters={filters}
         paginationMode="pagination"
         requestHandler={reactListConfig.requestHandler}
@@ -73,18 +95,16 @@ const ListWrapper = () => {
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative flex items-center gap-2">
-                <label className="whitespace-nowrap text-sm text-slate-500">
-                  Status:
-                </label>
+                <label className="whitespace-nowrap text-sm text-slate-500">Status:</label>
                 <select
                   className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                  value={filters.status ?? "all"}
+                  value={filters.status ?? 'all'}
                   onChange={(e) => {
-                    const value = e.target.value;
+                    const value = e.target.value
                     setFilters((prev) => ({
                       ...prev,
-                      status: value === "all" ? undefined : value,
-                    }));
+                      status: value === 'all' ? undefined : value,
+                    }))
                   }}
                 >
                   <option value="all">All Status</option>
@@ -98,18 +118,16 @@ const ListWrapper = () => {
               </div>
 
               <div className="relative flex items-center gap-2">
-                <label className="whitespace-nowrap text-sm text-slate-500">
-                  Color:
-                </label>
+                <label className="whitespace-nowrap text-sm text-slate-500">Color:</label>
                 <select
                   className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                  value={filters.color ?? "all"}
+                  value={filters.color ?? 'all'}
                   onChange={(e) => {
-                    const value = e.target.value;
+                    const value = e.target.value
                     setFilters((prev) => ({
                       ...prev,
-                      color: value === "all" ? undefined : value,
-                    }));
+                      color: value === 'all' ? undefined : value,
+                    }))
                   }}
                 >
                   <option value="all">All Colors</option>
@@ -157,20 +175,14 @@ const ListWrapper = () => {
               <div className="relative mb-8">
                 <div className="absolute inset-0 animate-pulse rounded-full bg-slate-50 opacity-30" />
                 <div className="relative rounded-full bg-linear-to-br from-slate-50 to-slate-100 p-8 shadow-inner">
-                  <Icon
-                    icon="mdi:file-search-outline"
-                    className="h-16 w-16 text-accent-400"
-                  />
+                  <Icon icon="mdi:file-search-outline" className="h-16 w-16 text-accent-400" />
                 </div>
               </div>
 
-              <h3 className="mb-3 text-2xl font-medium text-slate-800">
-                No Data Found
-              </h3>
+              <h3 className="mb-3 text-2xl font-medium text-slate-800">No Data Found</h3>
 
               <p className="mb-6 max-w-md text-center leading-relaxed text-slate-500">
-                We couldn&apos;t find any matching records. Try adjusting your
-                search or filters.
+                We couldn&apos;t find any matching records. Try adjusting your search or filters.
               </p>
 
               <button
@@ -187,17 +199,11 @@ const ListWrapper = () => {
             {({ error }: ErrorScope) => (
               <div className="flex flex-col items-center justify-center px-4 py-16">
                 <div className="mb-4 rounded-full bg-red-100 p-6">
-                  <Icon
-                    icon="mdi:alert-circle-outline"
-                    className="h-12 w-12 text-red-500"
-                  />
+                  <Icon icon="mdi:alert-circle-outline" className="h-12 w-12 text-red-500" />
                 </div>
-                <h3 className="mb-2 text-xl font-medium text-slate-800">
-                  Something went wrong
-                </h3>
+                <h3 className="mb-2 text-xl font-medium text-slate-800">Something went wrong</h3>
                 <p className="mb-4 max-w-md text-center text-slate-500">
-                  {error.message ||
-                    "An unexpected error occurred while fetching data."}
+                  {error.message || 'An unexpected error occurred while fetching data.'}
                 </p>
                 <div className="mb-6 w-full max-w-md rounded-md bg-slate-50 p-4">
                   <p className="wrap-break-word font-mono text-sm text-slate-600">
@@ -240,20 +246,20 @@ const ListWrapper = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                const sorting = nextSortOrder(sort.sortOrder);
+                                const sorting = nextSortOrder(sort.sortOrder)
                                 setSort({
-                                  by: "name",
-                                  order: sorting as "asc" | "desc",
-                                });
+                                  by: 'name',
+                                  order: sorting as 'asc' | 'desc',
+                                })
                               }}
                             >
                               <Icon
                                 icon={
-                                  sort.sortOrder === ""
-                                    ? "mi:sort"
-                                    : sort.sortOrder === "asc"
-                                      ? "lucide:sort-asc"
-                                      : "lucide:sort-desc"
+                                  sort.sortOrder === ''
+                                    ? 'mi:sort'
+                                    : sort.sortOrder === 'asc'
+                                      ? 'lucide:sort-asc'
+                                      : 'lucide:sort-desc'
                                 }
                                 className="size-5 cursor-pointer text-white"
                               />
@@ -269,34 +275,35 @@ const ListWrapper = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                const sorting = nextSortOrder(sort.sortOrder);
+                                const sorting = nextSortOrder(sort.sortOrder)
                                 setSort({
-                                  by: "date_updated",
-                                  order: sorting as "asc" | "desc",
-                                });
+                                  by: 'date_updated',
+                                  order: sorting as 'asc' | 'desc',
+                                })
                               }}
                             >
                               <Icon
                                 icon={
-                                  sort.sortOrder === ""
-                                    ? "mi:sort"
-                                    : sort.sortOrder === "asc"
-                                      ? "lucide:sort-asc"
-                                      : "lucide:sort-desc"
+                                  sort.sortOrder === ''
+                                    ? 'mi:sort'
+                                    : sort.sortOrder === 'asc'
+                                      ? 'lucide:sort-asc'
+                                      : 'lucide:sort-desc'
                                 }
                                 className="size-5 cursor-pointer text-white"
                               />
                             </button>
                           </span>
                         </th>
+                        <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
+                          Action
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {(items as SerializedListItem<Skill>[]).map((item) => (
                         <tr key={item.id}>
-                          <td className="border border-slate-200 bg-white px-2 py-2">
-                            {item.id}
-                          </td>
+                          <td className="border border-slate-200 bg-white px-2 py-2">{item.id}</td>
                           <td className="border border-slate-200 bg-white px-2 py-2">
                             {item.name}
                           </td>
@@ -306,12 +313,15 @@ const ListWrapper = () => {
                           <td className="border border-slate-200 bg-white px-2 py-2">
                             {new Date(item.date_updated).toLocaleString()}
                           </td>
+                          <td className="border border-slate-200 bg-white px-2 py-2">
+                            <PatchRowButton id={item.id} />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              );
+              )
             }}
           </ListItems>
 
@@ -338,10 +348,7 @@ const ListWrapper = () => {
                         className="w-20 appearance-none rounded-md border border-slate-300 bg-white py-1.5 pl-3 pr-8 text-sm text-slate-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                       >
                         {options.map((option) => (
-                          <option
-                            key={`page-size-${option.value}`}
-                            value={String(option.value)}
-                          >
+                          <option key={`page-size-${option.value}`} value={String(option.value)}>
                             {option.label}
                           </option>
                         ))}
@@ -407,7 +414,7 @@ const ListWrapper = () => {
 
                   <div className="mx-1 flex items-center gap-1">
                     {pagesToDisplay.map((item, index) => {
-                      const isActive = item === page;
+                      const isActive = item === page
 
                       return (
                         <button
@@ -416,13 +423,13 @@ const ListWrapper = () => {
                           onClick={() => setPage(item)}
                           className={`h-8 min-w-8 rounded-md border px-2 text-sm font-medium transition ${
                             isActive
-                              ? "border-primary-600 bg-primary-500 text-white"
-                              : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                              ? 'border-primary-600 bg-primary-500 text-white'
+                              : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                           }`}
                         >
                           {item}
                         </button>
-                      );
+                      )
                     })}
                   </div>
 
@@ -452,7 +459,7 @@ const ListWrapper = () => {
         </div>
       </ReactList>
     </div>
-  );
-};
+  )
+}
 
-export default ListWrapper;
+export default ListWrapper

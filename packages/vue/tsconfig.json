@@ -18,8 +18,8 @@
     "declarationMap": false,
     "emitDeclarationOnly": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "../.."
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "../../shared/**/*.ts"],
   "exclude": ["dist", "node_modules"]
 }

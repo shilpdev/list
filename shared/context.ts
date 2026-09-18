@@ -1,4 +1,4 @@
-import type { Filters, MetaRecord, SortOrder } from '../core';
+import type { Filters, MetaRecord, SortOrder } from './core';
 
 /** Base fields shared by request and state-manager contexts. */
 export interface BaseListContext {

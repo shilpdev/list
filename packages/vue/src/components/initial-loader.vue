@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { InitialLoaderScope } from '@shilp.dev/list-types'
+import type { InitialLoaderScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

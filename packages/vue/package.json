@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "pnpm --filter @shilp.dev/list-types build",
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
@@ -12,18 +11,14 @@
     "format": "prettier --write src/",
     "prepublishOnly": "npm run build"
   },
-  "main": "dist/vue-list.js",
-  "types": "dist/vue-list.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/vue-list.d.ts",
-        "default": "./dist/vue-list.js"
-      },
-      "require": {
-        "types": "./dist/vue-list.d.ts",
-        "default": "./dist/vue-list.umd.cjs"
-      }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
@@ -33,20 +28,13 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@shilp.dev/list-types": "^1.0.0",
     "vue": "^3.5.0"
-  },
-  "peerDependenciesMeta": {
-    "@shilp.dev/list-types": {
-      "optional": true
-    }
   },
   "dependencies": {
     "lodash-es": "^4.18.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
-    "@shilp.dev/list-types": "workspace:*",
     "@types/lodash-es": "^4.17.12",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/eslint-config-prettier": "^10.2.0",

@@ -1,5 +1,5 @@
 import { memo, useMemo, type ReactNode } from 'react'
-import type { InitialLoaderScope } from '@shilp.dev/list-types'
+import type { InitialLoaderScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListInitialLoaderProps = {

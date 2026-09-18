@@ -1,4 +1,4 @@
-import type { RequestHandler } from '@shilp.dev/list-types'
+import type { RequestHandler } from '@shilp.dev/vue-list'
 import type { Skill } from '@/types/skill'
 
 const requestHandler: RequestHandler<Skill> = async ({

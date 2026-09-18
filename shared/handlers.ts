@@ -1,5 +1,5 @@
-import type { Filters } from '../core';
-import type { RequestContextPatch } from '../context';
+import type { Filters } from './core';
+import type { RequestContextPatch } from './context';
 
 /** Actions exposed on list state for pagination, search, filters, and selection. */
 export interface ListHandlers<T = unknown> {

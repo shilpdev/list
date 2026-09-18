@@ -1,5 +1,5 @@
 import { startCase } from 'lodash-es'
-import type { ListAttribute } from '@shilp.dev/list-types'
+import type { ListAttribute } from '../../../shared'
 
 type AttrInput = string | (ListAttribute & { attrs?: AttrInput[] })
 
@@ -26,4 +26,16 @@ export const attrSerializer = (attrs: AttrInput[]): ListAttribute[] => {
       ...normalized,
     }
   })
+}
+
+export const DEFAULT_ID_KEY = 'id'
+
+export const getItemId = (
+  item: unknown,
+  idKey: string = DEFAULT_ID_KEY,
+): string | number | undefined => {
+  if (item == null || typeof item !== 'object') return undefined
+
+  const value = (item as Record<string, unknown>)[idKey]
+  return typeof value === 'string' || typeof value === 'number' ? value : undefined
 }

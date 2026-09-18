@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   AttrSettings,
+  Filters,
   InternalListState,
   ListAttribute,
   ListOptions,
@@ -10,10 +11,10 @@ import type {
   RequestContextPatch,
   SavedListState,
   StateManagerContext,
-} from '@shilp.dev/list-types'
+} from '../../../../shared'
 import { ListContextProvider } from '../context/list-context'
 import { hasActiveFilters } from './utils'
-import { isEqual } from '../utils'
+import { DEFAULT_ID_KEY, getItemId, isEqual } from '../utils'
 
 type LocalInternalListState<T> = Omit<InternalListState<T>, 'page'> & {
   page: number | string
@@ -22,6 +23,7 @@ type LocalInternalListState<T> = Omit<InternalListState<T>, 'page'> & {
 export type ReactListProps<T = unknown> = ListOptions<T> &
   ListProviderConfig<T> & {
     children?: ReactNode | ((state: ListRenderScope<T>) => ReactNode)
+    onFiltersChange?: (filters: Filters) => void
   }
 
 const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
@@ -49,6 +51,7 @@ function buildDefaultAttrSettings(
 function ReactList<T = unknown>({
   children,
   endpoint,
+  idKey = DEFAULT_ID_KEY,
   page = 1,
   perPage = 25,
   sortBy = '',
@@ -65,12 +68,15 @@ function ReactList<T = unknown>({
   onResponse,
   afterPageChange,
   afterLoadMore,
+  onFiltersChange,
 }: ReactListProps<T>) {
   if (!requestHandler) {
     throw new Error('ReactList: requestHandler is required.')
   }
 
   const initRef = useRef(false)
+  const defaultFiltersRef = useRef<Filters>({ ...filters })
+  const prevFiltersPropRef = useRef<Filters>(filters)
 
   const isLoadMore = paginationMode === 'loadMore'
 
@@ -135,13 +141,18 @@ function ReactList<T = unknown>({
       error: null,
       response: null,
       count: initialCount,
-      isLoading: false,
+      isLoading: true,
       initializingState: true,
       confirmedPage: null,
     }
   }, [getSavedState, search, page, perPage, sortBy, sortOrder, filters, isLoadMore, initialCount])
 
   const [state, setState] = useState(initializeState)
+
+  const stateRef = useRef(state)
+  stateRef.current = state
+
+  const requestIdRef = useRef(0)
 
   const updateStateManager = useCallback(
     (stateToSave: LocalInternalListState<T>) => {
@@ -158,13 +169,12 @@ function ReactList<T = unknown>({
       addContext: RequestContextPatch = {},
       newState: LocalInternalListState<T> | null = null,
     ) => {
-      if (!state.initializingState) {
-        setState((prev) => ({ ...prev, error: null, isLoading: true }))
-      }
+      const currentRequestId = ++requestIdRef.current
+      setState((prev) => ({ ...prev, error: null, isLoading: true }))
 
       try {
-        const currentState = newState ?? state
-        const previousItems = newState?.items ?? state.items
+        const currentState = newState ?? stateRef.current
+        const previousItems = newState?.items ?? stateRef.current.items
         const res = await requestHandler({
           endpoint,
           version,
@@ -177,6 +187,8 @@ function ReactList<T = unknown>({
           filters: currentState.filters,
           ...addContext,
         })
+
+        if (currentRequestId !== requestIdRef.current) return
 
         if (onResponse) onResponse(res)
 
@@ -203,6 +215,7 @@ function ReactList<T = unknown>({
 
         setState(updatedState)
       } catch (err) {
+        if (currentRequestId !== requestIdRef.current) return
         setState((prev) => ({
           ...prev,
           error: toError(err),
@@ -221,7 +234,6 @@ function ReactList<T = unknown>({
       isLoadMore,
       meta,
       requestHandler,
-      state,
       onResponse,
       afterLoadMore,
       afterPageChange,
@@ -236,46 +248,48 @@ function ReactList<T = unknown>({
         if (value === 0) {
           newPage = ''
         }
-        const newState = { ...state, page: newPage }
+        const newState = { ...stateRef.current, page: newPage }
         setState(newState)
         if (newPage) fetchData(addContext, newState)
       },
 
       setPerPage: (value: number) => {
-        const newState = { ...state, perPage: value, page: 1 }
+        const newState = { ...stateRef.current, perPage: value, page: 1 }
         setState(newState)
         fetchData({}, newState)
       },
 
       setSearch: (value: string) => {
-        if (value !== state.search) {
-          const newState = { ...state, search: value, page: 1 }
+        if (value !== stateRef.current.search) {
+          const newState = { ...stateRef.current, search: value, page: 1 }
           setState(newState)
           fetchData({}, newState)
         }
       },
 
       setSort: ({ by, order }: { by: string; order: 'asc' | 'desc' }) => {
-        const newState = { ...state, sortBy: by, sortOrder: order, page: 1 }
+        const newState = { ...stateRef.current, sortBy: by, sortOrder: order, page: 1 }
         setState(newState)
         fetchData({}, newState)
       },
 
       loadMore: () => {
-        const newState = { ...state, page: (state.page as number) + 1 }
+        const newState = { ...stateRef.current, page: (stateRef.current.page as number) + 1 }
         setState(newState)
         fetchData({}, newState)
       },
 
       clearFilters: () => {
-        const newState = { ...state, filters: filters, page: 1 }
+        const nextFilters = { ...defaultFiltersRef.current }
+        const newState = { ...stateRef.current, filters: nextFilters, page: 1 }
         setState(newState)
         fetchData({}, newState)
+        onFiltersChange?.(nextFilters)
       },
 
       refresh: (addContext: RequestContextPatch = { isRefresh: true }) => {
         if (isLoadMore) {
-          const newState = { ...state, page: 1, items: [] }
+          const newState = { ...stateRef.current, page: 1, items: [] }
           setState(newState)
           fetchData(addContext, newState)
         } else {
@@ -284,24 +298,34 @@ function ReactList<T = unknown>({
       },
 
       setFilters: (nextFilters: typeof filters) => {
-        const newState = { ...state, filters: nextFilters, page: 1 }
+        const newState = { ...stateRef.current, filters: nextFilters, page: 1 }
         setState(newState)
         fetchData({}, newState)
+        onFiltersChange?.(nextFilters)
       },
 
       updateItemById: (item: Partial<T>, id: string | number) => {
-        const newItems = state.items.map((i) => {
-          const record = i as T & { id?: string | number }
-          if (record.id === id) {
-            return { ...i, ...item }
-          }
-          return i
+        let matched = false
+
+        const newItems = stateRef.current.items.map((entry) => {
+          if (getItemId(entry, idKey) !== id) return entry
+          matched = true
+          return { ...entry, ...item }
         })
+
+        if (!matched) {
+          console.warn(
+            `ReactList: updateItemById did not find an item where ${idKey} === ${JSON.stringify(id)}. ` +
+              `Verify your items expose "${idKey}" and that the id type matches exactly.`,
+          )
+          return
+        }
+
         setState((prev) => ({ ...prev, items: newItems }))
       },
 
       updateAttr: (attrName: string, settingKey: string, value: boolean | unknown) => {
-        const nextAttrSettings = { ...(state.attrSettings ?? {}) }
+        const nextAttrSettings = { ...(stateRef.current.attrSettings ?? {}) }
         if (!nextAttrSettings[attrName]) {
           nextAttrSettings[attrName] = {}
         }
@@ -309,14 +333,14 @@ function ReactList<T = unknown>({
           ...nextAttrSettings[attrName],
           [settingKey]: value,
         }
-        const newState = { ...state, attrSettings: nextAttrSettings }
+        const newState = { ...stateRef.current, attrSettings: nextAttrSettings }
         setState(newState)
         updateStateManager(newState)
       },
 
       setSelection: (selection: T[]) => setState((prev) => ({ ...prev, selection })),
     }),
-    [fetchData, isLoadMore, state, filters, updateStateManager],
+    [fetchData, isLoadMore, onFiltersChange, updateStateManager, idKey],
   )
 
   const memoizedState = useMemo(
@@ -336,12 +360,14 @@ function ReactList<T = unknown>({
         initialLoading: state.initializingState,
       },
       sort: { sortBy: state.sortBy, sortOrder: state.sortOrder },
-      hasActiveFilters: hasActiveFilters(state.filters, filters),
+      hasActiveFilters: hasActiveFilters(state.filters, defaultFiltersRef.current),
       search: state.search,
       filters: state.filters,
       attrs: attrs || Object.keys((state.items[0] as Record<string, unknown>) || {}),
       attrSettings: state.attrSettings,
       isEmpty: state.items.length === 0,
+      isInitializing: state.initializingState,
+      idKey,
       ...handlers,
     }),
     [
@@ -361,7 +387,7 @@ function ReactList<T = unknown>({
       state.attrSettings,
       handlers,
       attrs,
-      filters,
+      idKey,
     ],
   )
 
@@ -399,8 +425,9 @@ function ReactList<T = unknown>({
   useEffect(() => {
     if (!initRef.current) return
 
-    if (!isEqual(filters, state.filters)) {
-      const newState = { ...state, filters, page: 1 }
+    if (!isEqual(filters, prevFiltersPropRef.current)) {
+      prevFiltersPropRef.current = filters
+      const newState = { ...stateRef.current, filters, page: 1 }
       setState(newState)
       fetchData({}, newState)
     }

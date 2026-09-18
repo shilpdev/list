@@ -1,6 +1,6 @@
-import type { SavedListState, StateManagerContext } from '../context';
-import type { RequestHandler } from '../response';
-import type { ListState } from '../state';
+import type { SavedListState, StateManagerContext } from './context';
+import type { RequestHandler } from './response';
+import type { ListState } from './state';
 
 /** Optional persistence layer for list UI state. */
 export interface StateManager {

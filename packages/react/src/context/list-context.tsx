@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react'
-import type { ListInstanceContext } from '@shilp.dev/list-types'
+import type { ListInstanceContext } from '../../../../shared'
 
 const ListContext = createContext<ListInstanceContext<unknown> | null>(null)
 

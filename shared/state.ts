@@ -1,7 +1,7 @@
-import type { Filters, MetaRecord, SortOrder } from '../core';
-import type { ListHandlers } from '../handlers';
-import type { ListAttribute, AttrSettings } from '../attributes';
-import type { ListResponse } from '../response';
+import type { Filters, MetaRecord, SortOrder } from './core';
+import type { ListHandlers } from './handlers';
+import type { ListAttribute, AttrSettings } from './attributes';
+import type { ListResponse } from './response';
 
 /** Pagination slice exposed on list state. */
 export interface ListPagination {
@@ -39,6 +39,7 @@ export interface ListState<T = unknown> extends ListHandlers<T> {
   isEmpty: boolean;
   hasActiveFilters: boolean;
   isInitializing?: boolean;
+  idKey?: string;
 }
 
 /** List item enriched with a display index (used by items scope). */

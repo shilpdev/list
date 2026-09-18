@@ -15,7 +15,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@shilp.dev/list-types": "workspace:*",
     "@shilp.dev/vue-list": "workspace:*",
     "vue": "^3.5.40",
     "vue-router": "^4.5.0"

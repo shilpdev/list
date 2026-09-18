@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { AttributesScope, ListAttribute } from '@shilp.dev/list-types'
+import type { AttributesScope, ListAttribute } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

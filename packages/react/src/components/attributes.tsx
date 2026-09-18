@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { AttributesScope, ListAttribute, RenderAttributeArgs } from '@shilp.dev/list-types'
+import type { AttributesScope, ListAttribute, RenderAttributeArgs } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListAttributesProps = {

@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { LoadMoreScope } from '@shilp.dev/list-types'
+import type { LoadMoreScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListLoadMoreProps = {
@@ -37,5 +37,23 @@ export const ListLoadMore = memo(({ children }: ListLoadMoreProps) => {
     return null
   }
 
-  return children?.(scope) ?? null
+  if (typeof children === 'function') {
+    return <div className="react-list-load-more">{children(scope)}</div>
+  }
+
+  if (children) {
+    return <div className="react-list-load-more">{children}</div>
+  }
+
+  return (
+    <div className="react-list-load-more">
+      {hasMoreItems ? (
+        <button type="button" onClick={loadMore} disabled={isLoading}>
+          Load More
+        </button>
+      ) : (
+        <p>— That&apos;s all —</p>
+      )}
+    </div>
+  )
 })

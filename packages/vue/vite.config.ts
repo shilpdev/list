@@ -12,10 +12,9 @@ export default defineConfig({
     vue(),
     vueDevTools(),
     dts({
-      include: ['src'],
+      include: ['src', '../../shared'],
       rollupTypes: true,
       tsconfigPath: './tsconfig.json',
-      skipDiagnostics: true,
     }),
   ],
   resolve: {
@@ -26,11 +25,12 @@ export default defineConfig({
   build: {
     lib: {
       entry: path.resolve(__dirname, 'src/main.ts'),
-      fileName: 'vue-list',
+      fileName: 'index',
       name: 'VueList',
+      formats: ['es', 'cjs'],
     },
     rollupOptions: {
-      external: ['vue', '@shilp.dev/list-types'],
+      external: ['vue'],
       output: {
         globals: {
           vue: 'Vue',

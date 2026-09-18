@@ -1,7 +1,10 @@
 <template>
-  <div v-if="!listState.loader.initialLoading" class="vue-list__items">
+  <div
+    v-if="!listState.loader.initialLoading && !listState.error && !listState.isEmpty"
+    class="vue-list__items"
+  >
     <slot name="default" v-bind="scope">
-      <div v-for="(item, index) in scope.items" :key="index">
+      <div v-for="(item, index) in scope.items" :key="getItemId(item, listState.idKey) ?? index">
         <slot name="item" :item="item" :index="index">
           <pre>{{ item }}</pre>
         </slot>
@@ -12,8 +15,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ItemsScope } from '@shilp.dev/list-types'
+import type { ItemsScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
+import { getItemId } from '../utils'
 
 defineOptions({
   name: 'ListItems',

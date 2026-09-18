@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { GoToScope } from '@shilp.dev/list-types'
+import type { GoToScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
