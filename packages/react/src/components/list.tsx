@@ -14,7 +14,7 @@ import type {
 } from '../../../../shared'
 import { ListContextProvider } from '../context/list-context'
 import { hasActiveFilters } from './utils'
-import { isEqual } from '../utils'
+import { DEFAULT_ID_KEY, getItemId, isEqual } from '../utils'
 
 type LocalInternalListState<T> = Omit<InternalListState<T>, 'page'> & {
   page: number | string
@@ -51,6 +51,7 @@ function buildDefaultAttrSettings(
 function ReactList<T = unknown>({
   children,
   endpoint,
+  idKey = DEFAULT_ID_KEY,
   page = 1,
   perPage = 25,
   sortBy = '',
@@ -304,13 +305,22 @@ function ReactList<T = unknown>({
       },
 
       updateItemById: (item: Partial<T>, id: string | number) => {
-        const newItems = stateRef.current.items.map((i) => {
-          const record = i as T & { id?: string | number }
-          if (record.id === id) {
-            return { ...i, ...item }
-          }
-          return i
+        let matched = false
+
+        const newItems = stateRef.current.items.map((entry) => {
+          if (getItemId(entry, idKey) !== id) return entry
+          matched = true
+          return { ...entry, ...item }
         })
+
+        if (!matched) {
+          console.warn(
+            `ReactList: updateItemById did not find an item where ${idKey} === ${JSON.stringify(id)}. ` +
+              `Verify your items expose "${idKey}" and that the id type matches exactly.`,
+          )
+          return
+        }
+
         setState((prev) => ({ ...prev, items: newItems }))
       },
 
@@ -330,7 +340,7 @@ function ReactList<T = unknown>({
 
       setSelection: (selection: T[]) => setState((prev) => ({ ...prev, selection })),
     }),
-    [fetchData, isLoadMore, onFiltersChange, updateStateManager],
+    [fetchData, isLoadMore, onFiltersChange, updateStateManager, idKey],
   )
 
   const memoizedState = useMemo(
@@ -357,6 +367,7 @@ function ReactList<T = unknown>({
       attrSettings: state.attrSettings,
       isEmpty: state.items.length === 0,
       isInitializing: state.initializingState,
+      idKey,
       ...handlers,
     }),
     [
@@ -376,6 +387,7 @@ function ReactList<T = unknown>({
       state.attrSettings,
       handlers,
       attrs,
+      idKey,
     ],
   )
 

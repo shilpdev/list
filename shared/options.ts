@@ -14,6 +14,7 @@ export interface ListLifecycleCallbacks<T = unknown> {
 export interface ListOptions<T = unknown> extends ListLifecycleCallbacks<T> {
   /** Unique identifier for the data source (API route or key). */
   endpoint: string;
+  idKey?: string;
   page?: number;
   perPage?: number;
   sortBy?: string;

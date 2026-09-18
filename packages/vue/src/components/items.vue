@@ -4,7 +4,7 @@
     class="vue-list__items"
   >
     <slot name="default" v-bind="scope">
-      <div v-for="(item, index) in scope.items" :key="index">
+      <div v-for="(item, index) in scope.items" :key="getItemId(item, listState.idKey) ?? index">
         <slot name="item" :item="item" :index="index">
           <pre>{{ item }}</pre>
         </slot>
@@ -17,6 +17,7 @@
 import { computed } from 'vue'
 import type { ItemsScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
+import { getItemId } from '../utils'
 
 defineOptions({
   name: 'ListItems',

@@ -39,6 +39,7 @@ export interface ListState<T = unknown> extends ListHandlers<T> {
   isEmpty: boolean;
   hasActiveFilters: boolean;
   isInitializing?: boolean;
+  idKey?: string;
 }
 
 /** List item enriched with a display index (used by items scope). */
