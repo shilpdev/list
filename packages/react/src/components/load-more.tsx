@@ -37,5 +37,23 @@ export const ListLoadMore = memo(({ children }: ListLoadMoreProps) => {
     return null
   }
 
-  return children?.(scope) ?? null
+  if (typeof children === 'function') {
+    return <div className="react-list-load-more">{children(scope)}</div>
+  }
+
+  if (children) {
+    return <div className="react-list-load-more">{children}</div>
+  }
+
+  return (
+    <div className="react-list-load-more">
+      {hasMoreItems ? (
+        <button type="button" onClick={loadMore} disabled={isLoading}>
+          Load More
+        </button>
+      ) : (
+        <p>— That&apos;s all —</p>
+      )}
+    </div>
+  )
 })

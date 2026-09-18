@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { debounce } from 'lodash-es'
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import type { SearchComponentOptions, SearchScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
@@ -40,6 +40,10 @@ watch(
 const debouncedSetSearch = debounce((value: string) => {
   listState.value.setSearch(value)
 }, props.debounceTime)
+
+onUnmounted(() => {
+  debouncedSetSearch.cancel()
+})
 
 function handleInput(value: string) {
   localSearch.value = value

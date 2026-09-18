@@ -1,5 +1,8 @@
 <template>
-  <div v-if="!listState.loader.initialLoading" class="vue-list__items">
+  <div
+    v-if="!listState.loader.initialLoading && !listState.error && !listState.isEmpty"
+    class="vue-list__items"
+  >
     <slot name="default" v-bind="scope">
       <div v-for="(item, index) in scope.items" :key="index">
         <slot name="item" :item="item" :index="index">

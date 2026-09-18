@@ -18,7 +18,7 @@ export const ListLoader = memo(({ children, position = 'overlay' }: ListLoaderPr
     [isLoading],
   )
 
-  if (!initialLoading && !isLoading) {
+  if (initialLoading || !isLoading) {
     return null
   }
 

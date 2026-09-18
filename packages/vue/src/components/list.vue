@@ -101,9 +101,10 @@ const items = ref<unknown[]>([])
 const selection = ref<unknown[]>([])
 const error = ref<Error | null>(null)
 const response = ref<ListResponse | null>(null)
-const count = ref(0)
-const isLoading = ref(false)
+const count = ref(props.count ?? 0)
+const isLoading = ref(true)
 const initializingState = ref(true)
+let requestId = 0
 
 const serializedAttrs = computed(() => {
   const attrs = props.attrs || Object.keys((items.value[0] as Record<string, unknown>) || {})
@@ -149,6 +150,7 @@ function updateStateManager() {
 function getData(addContext: RequestContextPatch = {}) {
   error.value = null
   isLoading.value = true
+  const currentRequestId = ++requestId
 
   requestHandler({
     ...buildContext(),
@@ -156,6 +158,7 @@ function getData(addContext: RequestContextPatch = {}) {
     ...addContext,
   })
     .then((res) => {
+      if (currentRequestId !== requestId) return
       response.value = res
       updateStateManager()
       selection.value = []
@@ -163,6 +166,7 @@ function getData(addContext: RequestContextPatch = {}) {
       initializingState.value = false
     })
     .catch((err: unknown) => {
+      if (currentRequestId !== requestId) return
       error.value = toError(err)
       items.value = []
       count.value = 0
@@ -171,7 +175,9 @@ function getData(addContext: RequestContextPatch = {}) {
       // Re-throwing here creates unhandled promise rejections.
     })
     .finally(() => {
-      isLoading.value = false
+      if (currentRequestId === requestId) {
+        isLoading.value = false
+      }
     })
 }
 
