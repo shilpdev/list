@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { LoadMoreScope } from '@shilp.dev/list-types'
+import type { LoadMoreScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

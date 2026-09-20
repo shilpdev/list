@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { RefreshScope } from '@shilp.dev/list-types'
+import type { RefreshScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

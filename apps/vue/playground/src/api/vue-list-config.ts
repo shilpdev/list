@@ -4,7 +4,7 @@ import type {
   SavedListState,
   SortOrder,
   StateManagerContext,
-} from '@shilp.dev/list-types'
+} from '@shilp.dev/vue-list'
 import type { Skill } from '@/types/skill'
 import requestHandler from './request-handler'
 

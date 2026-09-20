@@ -1,6 +1,7 @@
 import { memo, useMemo, type ReactNode } from 'react'
-import type { ItemsScope, RenderItemArgs } from '@shilp.dev/list-types'
+import type { ItemsScope, RenderItemArgs } from '../../../../shared'
 import { useListContext } from '../context/list-context'
+import { getItemId } from '../utils'
 
 type ListItemsProps<T = unknown> = {
   children?: (scope: ItemsScope<T>) => ReactNode
@@ -9,7 +10,7 @@ type ListItemsProps<T = unknown> = {
 
 function ListItemsInner<T = unknown>({ children, renderItem }: ListItemsProps<T>) {
   const { listState } = useListContext<T>()
-  const { data: items = [], loader, error, setSort, sort, pagination } = listState
+  const { data: items = [], loader, error, setSort, sort, pagination, idKey } = listState
   const { initialLoading, isLoading } = loader
   const { page, perPage } = pagination
 
@@ -45,10 +46,9 @@ function ListItemsInner<T = unknown>({ children, renderItem }: ListItemsProps<T>
   if (renderItem) {
     return (
       <div className="react-list-items">
-        {items.map((item, index) => {
-          const record = item as T & { id?: string | number }
-          return <div key={record.id ?? index}>{renderItem({ item, index })}</div>
-        })}
+        {items.map((item, index) => (
+          <div key={getItemId(item, idKey) ?? index}>{renderItem({ item, index })}</div>
+        ))}
       </div>
     )
   }
@@ -59,10 +59,9 @@ function ListItemsInner<T = unknown>({ children, renderItem }: ListItemsProps<T>
 
   return (
     <div className="react-list-items">
-      {items.map((item, index) => {
-        const record = item as T & { id?: string | number }
-        return <pre key={record.id ?? index}>{JSON.stringify(item, null, 2)}</pre>
-      })}
+      {items.map((item, index) => (
+        <pre key={getItemId(item, idKey) ?? index}>{JSON.stringify(item, null, 2)}</pre>
+      ))}
     </div>
   )
 }

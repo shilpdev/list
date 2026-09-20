@@ -14,5 +14,6 @@ export { ListPagination } from './components/pagination'
 export { ListInitialLoader } from './components/initial-loader'
 export { ListItems } from './components/items'
 export { useListContext } from './context/list-context'
+export { DEFAULT_ID_KEY, getItemId } from './utils'
 
-export type * from '@shilp.dev/list-types'
+export type * from '../../../shared'

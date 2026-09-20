@@ -1,5 +1,5 @@
 import { memo, useMemo, type ReactNode } from 'react'
-import type { LoaderComponentOptions, LoaderScope } from '@shilp.dev/list-types'
+import type { LoaderComponentOptions, LoaderScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListLoaderProps = LoaderComponentOptions & {
@@ -18,7 +18,7 @@ export const ListLoader = memo(({ children, position = 'overlay' }: ListLoaderPr
     [isLoading],
   )
 
-  if (!initialLoading && !isLoading) {
+  if (initialLoading || !isLoading) {
     return null
   }
 

@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { SearchComponentOptions, SearchScope } from '@shilp.dev/list-types'
+import type { SearchComponentOptions, SearchScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListSearchProps = SearchComponentOptions & {

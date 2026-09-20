@@ -1,4 +1,4 @@
-import type { Filters } from '@shilp.dev/list-types'
+import type { Filters } from '../../../../shared'
 
 export const deepEqual = (obj1: unknown, obj2: unknown): boolean => {
   if (obj1 === obj2) return true

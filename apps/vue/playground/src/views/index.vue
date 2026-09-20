@@ -383,7 +383,7 @@ import {
   ListSearch,
   ListSummary,
 } from '@shilp.dev/vue-list'
-import type { ListSort } from '@shilp.dev/list-types'
+import type { ListSort } from '@shilp.dev/vue-list'
 import type { Skill, SkillFilters } from '@/types/skill'
 import vueListConfig, { getStateFromSearchParams } from '@/api/vue-list-config'
 

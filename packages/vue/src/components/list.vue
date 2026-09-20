@@ -15,11 +15,11 @@ import type {
   SavedListState,
   SortOrder,
   StateManagerContext,
-} from '@shilp.dev/list-types'
+} from '../../../../shared'
 import type { VueListEmits, VueListProps } from '../types'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'
-import { attrSerializer } from '../utils'
+import { attrSerializer, DEFAULT_ID_KEY, getItemId } from '../utils'
 
 defineOptions({
   name: 'VueList',
@@ -28,6 +28,7 @@ defineOptions({
 type VueListComponentProps = Omit<VueListProps, 'filters'>
 
 const props = withDefaults(defineProps<VueListComponentProps>(), {
+  idKey: DEFAULT_ID_KEY,
   page: 1,
   perPage: 25,
   sortBy: '',
@@ -101,9 +102,10 @@ const items = ref<unknown[]>([])
 const selection = ref<unknown[]>([])
 const error = ref<Error | null>(null)
 const response = ref<ListResponse | null>(null)
-const count = ref(0)
-const isLoading = ref(false)
+const count = ref(props.count ?? 0)
+const isLoading = ref(true)
 const initializingState = ref(true)
+let requestId = 0
 
 const serializedAttrs = computed(() => {
   const attrs = props.attrs || Object.keys((items.value[0] as Record<string, unknown>) || {})
@@ -149,6 +151,7 @@ function updateStateManager() {
 function getData(addContext: RequestContextPatch = {}) {
   error.value = null
   isLoading.value = true
+  const currentRequestId = ++requestId
 
   requestHandler({
     ...buildContext(),
@@ -156,6 +159,7 @@ function getData(addContext: RequestContextPatch = {}) {
     ...addContext,
   })
     .then((res) => {
+      if (currentRequestId !== requestId) return
       response.value = res
       updateStateManager()
       selection.value = []
@@ -163,6 +167,7 @@ function getData(addContext: RequestContextPatch = {}) {
       initializingState.value = false
     })
     .catch((err: unknown) => {
+      if (currentRequestId !== requestId) return
       error.value = toError(err)
       items.value = []
       count.value = 0
@@ -171,7 +176,9 @@ function getData(addContext: RequestContextPatch = {}) {
       // Re-throwing here creates unhandled promise rejections.
     })
     .finally(() => {
-      isLoading.value = false
+      if (currentRequestId === requestId) {
+        isLoading.value = false
+      }
     })
 }
 
@@ -234,13 +241,23 @@ function loadMore() {
 }
 
 function updateItemById(item: Partial<unknown>, id: string | number) {
-  items.value = items.value.map((entry) => {
-    const record = entry as Record<string, unknown> & { id?: string | number }
-    if (record.id === id) {
-      return { ...(entry as Record<string, unknown>), ...item }
-    }
-    return entry
+  let matched = false
+
+  const next = items.value.map((entry) => {
+    if (getItemId(entry, props.idKey) !== id) return entry
+    matched = true
+    return { ...(entry as Record<string, unknown>), ...item }
   })
+
+  if (!matched) {
+    console.warn(
+      `VueList: updateItemById did not find an item where ${props.idKey} === ${JSON.stringify(id)}. ` +
+        `Verify your items expose "${props.idKey}" and that the id type matches exactly.`,
+    )
+    return
+  }
+
+  items.value = next
 }
 
 function updateAttr(name: string, prop: string, value: boolean | unknown) {
@@ -281,6 +298,7 @@ const listState = computed(
     isEmpty: isEmpty.value,
     hasActiveFilters: hasActiveFilters(filters.value ?? {}, defaultFilters.value),
     isInitializing: initializingState.value,
+    idKey: props.idKey,
     setPage,
     setPerPage,
     setSearch,

@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { LoaderComponentOptions, LoaderScope } from '@shilp.dev/list-types'
+import type { LoaderComponentOptions, LoaderScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
