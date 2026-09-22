@@ -6,27 +6,22 @@ type ListSummaryProps = {
   children?: (scope: SummaryScope) => ReactNode
 }
 
-export const ListSummary = memo(({ children }: ListSummaryProps) => {
+export const ListSummary = ({ children }: ListSummaryProps) => {
   const { listState } = useListContext()
   const { data, count, pagination, loader, error } = listState
   const { page, perPage } = pagination
   const { initialLoading } = loader
 
-  const summaryData = useMemo(() => {
-    const from = page * perPage - perPage + 1
-    const to = Math.min(page * perPage, count)
-    const visibleCount = data?.length || 0
+  const summaryData = {
+    from: page * perPage - perPage + 1,
+    to: Math.min(page * perPage, count),
+    visibleCount: data?.length || 0,
+  }
 
-    return { from, to, visibleCount }
-  }, [page, perPage, count, data])
-
-  const scope = useMemo(
-    (): SummaryScope => ({
-      ...summaryData,
-      count,
-    }),
-    [summaryData, count],
-  )
+  const scope: SummaryScope = {
+    ...summaryData,
+    count,
+  }
 
   if (initialLoading) return null
 
@@ -53,4 +48,4 @@ export const ListSummary = memo(({ children }: ListSummaryProps) => {
       )}
     </div>
   )
-})
+}

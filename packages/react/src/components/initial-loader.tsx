@@ -1,4 +1,4 @@
-import { memo, useMemo, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import type { InitialLoaderScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
@@ -6,17 +6,14 @@ type ListInitialLoaderProps = {
   children?: ReactNode | ((scope: InitialLoaderScope) => ReactNode)
 }
 
-export const ListInitialLoader = memo(({ children }: ListInitialLoaderProps) => {
+export const ListInitialLoader = ({ children }: ListInitialLoaderProps) => {
   const { listState } = useListContext()
   const { loader } = listState
   const { initialLoading } = loader
 
-  const scope = useMemo(
-    (): InitialLoaderScope => ({
-      loading: initialLoading,
-    }),
-    [initialLoading],
-  )
+  const scope: InitialLoaderScope = {
+    loading: initialLoading,
+  }
 
   if (!initialLoading) {
     return null
@@ -27,4 +24,4 @@ export const ListInitialLoader = memo(({ children }: ListInitialLoaderProps) => 
       {typeof children === 'function' ? children(scope) : children || <p>Initial Loading...</p>}
     </div>
   )
-})
+}
