@@ -1,17 +1,17 @@
 import type { Filters, MetaRecord, PaginationMode, SortOrder } from './core';
 import type { ListResponse } from './response';
-import type { ListAttribute } from './attributes';
+import type { AttributeSettingValue, ListAttribute } from './attributes';
 import type { PaginationScope } from './scopes';
 
 /** Lifecycle hooks shared by React props and Vue emits. */
-export interface ListLifecycleCallbacks<T = unknown> {
+export interface ListLifecycleCallbacks<T = Record<string, unknown>> {
   onResponse?: (response: ListResponse<T>) => void;
   afterPageChange?: (response: ListResponse<T>) => void;
   afterLoadMore?: (response: ListResponse<T>) => void;
 }
 
 /** Root list configuration shared by React and Vue implementations. */
-export interface ListOptions<T = unknown> extends ListLifecycleCallbacks<T> {
+export interface ListOptions<T = Record<string, unknown>> extends ListLifecycleCallbacks<T> {
   /** Unique identifier for the data source (API route or key). */
   endpoint: string;
   idKey?: string;
@@ -58,7 +58,7 @@ export interface LoaderComponentOptions {
 }
 
 /** Arguments passed to a custom item renderer. */
-export interface RenderItemArgs<T = unknown> {
+export interface RenderItemArgs<T = Record<string, unknown>> {
   item: T;
   index: number;
 }
@@ -68,3 +68,7 @@ export interface RenderPageArgs extends PaginationScope {
   page: number;
   isActive: boolean;
 }
+
+/** Value used for per-attribute settings in the list UI. */
+export type AttributeValue = AttributeSettingValue;
+

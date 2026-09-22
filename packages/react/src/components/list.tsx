@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   AttrSettings,
+  AttributeSettingValue,
   Filters,
   InternalListState,
   ListAttribute,
@@ -20,7 +21,7 @@ type LocalInternalListState<T> = Omit<InternalListState<T>, 'page'> & {
   page: number | string
 }
 
-export type ReactListProps<T = unknown> = ListOptions<T> &
+export type ReactListProps<T = Record<string, unknown>> = ListOptions<T> &
   ListProviderConfig<T> & {
     children?: ReactNode | ((state: ListRenderScope<T>) => ReactNode)
     onFiltersChange?: (filters: Filters) => void
@@ -48,7 +49,7 @@ function buildDefaultAttrSettings(
  * ReactList root component for data fetching, pagination, and state management.
  * Provides list context to child components (`ListSearch`, `ListPagination`, etc.).
  */
-function ReactList<T = unknown>({
+function ReactList<T = Record<string, unknown>>({
   children,
   endpoint,
   idKey = DEFAULT_ID_KEY,
@@ -324,7 +325,7 @@ function ReactList<T = unknown>({
         setState((prev) => ({ ...prev, items: newItems }))
       },
 
-      updateAttr: (attrName: string, settingKey: string, value: boolean | unknown) => {
+      updateAttr: (attrName: string, settingKey: string, value: AttributeSettingValue) => {
         const nextAttrSettings = { ...(stateRef.current.attrSettings ?? {}) }
         if (!nextAttrSettings[attrName]) {
           nextAttrSettings[attrName] = {}
@@ -440,4 +441,4 @@ function ReactList<T = unknown>({
   )
 }
 
-export default ReactList as <T = unknown>(props: ReactListProps<T>) => ReactNode
+export default ReactList as <T = Record<string, unknown>>(props: ReactListProps<T>) => ReactNode

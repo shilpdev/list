@@ -10,12 +10,12 @@ export interface StateManager {
 }
 
 /** Configuration for list data fetching and optional state persistence. */
-export interface ListProviderConfig<T = unknown> {
+export interface ListProviderConfig<T = Record<string, unknown>> {
   requestHandler: RequestHandler<T>;
   stateManager?: StateManager;
 }
 
 /** Context value provided by a list instance to its child components. */
-export interface ListInstanceContext<T = unknown> {
+export interface ListInstanceContext<T = Record<string, unknown>> {
   listState: ListState<T>;
 }

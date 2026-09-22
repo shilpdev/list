@@ -3,12 +3,12 @@ import type { ItemsScope, RenderItemArgs } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 import { getItemId } from '../utils'
 
-type ListItemsProps<T = unknown> = {
+type ListItemsProps<T = Record<string, unknown>> = {
   children?: (scope: ItemsScope<T>) => ReactNode
   renderItem?: (args: RenderItemArgs<T>) => ReactNode
 }
 
-function ListItemsInner<T = unknown>({ children, renderItem }: ListItemsProps<T>) {
+function ListItemsInner<T = Record<string, unknown>>({ children, renderItem }: ListItemsProps<T>) {
   const { listState } = useListContext<T>()
   const { data: items = [], loader, error, setSort, sort, pagination, idKey } = listState
   const { initialLoading, isLoading } = loader

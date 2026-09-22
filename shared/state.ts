@@ -23,7 +23,7 @@ export interface ListSort {
 }
 
 /** Full reactive list state exposed to UI components and composables. */
-export interface ListState<T = unknown> extends ListHandlers<T> {
+export interface ListState<T = Record<string, unknown>> extends ListHandlers<T> {
   data: T[];
   response: ListResponse<T> | null;
   error: Error | null;
@@ -48,7 +48,7 @@ export type SerializedListItem<T> = T & {
 };
 
 /** Internal shape used while bootstrapping list state inside the root list. */
-export interface InternalListState<T = unknown> {
+export interface InternalListState<T = Record<string, unknown>> {
   page: number;
   perPage: number;
   sortBy: string;

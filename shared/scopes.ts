@@ -2,7 +2,7 @@ import type { ListAttribute, AttrSettings, UpdateAttrFn } from './attributes';
 import type { ListState, ListSort, SerializedListItem } from './state';
 
 /** Scope for items list slot. */
-export interface ItemsScope<T = unknown> {
+export interface ItemsScope<T = Record<string, unknown>> {
   items: SerializedListItem<T>[];
   isLoading: boolean;
   setSort: (sort: { by: string; order: 'asc' | 'desc' }) => void;
@@ -91,4 +91,4 @@ export interface AttributesScope {
 }
 
 /** Scope for root list render function / default slot. */
-export type ListRenderScope<T = unknown> = ListState<T>;
+export type ListRenderScope<T = Record<string, unknown>> = ListState<T>;

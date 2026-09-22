@@ -1,9 +1,9 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import type { ListInstanceContext } from '../../../../shared'
 
-const ListContext = createContext<ListInstanceContext<unknown> | null>(null)
+const ListContext = createContext<ListInstanceContext<Record<string, unknown>> | null>(null)
 
-export function ListContextProvider<T = unknown>({
+export function ListContextProvider<T = Record<string, unknown>>({
   value,
   children,
 }: {
@@ -11,13 +11,13 @@ export function ListContextProvider<T = unknown>({
   children: ReactNode
 }) {
   return (
-    <ListContext.Provider value={value as ListInstanceContext<unknown>}>
+    <ListContext.Provider value={value as ListInstanceContext<Record<string, unknown>>}>
       {children}
     </ListContext.Provider>
   )
 }
 
-export function useListContext<T = unknown>(): ListInstanceContext<T> {
+export function useListContext<T = Record<string, unknown>>(): ListInstanceContext<T> {
   const context = useContext(ListContext)
   if (!context) {
     throw new Error('useListContext must be used within a ReactList')

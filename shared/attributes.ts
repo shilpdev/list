@@ -4,10 +4,20 @@ export interface ListAttribute {
   label?: string;
 }
 
+/** Primitive or object-like value that can be stored per attribute setting. */
+export type AttributeSettingValue =
+  | boolean
+  | string
+  | number
+  | null
+  | undefined
+  | Record<string, unknown>
+  | unknown[];
+
 /** Per-attribute settings keyed by attribute name. */
 export interface AttributeSetting {
   visible?: boolean;
-  [key: string]: unknown;
+  [key: string]: AttributeSettingValue | undefined;
 }
 
 export type AttrSettings = Record<string, AttributeSetting>;
@@ -16,7 +26,7 @@ export type AttrSettings = Record<string, AttributeSetting>;
 export type UpdateAttrFn = (
   attrName: string,
   settingKey: string,
-  value: boolean | unknown
+  value: AttributeSettingValue
 ) => void;
 
 /** Arguments passed to a custom attribute renderer. */

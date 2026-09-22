@@ -1,8 +1,9 @@
 import type { Filters } from './core';
 import type { RequestContextPatch } from './context';
+import type { AttributeSettingValue } from './attributes';
 
 /** Actions exposed on list state for pagination, search, filters, and selection. */
-export interface ListHandlers<T = unknown> {
+export interface ListHandlers<T = Record<string, unknown>> {
   setPage: (page: number | string, context?: RequestContextPatch) => void;
   setPerPage: (perPage: number) => void;
   setSearch: (search: string) => void;
@@ -16,6 +17,6 @@ export interface ListHandlers<T = unknown> {
   updateAttr?: (
     attrName: string,
     settingKey: string,
-    value: boolean | unknown
+    value: AttributeSettingValue
   ) => void;
 }
