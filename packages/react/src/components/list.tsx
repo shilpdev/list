@@ -10,19 +10,18 @@ import type {
   ListState,
   RequestContextPatch,
   SavedListState,
-  StateManagerContext,
 } from '../../../../shared'
 import { ListContextProvider } from '../context/list-context'
-import { hasActiveFilters } from './utils'
 import { DEFAULT_ID_KEY, getItemId, isEqual } from '../utils'
+import { hasActiveFilters } from './utils'
 
-type LocalInternalListState<T> = Omit<InternalListState<T>, 'page'> & {
+type LocalInternalListState = Omit<InternalListState, 'page'> & {
   page: number | string
 }
 
-export type ReactListProps<T = unknown> = ListOptions<T> &
-  ListProviderConfig<T> & {
-    children?: ReactNode | ((state: ListRenderScope<T>) => ReactNode)
+export type ReactListProps = ListOptions &
+  ListProviderConfig & {
+    children?: ReactNode | ((state: ListRenderScope) => ReactNode)
     onFiltersChange?: (filters: Filters) => void
   }
 
@@ -48,7 +47,7 @@ function buildDefaultAttrSettings(
  * ReactList root component for data fetching, pagination, and state management.
  * Provides list context to child components (`ListSearch`, `ListPagination`, etc.).
  */
-function ReactList<T = unknown>({
+function ReactList({
   children,
   endpoint,
   idKey = DEFAULT_ID_KEY,
@@ -69,7 +68,7 @@ function ReactList<T = unknown>({
   afterPageChange,
   afterLoadMore,
   onFiltersChange,
-}: ReactListProps<T>) {
+}: ReactListProps) {
   if (!requestHandler) {
     throw new Error('ReactList: requestHandler is required.')
   }
@@ -77,11 +76,12 @@ function ReactList<T = unknown>({
   const initRef = useRef(false)
   const defaultFiltersRef = useRef<Filters>({ ...filters })
   const prevFiltersPropRef = useRef<Filters>(filters)
+  const requestIdRef = useRef(0)
 
   const isLoadMore = paginationMode === 'loadMore'
 
   const getContext = useCallback(
-    (currentState?: LocalInternalListState<T>): StateManagerContext => {
+    (currentState?: LocalInternalListState) => {
       return {
         endpoint,
         version,
@@ -98,10 +98,9 @@ function ReactList<T = unknown>({
     [endpoint, version, meta, search, page, perPage, sortBy, sortOrder, filters],
   )
 
-  const getSavedState = useCallback((): SavedListState => {
+  const getSavedState = (): SavedListState => {
     try {
-      const context = getContext()
-      const oldState = stateManager?.get?.(context)
+      const oldState = stateManager?.get?.(getContext())
 
       return {
         page: oldState?.page,
@@ -116,9 +115,9 @@ function ReactList<T = unknown>({
       console.error(err)
       return {}
     }
-  }, [getContext, stateManager])
+  }
 
-  const initializeState = useCallback((): LocalInternalListState<T> => {
+  const initializeState = (): LocalInternalListState => {
     const savedState = getSavedState()
 
     let initialPage: number | string = page
@@ -145,36 +144,32 @@ function ReactList<T = unknown>({
       initializingState: true,
       confirmedPage: null,
     }
-  }, [getSavedState, search, page, perPage, sortBy, sortOrder, filters, isLoadMore, initialCount])
+  }
 
   const [state, setState] = useState(initializeState)
 
   const stateRef = useRef(state)
   stateRef.current = state
 
-  const requestIdRef = useRef(0)
-
   const updateStateManager = useCallback(
-    (stateToSave: LocalInternalListState<T>) => {
-      if (stateManager) {
-        const context = getContext(stateToSave)
-        stateManager?.set?.(context)
-      }
+    (stateToSave: LocalInternalListState) => {
+      stateManager?.set?.(getContext(stateToSave))
     },
     [stateManager, getContext],
   )
 
+  // Memoised because it is a dependency of `applyState` and `handlers`.
   const fetchData = useCallback(
     async (
       addContext: RequestContextPatch = {},
-      newState: LocalInternalListState<T> | null = null,
+      newState: LocalInternalListState | null = null,
     ) => {
       const currentRequestId = ++requestIdRef.current
       setState((prev) => ({ ...prev, error: null, isLoading: true }))
 
       try {
         const currentState = newState ?? stateRef.current
-        const previousItems = newState?.items ?? stateRef.current.items
+        const previousItems = currentState.items
         const res = await requestHandler({
           endpoint,
           version,
@@ -190,15 +185,15 @@ function ReactList<T = unknown>({
 
         if (currentRequestId !== requestIdRef.current) return
 
-        if (onResponse) onResponse(res)
+        onResponse?.(res)
 
         if (isLoadMore) {
-          if (afterLoadMore) afterLoadMore(res)
+          afterLoadMore?.(res)
         } else {
-          if (afterPageChange) afterPageChange(res)
+          afterPageChange?.(res)
         }
 
-        const updatedState: LocalInternalListState<T> = {
+        const updatedState = {
           ...currentState,
           response: res,
           selection: [],
@@ -207,6 +202,7 @@ function ReactList<T = unknown>({
               ? [...previousItems, ...res.items]
               : res.items,
           count: res.count,
+          error: null,
           initializingState: false,
           isLoading: false,
         }
@@ -225,7 +221,7 @@ function ReactList<T = unknown>({
           isLoading: false,
         }))
         // The list UI already surfaces the error via `state.error`.
-        // Re-throwing here creates unhandled promise rejections that break
+        // Re-throwing here creates unhandled promise rejections.
       }
     },
     [
@@ -241,76 +237,66 @@ function ReactList<T = unknown>({
     ],
   )
 
+  const applyState = useCallback(
+    (patch: Partial<LocalInternalListState>, addContext: RequestContextPatch = {}) => {
+      const nextState = { ...stateRef.current, ...patch }
+      setState(nextState)
+      fetchData(addContext, nextState)
+    },
+    [fetchData],
+  )
+
   const handlers = useMemo(
     () => ({
       setPage: (value: number | string, addContext?: RequestContextPatch) => {
-        let newPage: number | string = value
-        if (value === 0) {
-          newPage = ''
+        const newPage = value === 0 ? '' : value
+
+        if (!newPage) {
+          setState((prev) => ({ ...prev, page: newPage }))
+          return
         }
-        const newState = { ...stateRef.current, page: newPage }
-        setState(newState)
-        if (newPage) fetchData(addContext, newState)
+
+        applyState({ page: newPage }, addContext)
       },
 
-      setPerPage: (value: number) => {
-        const newState = { ...stateRef.current, perPage: value, page: 1 }
-        setState(newState)
-        fetchData({}, newState)
-      },
+      setPerPage: (value: number) => applyState({ perPage: value, page: 1 }),
 
       setSearch: (value: string) => {
-        if (value !== stateRef.current.search) {
-          const newState = { ...stateRef.current, search: value, page: 1 }
-          setState(newState)
-          fetchData({}, newState)
-        }
+        if (value === stateRef.current.search) return
+        applyState({ search: value, page: 1 })
       },
 
-      setSort: ({ by, order }: { by: string; order: 'asc' | 'desc' }) => {
-        const newState = { ...stateRef.current, sortBy: by, sortOrder: order, page: 1 }
-        setState(newState)
-        fetchData({}, newState)
-      },
+      setSort: ({ by, order }: { by: string; order: 'asc' | 'desc' }) =>
+        applyState({ sortBy: by, sortOrder: order, page: 1 }),
 
-      loadMore: () => {
-        const newState = { ...stateRef.current, page: (stateRef.current.page as number) + 1 }
-        setState(newState)
-        fetchData({}, newState)
-      },
+      loadMore: () => applyState({ page: (stateRef.current.page as number) + 1 }),
 
       clearFilters: () => {
         const nextFilters = { ...defaultFiltersRef.current }
-        const newState = { ...stateRef.current, filters: nextFilters, page: 1 }
-        setState(newState)
-        fetchData({}, newState)
+        applyState({ filters: nextFilters, page: 1 })
+        onFiltersChange?.(nextFilters)
+      },
+
+      setFilters: (nextFilters: Filters) => {
+        applyState({ filters: nextFilters, page: 1 })
         onFiltersChange?.(nextFilters)
       },
 
       refresh: (addContext: RequestContextPatch = { isRefresh: true }) => {
         if (isLoadMore) {
-          const newState = { ...stateRef.current, page: 1, items: [] }
-          setState(newState)
-          fetchData(addContext, newState)
+          applyState({ page: 1, items: [] }, addContext)
         } else {
           fetchData(addContext)
         }
       },
 
-      setFilters: (nextFilters: typeof filters) => {
-        const newState = { ...stateRef.current, filters: nextFilters, page: 1 }
-        setState(newState)
-        fetchData({}, newState)
-        onFiltersChange?.(nextFilters)
-      },
-
-      updateItemById: (item: Partial<T>, id: string | number) => {
+      updateItemById: (item: Record<string, unknown>, id: string | number) => {
         let matched = false
 
         const newItems = stateRef.current.items.map((entry) => {
           if (getItemId(entry, idKey) !== id) return entry
           matched = true
-          return { ...entry, ...item }
+          return { ...(entry as Record<string, unknown>), ...item }
         })
 
         if (!matched) {
@@ -324,27 +310,27 @@ function ReactList<T = unknown>({
         setState((prev) => ({ ...prev, items: newItems }))
       },
 
-      updateAttr: (attrName: string, settingKey: string, value: boolean | unknown) => {
-        const nextAttrSettings = { ...(stateRef.current.attrSettings ?? {}) }
-        if (!nextAttrSettings[attrName]) {
-          nextAttrSettings[attrName] = {}
+      updateAttr: (attrName: string, settingKey: string, value: unknown) => {
+        const current = stateRef.current
+        const newState = {
+          ...current,
+          attrSettings: {
+            ...current.attrSettings,
+            [attrName]: { ...current.attrSettings?.[attrName], [settingKey]: value },
+          },
         }
-        nextAttrSettings[attrName] = {
-          ...nextAttrSettings[attrName],
-          [settingKey]: value,
-        }
-        const newState = { ...stateRef.current, attrSettings: nextAttrSettings }
+
         setState(newState)
         updateStateManager(newState)
       },
 
-      setSelection: (selection: T[]) => setState((prev) => ({ ...prev, selection })),
+      setSelection: (selection: unknown[]) => setState((prev) => ({ ...prev, selection })),
     }),
-    [fetchData, isLoadMore, onFiltersChange, updateStateManager, idKey],
+    [applyState, fetchData, isLoadMore, onFiltersChange, updateStateManager, idKey],
   )
 
   const memoizedState = useMemo(
-    (): ListState<T> => ({
+    (): ListState => ({
       data: state.items,
       response: state.response,
       error: state.error,
@@ -363,7 +349,7 @@ function ReactList<T = unknown>({
       hasActiveFilters: hasActiveFilters(state.filters, defaultFiltersRef.current),
       search: state.search,
       filters: state.filters,
-      attrs: attrs || Object.keys((state.items[0] as Record<string, unknown>) || {}),
+      attrs: attrs ?? Object.keys((state.items[0] as Record<string, unknown>) || {}),
       attrSettings: state.attrSettings,
       isEmpty: state.items.length === 0,
       isInitializing: state.initializingState,
@@ -394,43 +380,28 @@ function ReactList<T = unknown>({
   const contextValue = useMemo(() => ({ listState: memoizedState }), [memoizedState])
 
   useEffect(() => {
-    if (Object.keys(state.attrSettings).length > 0) {
-      return
-    }
+    if (Object.keys(state.attrSettings).length > 0) return
 
     const settings = buildDefaultAttrSettings(attrs, state.items[0])
-    if (Object.keys(settings).length === 0) {
-      return
-    }
+    if (Object.keys(settings).length === 0) return
 
     setState((prev) => ({ ...prev, attrSettings: settings }))
   }, [attrs, state.items, state.attrSettings])
 
   useEffect(() => {
-    if (!state.initializingState) {
-      return
-    }
-    if (!initRef.current) {
-      initRef.current = true
+    if (!state.initializingState || initRef.current) return
 
-      if (stateManager?.init) {
-        const context = getContext(state)
-        stateManager.init(context)
-      }
-
-      handlers.setPage(state.page as number)
-    }
+    initRef.current = true
+    stateManager?.init?.(getContext(state))
+    handlers.setPage(state.page as number)
   }, [])
 
   useEffect(() => {
     if (!initRef.current) return
+    if (isEqual(filters, prevFiltersPropRef.current)) return
 
-    if (!isEqual(filters, prevFiltersPropRef.current)) {
-      prevFiltersPropRef.current = filters
-      const newState = { ...stateRef.current, filters, page: 1 }
-      setState(newState)
-      fetchData({}, newState)
-    }
+    prevFiltersPropRef.current = filters
+    applyState({ filters, page: 1 })
   }, [filters])
 
   return (
@@ -440,4 +411,4 @@ function ReactList<T = unknown>({
   )
 }
 
-export default ReactList as <T = unknown>(props: ReactListProps<T>) => ReactNode
+export default ReactList as (props: ReactListProps) => ReactNode
