@@ -1,4 +1,4 @@
-import { memo, useMemo, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import type { SummaryScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
