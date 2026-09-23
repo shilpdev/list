@@ -15,13 +15,13 @@ import { ListContextProvider } from '../context/list-context'
 import { DEFAULT_ID_KEY, getItemId, isEqual } from '../utils'
 import { hasActiveFilters } from './utils'
 
-type LocalInternalListState<T> = Omit<InternalListState<T>, 'page'> & {
+type LocalInternalListState = Omit<InternalListState, 'page'> & {
   page: number | string
 }
 
-export type ReactListProps<T> = ListOptions<T> &
-  ListProviderConfig<T> & {
-    children?: ReactNode | ((state: ListRenderScope<T>) => ReactNode)
+export type ReactListProps = ListOptions &
+  ListProviderConfig & {
+    children?: ReactNode | ((state: ListRenderScope) => ReactNode)
     onFiltersChange?: (filters: Filters) => void
   }
 
@@ -47,7 +47,7 @@ function buildDefaultAttrSettings(
  * ReactList root component for data fetching, pagination, and state management.
  * Provides list context to child components (`ListSearch`, `ListPagination`, etc.).
  */
-function ReactList<T>({
+function ReactList({
   children,
   endpoint,
   idKey = DEFAULT_ID_KEY,
@@ -68,7 +68,7 @@ function ReactList<T>({
   afterPageChange,
   afterLoadMore,
   onFiltersChange,
-}: ReactListProps<T>) {
+}: ReactListProps) {
   if (!requestHandler) {
     throw new Error('ReactList: requestHandler is required.')
   }
@@ -81,7 +81,7 @@ function ReactList<T>({
   const isLoadMore = paginationMode === 'loadMore'
 
   const getContext = useCallback(
-    (currentState?: LocalInternalListState<T>) => {
+    (currentState?: LocalInternalListState) => {
       return {
         endpoint,
         version,
@@ -117,7 +117,7 @@ function ReactList<T>({
     }
   }
 
-  const initializeState = (): LocalInternalListState<T> => {
+  const initializeState = (): LocalInternalListState => {
     const savedState = getSavedState()
 
     let initialPage: number | string = page
@@ -152,7 +152,7 @@ function ReactList<T>({
   stateRef.current = state
 
   const updateStateManager = useCallback(
-    (stateToSave: LocalInternalListState<T>) => {
+    (stateToSave: LocalInternalListState) => {
       stateManager?.set?.(getContext(stateToSave))
     },
     [stateManager, getContext],
@@ -162,7 +162,7 @@ function ReactList<T>({
   const fetchData = useCallback(
     async (
       addContext: RequestContextPatch = {},
-      newState: LocalInternalListState<T> | null = null,
+      newState: LocalInternalListState | null = null,
     ) => {
       const currentRequestId = ++requestIdRef.current
       setState((prev) => ({ ...prev, error: null, isLoading: true }))
@@ -238,7 +238,7 @@ function ReactList<T>({
   )
 
   const applyState = useCallback(
-    (patch: Partial<LocalInternalListState<T>>, addContext: RequestContextPatch = {}) => {
+    (patch: Partial<LocalInternalListState>, addContext: RequestContextPatch = {}) => {
       const nextState = { ...stateRef.current, ...patch }
       setState(nextState)
       fetchData(addContext, nextState)
@@ -290,13 +290,13 @@ function ReactList<T>({
         }
       },
 
-      updateItemById: (item: Partial<T>, id: string | number) => {
+      updateItemById: (item: Record<string, unknown>, id: string | number) => {
         let matched = false
 
         const newItems = stateRef.current.items.map((entry) => {
           if (getItemId(entry, idKey) !== id) return entry
           matched = true
-          return { ...entry, ...item }
+          return { ...(entry as Record<string, unknown>), ...item }
         })
 
         if (!matched) {
@@ -324,13 +324,13 @@ function ReactList<T>({
         updateStateManager(newState)
       },
 
-      setSelection: (selection: T[]) => setState((prev) => ({ ...prev, selection })),
+      setSelection: (selection: unknown[]) => setState((prev) => ({ ...prev, selection })),
     }),
     [applyState, fetchData, isLoadMore, onFiltersChange, updateStateManager, idKey],
   )
 
   const memoizedState = useMemo(
-    (): ListState<T> => ({
+    (): ListState => ({
       data: state.items,
       response: state.response,
       error: state.error,
@@ -411,4 +411,4 @@ function ReactList<T>({
   )
 }
 
-export default ReactList as <T>(props: ReactListProps<T>) => ReactNode
+export default ReactList as (props: ReactListProps) => ReactNode
