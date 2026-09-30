@@ -34,9 +34,11 @@ export const ListSummary = ({ children }: ListSummaryProps) => {
   }
 
   return (
-    <div className="react-list-summary">
-      {children ? (
+    <div className="react-list__summary">
+      {typeof children === 'function' ? (
         children(scope)
+      ) : children ? (
+        children
       ) : (
         <span>
           Showing <span>{summaryData.visibleCount}</span> items (

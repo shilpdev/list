@@ -3,20 +3,20 @@ import type { ItemsScope, RenderItemArgs } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 import { getItemId } from '../utils'
 
-type ListItemsProps<T> = {
-  children?: (scope: ItemsScope<T>) => ReactNode
-  renderItem?: (args: RenderItemArgs<T>) => ReactNode
+type ListItemsProps = {
+  children?: (scope: ItemsScope) => ReactNode
+  item?: (args: RenderItemArgs) => ReactNode
 }
 
-function ListItemsInner<T>({ children, renderItem }: ListItemsProps<T>) {
-  const { listState } = useListContext<T>()
+function ListItemsInner({ children, item: itemFn }: ListItemsProps) {
+  const { listState } = useListContext()
   const { data: items = [], loader, error, setSort, sort, pagination, idKey } = listState
   const { initialLoading, isLoading } = loader
   const { page, perPage } = pagination
 
   const serializedItems = useMemo(
     () =>
-      items.map((item, index) => ({
+      items.map((item: any, index: number) => ({
         ...item,
         _index: (page - 1) * perPage + index + 1,
       })),
@@ -24,7 +24,7 @@ function ListItemsInner<T>({ children, renderItem }: ListItemsProps<T>) {
   )
 
   const scope = useMemo(
-    (): ItemsScope<T> => ({
+    (): ItemsScope => ({
       items: serializedItems,
       isLoading,
       setSort,
@@ -39,29 +39,19 @@ function ListItemsInner<T>({ children, renderItem }: ListItemsProps<T>) {
     return null
   }
 
-  if (error) {
-    return null
-  }
-
-  if (renderItem) {
-    return (
-      <div className="react-list-items">
-        {items.map((item, index) => (
-          <div key={getItemId(item, idKey) ?? index}>{renderItem({ item, index })}</div>
-        ))}
-      </div>
-    )
-  }
-
-  if (typeof children === 'function') {
-    return <div className="react-list-items">{children(scope)}</div>
-  }
+  if (error) return null
 
   return (
-    <div className="react-list-items">
-      {items.map((item, index) => (
-        <pre key={getItemId(item, idKey) ?? index}>{JSON.stringify(item, null, 2)}</pre>
-      ))}
+    <div className="react-list__list-items">
+      {itemFn
+        ? items.map((item: any, index: number) => (
+            <div key={getItemId(item, idKey) ?? index}>{itemFn({ item, index })}</div>
+          ))
+        : children && typeof children === 'function'
+          ? children(scope)
+          : items.map((item, index) => (
+              <pre key={getItemId(item, idKey) ?? index}>{JSON.stringify(item, null, 2)}</pre>
+            ))}
     </div>
   )
 }

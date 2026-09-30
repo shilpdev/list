@@ -34,7 +34,7 @@ export interface ListState<T = unknown> extends ListHandlers<T> {
   sort: ListSort;
   search: string;
   filters: Filters;
-  attrs: ListAttribute[] | string[];
+  attrs: ListAttribute[];
   attrSettings?: AttrSettings;
   isEmpty: boolean;
   hasActiveFilters: boolean;

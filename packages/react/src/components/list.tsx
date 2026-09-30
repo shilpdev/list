@@ -3,7 +3,6 @@ import type {
   AttrSettings,
   Filters,
   InternalListState,
-  ListAttribute,
   ListOptions,
   ListProviderConfig,
   ListRenderScope,
@@ -26,22 +25,6 @@ export type ReactListProps = ListOptions &
   }
 
 const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
-
-function buildDefaultAttrSettings(
-  attrSource: ListAttribute[] | string[] | undefined,
-  firstItem?: unknown,
-): AttrSettings {
-  const names = attrSource?.length
-    ? attrSource.map((attr) => (typeof attr === 'string' ? attr : attr.name))
-    : firstItem
-      ? Object.keys(firstItem as Record<string, unknown>)
-      : []
-
-  return names.reduce<AttrSettings>((settings, name) => {
-    settings[name] = { visible: true }
-    return settings
-  }, {})
-}
 
 /**
  * ReactList root component for data fetching, pagination, and state management.
@@ -349,7 +332,9 @@ function ReactList({
       hasActiveFilters: hasActiveFilters(state.filters, defaultFiltersRef.current),
       search: state.search,
       filters: state.filters,
-      attrs: attrs ?? Object.keys((state.items[0] as Record<string, unknown>) || {}),
+      attrs:
+        attrs ??
+        Object.keys((state.items[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
       attrSettings: state.attrSettings,
       isEmpty: state.items.length === 0,
       isInitializing: state.initializingState,
@@ -378,15 +363,6 @@ function ReactList({
   )
 
   const contextValue = useMemo(() => ({ listState: memoizedState }), [memoizedState])
-
-  useEffect(() => {
-    if (Object.keys(state.attrSettings).length > 0) return
-
-    const settings = buildDefaultAttrSettings(attrs, state.items[0])
-    if (Object.keys(settings).length === 0) return
-
-    setState((prev) => ({ ...prev, attrSettings: settings }))
-  }, [attrs, state.items, state.attrSettings])
 
   useEffect(() => {
     if (!state.initializingState || initRef.current) return

@@ -16,7 +16,7 @@ export const ListError = ({ children }: ListErrorProps) => {
   }
 
   return (
-    <div className="react-list-error">
+    <div className="react-list__error">
       {typeof children === 'function'
         ? children({ error })
         : children || (

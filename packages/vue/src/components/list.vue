@@ -1,5 +1,5 @@
 <template>
-  <div class="v-list">
+  <div class="vue-list">
     <slot v-bind="listState" />
   </div>
 </template>
@@ -9,6 +9,7 @@ import { ref, computed, provide, watch } from 'vue'
 import type {
   AttrSettings,
   Filters,
+  ListAttribute,
   ListResponse,
   ListState,
   RequestContextPatch,
@@ -19,7 +20,7 @@ import type {
 import type { VueListEmits, VueListProps } from '../types'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'
-import { attrSerializer, DEFAULT_ID_KEY, getItemId } from '../utils'
+import { DEFAULT_ID_KEY, getItemId } from '../utils'
 
 defineOptions({
   name: 'VueList',
@@ -107,10 +108,6 @@ const isLoading = ref(true)
 const initializingState = ref(true)
 let requestId = 0
 
-const serializedAttrs = computed(() => {
-  const attrs = props.attrs || Object.keys((items.value[0] as Record<string, unknown>) || {})
-  return attrSerializer(attrs)
-})
 
 const isEmpty = computed(() => items.value.length === 0)
 
@@ -261,13 +258,14 @@ function updateItemById(item: Partial<unknown>, id: string | number) {
 }
 
 function updateAttr(name: string, prop: string, value: boolean | unknown) {
-  if (!attrSettings.value) {
-    attrSettings.value = {}
+  const current = attrSettings.value ?? {}
+  attrSettings.value = {
+    ...current,
+    [name]: {
+      ...current[name],
+      [prop]: value,
+    },
   }
-  if (!attrSettings.value[name]) {
-    attrSettings.value[name] = {}
-  }
-  attrSettings.value[name][prop] = value
   updateStateManager()
 }
 
@@ -293,7 +291,9 @@ const listState = computed(
     },
     search: localSearch.value,
     filters: filters.value ?? {},
-    attrs: serializedAttrs.value,
+    attrs:
+      props.attrs ??
+      Object.keys((items.value[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
     attrSettings: attrSettings.value,
     isEmpty: isEmpty.value,
     hasActiveFilters: hasActiveFilters(filters.value ?? {}, defaultFilters.value),
@@ -324,14 +324,6 @@ watch(filters, (newValue, oldValue) => {
 watch(selection, (newValue, oldValue) => {
   emit('onItemSelect', newValue, oldValue ?? [])
 })
-
-if (!attrSettings.value) {
-  const settings: AttrSettings = {}
-  for (const item of serializedAttrs.value) {
-    settings[item.name] = { visible: true }
-  }
-  attrSettings.value = settings
-}
 
 stateManager?.init?.(buildContext())
 

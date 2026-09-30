@@ -3,7 +3,7 @@
     v-if="!listState.loader.initialLoading && !listState.error && !listState.isEmpty"
     class="vue-list__items"
   >
-    <slot name="default" v-bind="scope">
+    <slot v-bind="scope">
       <div v-for="(item, index) in scope.items" :key="getItemId(item, listState.idKey) ?? index">
         <slot name="item" :item="item" :index="index">
           <pre>{{ item }}</pre>

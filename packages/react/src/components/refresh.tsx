@@ -22,15 +22,15 @@ export const ListRefresh = ({ children }: ListRefreshProps) => {
 
   if (initialLoading) return null
 
-  if (children) {
-    return children(scope)
-  }
-
   return (
-    <div className="react-list-refresh">
-      <button onClick={handleRefresh} disabled={isLoading}>
-        {isLoading ? 'Loading...' : 'Refresh'}
-      </button>
+    <div className="react-list__refresh">
+      {typeof children === 'function'
+        ? children(scope)
+        : children || (
+            <button onClick={handleRefresh} disabled={isLoading}>
+              {isLoading ? 'Loading...' : 'Refresh'}
+            </button>
+          )}
     </div>
   )
 }

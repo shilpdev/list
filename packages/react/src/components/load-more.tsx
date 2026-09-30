@@ -34,17 +34,13 @@ export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
     return null
   }
 
-  if (typeof children === 'function') {
-    return <div className="react-list-load-more">{children(scope)}</div>
-  }
-
-  if (children) {
-    return <div className="react-list-load-more">{children}</div>
-  }
-
   return (
-    <div className="react-list-load-more">
-      {hasMoreItems ? (
+    <div className="react-list__load-more">
+      {typeof children === 'function' ? (
+        children(scope)
+      ) : children ? (
+        children
+      ) : hasMoreItems ? (
         <button type="button" onClick={loadMore} disabled={isLoading}>
           Load More
         </button>

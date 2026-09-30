@@ -1,13 +1,13 @@
 <template>
   <div class="vue-list__attributes">
-    <slot name="default" v-bind="scope">
+    <slot v-bind="scope">
       <template v-for="(attr, index) in scope.attrs" :key="`attr-${index}`">
-        <slot :attr="attr" :updateAttr="scope.updateAttr">
+        <slot name="attribute" :attr="attr" :updateAttr="scope.updateAttr">
           <label>
             <span>{{ attr.label }}</span>
             <input
               type="checkbox"
-              :checked="scope.attrSettings?.[attr.name]?.visible"
+              :checked="scope.attrSettings?.[attr.name]?.visible ?? true"
               @change="
                 scope.updateAttr(attr.name, 'visible', ($event.target as HTMLInputElement).checked)
               "

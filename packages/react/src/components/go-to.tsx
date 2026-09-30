@@ -46,9 +46,11 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
   }
 
   return (
-    <div className="react-list-go-to">
-      {children ? (
+    <div className="react-list__go-to">
+      {typeof children === 'function' ? (
         children(scope)
+      ) : children ? (
+        children
       ) : (
         <select value={page} onChange={handlePageChange}>
           {pages.map((pageNum) => (

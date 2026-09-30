@@ -20,7 +20,7 @@ export const ListInitialLoader = ({ children }: ListInitialLoaderProps) => {
   }
 
   return (
-    <div className="react-list-initial-loader">
+    <div className="react-list__initial-loader">
       {typeof children === 'function' ? children(scope) : children || <p>Initial Loading...</p>}
     </div>
   )

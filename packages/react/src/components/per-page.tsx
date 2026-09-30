@@ -51,9 +51,11 @@ export const ListPerPage = memo(({ children, options = [10, 25, 50, 100] }: List
   }
 
   return (
-    <div className="react-list-per-page">
-      {children ? (
+    <div className="react-list__per-page">
+      {typeof children === 'function' ? (
         children(scope)
+      ) : children ? (
+        children
       ) : (
         <select value={perPage} onChange={handlePerPageChange}>
           {serializedOptions.map((option) => (
