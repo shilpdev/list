@@ -5,11 +5,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, provide, watch } from 'vue'
+import { computed, provide, ref, watch } from 'vue'
 import type {
   AttrSettings,
   Filters,
-  ListAttribute,
   ListResponse,
   ListState,
   RequestContextPatch,
@@ -17,9 +16,9 @@ import type {
   SortOrder,
   StateManagerContext,
 } from '../../../../shared'
-import type { VueListEmits, VueListProps } from '../types'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'
+import type { VueListEmits, VueListProps } from '../types'
 import { DEFAULT_ID_KEY, getItemId } from '../utils'
 
 defineOptions({
@@ -107,7 +106,6 @@ const count = ref(props.count ?? 0)
 const isLoading = ref(true)
 const initializingState = ref(true)
 let requestId = 0
-
 
 const isEmpty = computed(() => items.value.length === 0)
 
