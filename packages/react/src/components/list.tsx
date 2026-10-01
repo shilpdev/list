@@ -261,7 +261,7 @@ function ReactList({
         applyState({ sortBy: by, sortOrder: order, page: 1 }),
 
       loadMore: () => {
-        const { page, perPage } = stateRef.current
+        const { page } = stateRef.current
         const hasMore = (page as number) * stateRef.current.perPage < stateRef.current.count
         if (hasMore && !stateRef.current.isLoading) {
           applyState({ page: (page as number) + 1 })
