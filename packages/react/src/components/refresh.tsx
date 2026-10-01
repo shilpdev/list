@@ -27,7 +27,7 @@ export const ListRefresh = ({ children }: ListRefreshProps) => {
       {typeof children === 'function'
         ? children(scope)
         : children || (
-            <button onClick={handleRefresh} disabled={isLoading}>
+            <button type="button" onClick={handleRefresh} disabled={isLoading}>
               {isLoading ? 'Loading...' : 'Refresh'}
             </button>
           )}

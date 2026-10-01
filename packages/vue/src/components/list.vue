@@ -207,10 +207,13 @@ function setSelection(value: unknown[]) {
 
 function setFilters(nextFilters: Filters) {
   filters.value = nextFilters
+  emit('onFiltersChange', nextFilters)
 }
 
 function clearFilters() {
-  filters.value = { ...defaultFilters.value }
+  const nextFilters = { ...defaultFilters.value }
+  filters.value = nextFilters
+  emit('onFiltersChange', nextFilters)
 }
 
 function refresh(addContext: RequestContextPatch = { isRefresh: true }) {
@@ -344,5 +347,6 @@ defineExpose({
   setFilters,
   clearFilters,
   updateItemById,
+  updateAttr,
 })
 </script>

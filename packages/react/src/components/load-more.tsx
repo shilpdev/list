@@ -41,7 +41,7 @@ export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
       ) : children ? (
         children
       ) : hasMoreItems ? (
-        <button type="button" onClick={loadMore} disabled={isLoading}>
+        <button type="button" onClick={loadMore}>
           Load More
         </button>
       ) : (

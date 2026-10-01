@@ -163,36 +163,44 @@ function ReactList({
           sortBy: currentState.sortBy,
           sortOrder: currentState.sortOrder,
           filters: currentState.filters,
+          isRefresh: false,
           ...addContext,
         })
 
         if (currentRequestId !== requestIdRef.current) return
 
-        onResponse?.(res)
+        const newItems =
+          isLoadMore && (currentState.page as number) > 1
+            ? [...previousItems, ...res.items]
+            : res.items
 
+        let mergedForStateManager: LocalInternalListState | null = null
+
+        setState((prev) => {
+          const merged = {
+            ...prev,
+            response: res,
+            selection: [],
+            items: newItems,
+            count: res.count,
+            error: null,
+            initializingState: false,
+            isLoading: false,
+          }
+          mergedForStateManager = merged
+          return merged
+        })
+
+        if (mergedForStateManager) {
+          updateStateManager(mergedForStateManager)
+        }
+
+        onResponse?.(res)
         if (isLoadMore) {
           afterLoadMore?.(res)
         } else {
           afterPageChange?.(res)
         }
-
-        const updatedState = {
-          ...currentState,
-          response: res,
-          selection: [],
-          items:
-            isLoadMore && (currentState.page as number) > 1
-              ? [...previousItems, ...res.items]
-              : res.items,
-          count: res.count,
-          error: null,
-          initializingState: false,
-          isLoading: false,
-        }
-
-        updateStateManager(updatedState)
-
-        setState(updatedState)
       } catch (err) {
         if (currentRequestId !== requestIdRef.current) return
         setState((prev) => ({
@@ -232,12 +240,12 @@ function ReactList({
   const handlers = useMemo(
     () => ({
       setPage: (value: number | string, addContext?: RequestContextPatch) => {
-        const newPage = value === 0 ? '' : value
-
-        if (!newPage) {
-          setState((prev) => ({ ...prev, page: newPage }))
+        const coerced = value === 0 ? '' : value
+        if (coerced === '' || coerced === null || coerced === undefined) {
           return
         }
+        const newPage = Number(coerced)
+        if (!newPage) return
 
         applyState({ page: newPage }, addContext)
       },
@@ -252,15 +260,23 @@ function ReactList({
       setSort: ({ by, order }: { by: string; order: 'asc' | 'desc' }) =>
         applyState({ sortBy: by, sortOrder: order, page: 1 }),
 
-      loadMore: () => applyState({ page: (stateRef.current.page as number) + 1 }),
+      loadMore: () => {
+        const { page, perPage } = stateRef.current
+        const hasMore = (page as number) * stateRef.current.perPage < stateRef.current.count
+        if (hasMore && !stateRef.current.isLoading) {
+          applyState({ page: (page as number) + 1 })
+        }
+      },
 
       clearFilters: () => {
         const nextFilters = { ...defaultFiltersRef.current }
+        if (isEqual(stateRef.current.filters, nextFilters)) return
         applyState({ filters: nextFilters, page: 1 })
         onFiltersChange?.(nextFilters)
       },
 
       setFilters: (nextFilters: Filters) => {
+        if (isEqual(stateRef.current.filters, nextFilters)) return
         applyState({ filters: nextFilters, page: 1 })
         onFiltersChange?.(nextFilters)
       },
@@ -382,7 +398,9 @@ function ReactList({
 
   return (
     <ListContextProvider value={contextValue}>
-      {typeof children === 'function' ? children(memoizedState) : children}
+      <div className="react-list">
+        {typeof children === 'function' ? children(memoizedState) : children}
+      </div>
     </ListContextProvider>
   )
 }
