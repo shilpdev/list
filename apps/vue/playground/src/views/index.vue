@@ -1,9 +1,7 @@
 <template>
   <div class="flex min-h-screen items-start justify-center bg-slate-100 p-6">
     <div class="w-full max-w-350 rounded-xl bg-white p-8 text-slate-800 shadow-lg">
-      <h2 class="mb-6 text-3xl font-bold text-slate-700">
-        Vue List Playground (TypeScript)
-      </h2>
+      <h2 class="mb-6 text-3xl font-bold text-slate-700">Vue List Playground (TypeScript)</h2>
 
       <VueList
         endpoint="skills"
@@ -14,6 +12,12 @@
         pagination-mode="pagination"
         :request-handler="vueListConfig.requestHandler"
         :state-manager="vueListConfig.stateManager"
+        :attrs="[
+          { name: 'id', label: 'ID' },
+          { name: 'name', label: 'Name' },
+          { name: 'status', label: 'Status' },
+          { name: 'date_updated', label: 'Update At' },
+        ]"
       >
         <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center">
@@ -29,6 +33,38 @@
               </div>
             </ListSearch>
           </div>
+
+          <ListAttributes v-slot="{ attrs, updateAttr, attrSettings }">
+            <div class="flex flex-wrap items-center gap-2">
+              <label
+                v-for="attr in attrs"
+                :key="attr.name"
+                class="flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition"
+                :class="
+                  (attrSettings?.[attr.name]?.visible ?? true)
+                    ? 'border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-50'
+                    : 'border-slate-200 bg-slate-100 text-slate-400 line-through opacity-70'
+                "
+              >
+                <input
+                  type="checkbox"
+                  :checked="attrSettings?.[attr.name]?.visible ?? true"
+                  @change="
+                    updateAttr?.(
+                      attr.name,
+                      'visible',
+                      ($event.target as HTMLInputElement).checked,
+                    )
+                  "
+                  class="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                />
+
+                <span>
+                  {{ attr.label || attr.name }}
+                </span>
+              </label>
+            </div>
+          </ListAttributes>
 
           <div class="flex flex-wrap items-center gap-3">
             <div class="relative flex items-center gap-2">
@@ -107,10 +143,7 @@
                 <div
                   class="relative rounded-full bg-linear-to-br from-slate-50 to-slate-100 p-8 shadow-inner"
                 >
-                  <UIcon
-                    name="i-mdi-file-search-outline"
-                    class="h-16 w-16 text-slate-400"
-                  />
+                  <UIcon name="i-mdi-file-search-outline" class="h-16 w-16 text-slate-400" />
                 </div>
               </div>
 
@@ -180,9 +213,7 @@
               <table class="w-full whitespace-nowrap border-collapse">
                 <thead>
                   <tr>
-                    <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                      ID
-                    </th>
+                    <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">ID</th>
                     <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
                       <span class="inline-flex items-center gap-1">
                         Name
@@ -200,10 +231,7 @@
                     <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
                       <span class="inline-flex items-center gap-1">
                         Update At
-                        <button
-                          type="button"
-                          @click="toggleSort(sort, setSort, 'date_updated')"
-                        >
+                        <button type="button" @click="toggleSort(sort, setSort, 'date_updated')">
                           <UIcon
                             :name="sortIconName(sort, 'date_updated')"
                             class="size-5 cursor-pointer text-slate-700"
@@ -214,10 +242,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr
-                    v-for="item in items as unknown as Skill[]"
-                    :key="item.id"
-                  >
+                  <tr v-for="item in items as unknown as Skill[]" :key="item.id">
                     <td class="border border-slate-200 bg-white px-2 py-2">
                       {{ item.id }}
                     </td>
@@ -289,17 +314,7 @@
             </div>
 
             <ListPagination
-              v-slot="{
-                page,
-                pagesToDisplay,
-                hasNext,
-                hasPrev,
-                prev,
-                next,
-                first,
-                last,
-                setPage,
-              }"
+              v-slot="{ page, pagesToDisplay, hasNext, hasPrev, prev, next, first, last, setPage }"
             >
               <div class="flex items-center gap-1">
                 <button
@@ -382,6 +397,7 @@ import {
   ListRefresh,
   ListSearch,
   ListSummary,
+  ListAttributes,
 } from '@shilp.dev/vue-list'
 import type { ListSort } from '@shilp.dev/vue-list'
 import type { Skill, SkillFilters } from '@/types/skill'

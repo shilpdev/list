@@ -1,4 +1,5 @@
 import ReactList, {
+  ListAttributes,
   ListEmpty,
   ListError,
   ListGoTo,
@@ -55,6 +56,139 @@ function PatchRowButton({ id }: { id: Skill['id'] }) {
   )
 }
 
+function SkillItemsTable({
+  items,
+  sort,
+  setSort,
+}: {
+  items: SerializedListItem<Skill>[]
+  sort: { sortBy: string | null; sortOrder: SortOrder }
+  setSort: (sort: { by: string; order: 'asc' | 'desc' }) => void
+}) {
+  const { listState } = useListContext<Skill>()
+  const attrSettings = listState.attrSettings
+  const isVisible = (name: string) => attrSettings?.[name]?.visible ?? true
+
+  return (
+    <div className="relative max-h-[70vh] w-full overflow-y-auto rounded-md border border-slate-200">
+      <ListLoader>
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-[1px]">
+          <Icon
+            icon="svg-spinners:blocks-shuffle-3"
+            className="h-12 w-12 animate-pulse text-primary-500"
+          />
+        </div>
+      </ListLoader>
+
+      <table className="w-full whitespace-nowrap border-collapse">
+        <thead>
+          <tr>
+            {isVisible('id') && (
+              <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
+                ID
+              </th>
+            )}
+            {isVisible('name') && (
+              <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
+                <span className="inline-flex items-center gap-1">
+                  Name
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sorting = nextSortOrder(sort.sortOrder)
+                      setSort({
+                        by: 'name',
+                        order: sorting as 'asc' | 'desc',
+                      })
+                    }}
+                  >
+                    <Icon
+                      icon={
+                        sort.sortOrder === ''
+                          ? 'mi:sort'
+                          : sort.sortOrder === 'asc'
+                            ? 'lucide:sort-asc'
+                            : 'lucide:sort-desc'
+                      }
+                      className="size-5 cursor-pointer text-white"
+                    />
+                  </button>
+                </span>
+              </th>
+            )}
+            {isVisible('status') && (
+              <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
+                Status
+              </th>
+            )}
+            {isVisible('date_updated') && (
+              <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
+                <span className="inline-flex items-center gap-1">
+                  Update At
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sorting = nextSortOrder(sort.sortOrder)
+                      setSort({
+                        by: 'date_updated',
+                        order: sorting as 'asc' | 'desc',
+                      })
+                    }}
+                  >
+                    <Icon
+                      icon={
+                        sort.sortOrder === ''
+                          ? 'mi:sort'
+                          : sort.sortOrder === 'asc'
+                            ? 'lucide:sort-asc'
+                            : 'lucide:sort-desc'
+                      }
+                      className="size-5 cursor-pointer text-white"
+                    />
+                  </button>
+                </span>
+              </th>
+            )}
+            <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
+              Action
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.id}>
+              {isVisible('id') && (
+                <td className="border border-slate-200 bg-white px-2 py-2">
+                  {item.id}
+                </td>
+              )}
+              {isVisible('name') && (
+                <td className="border border-slate-200 bg-white px-2 py-2">
+                  {item.name}
+                </td>
+              )}
+              {isVisible('status') && (
+                <td className="border border-slate-200 bg-white px-2 py-2">
+                  {item.status}
+                </td>
+              )}
+              {isVisible('date_updated') && (
+                <td className="border border-slate-200 bg-white px-2 py-2">
+                  {new Date(item.date_updated).toLocaleString()}
+                </td>
+              )}
+              <td className="border border-slate-200 bg-white px-2 py-2">
+                <PatchRowButton id={item.id} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+
 const ListWrapper = () => {
   const [filters, setFilters] = useState<SkillFilters>(
     () => getStateFromSearchParams()?.filters ?? {},
@@ -70,6 +204,12 @@ const ListWrapper = () => {
         page={1}
         perPage={10}
         idKey="id"
+        attrs={[
+          { name: 'id', label: 'ID' },
+          { name: 'name', label: 'Name' },
+          { name: 'status', label: 'Status' },
+          { name: 'date_updated', label: 'Update At' },
+        ]}
         filters={filters}
         paginationMode="pagination"
         requestHandler={reactListConfig.requestHandler}
@@ -90,6 +230,45 @@ const ListWrapper = () => {
                 </div>
               )}
             </ListSearch>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Attributes / Columns:
+            </span>
+            <ListAttributes>
+              {({ attrs, updateAttr, attrSettings }) => {
+                console.log({ attrs, attrSettings })
+                return (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {attrs.map((attr) => {
+                      const attrName = typeof attr === 'string' ? attr : attr.name
+                      const attrLabel = typeof attr === 'string' ? attr : attr.label || attr.name
+                      const isVisible = attrSettings?.[attrName]?.visible ?? true
+
+                      return (
+                        <label
+                          key={attrName}
+                          className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition ${
+                            isVisible
+                              ? 'border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-50'
+                              : 'border-slate-200 bg-slate-100 text-slate-400 line-through opacity-70'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isVisible}
+                            onChange={(e) => updateAttr?.(attrName, 'visible', e.target.checked)}
+                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span>{attrLabel}</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                )
+              }}
+            </ListAttributes>
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
@@ -221,108 +400,16 @@ const ListWrapper = () => {
             )}
           </ListError>
 
-          <ListItems>
-            {({ items, sort, setSort }) => {
-              return (
-                <div className="relative max-h-[70vh] w-full overflow-y-auto rounded-md border border-slate-200">
-                  <ListLoader>
-                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-[1px]">
-                      <Icon
-                        icon="svg-spinners:blocks-shuffle-3"
-                        className="h-12 w-12 animate-pulse text-primary-500"
-                      />
-                    </div>
-                  </ListLoader>
 
-                  <table className="w-full whitespace-nowrap border-collapse">
-                    <thead>
-                      <tr>
-                        <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                          ID
-                        </th>
-                        <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                          <span className="inline-flex items-center gap-1">
-                            Name
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const sorting = nextSortOrder(sort.sortOrder)
-                                setSort({
-                                  by: 'name',
-                                  order: sorting as 'asc' | 'desc',
-                                })
-                              }}
-                            >
-                              <Icon
-                                icon={
-                                  sort.sortOrder === ''
-                                    ? 'mi:sort'
-                                    : sort.sortOrder === 'asc'
-                                      ? 'lucide:sort-asc'
-                                      : 'lucide:sort-desc'
-                                }
-                                className="size-5 cursor-pointer text-white"
-                              />
-                            </button>
-                          </span>
-                        </th>
-                        <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                          Status
-                        </th>
-                        <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                          <span className="inline-flex items-center gap-1">
-                            Update At
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const sorting = nextSortOrder(sort.sortOrder)
-                                setSort({
-                                  by: 'date_updated',
-                                  order: sorting as 'asc' | 'desc',
-                                })
-                              }}
-                            >
-                              <Icon
-                                icon={
-                                  sort.sortOrder === ''
-                                    ? 'mi:sort'
-                                    : sort.sortOrder === 'asc'
-                                      ? 'lucide:sort-asc'
-                                      : 'lucide:sort-desc'
-                                }
-                                className="size-5 cursor-pointer text-white"
-                              />
-                            </button>
-                          </span>
-                        </th>
-                        <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                          Action
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(items as SerializedListItem<Skill>[]).map((item) => (
-                        <tr key={item.id}>
-                          <td className="border border-slate-200 bg-white px-2 py-2">{item.id}</td>
-                          <td className="border border-slate-200 bg-white px-2 py-2">
-                            {item.name}
-                          </td>
-                          <td className="border border-slate-200 bg-white px-2 py-2">
-                            {item.status}
-                          </td>
-                          <td className="border border-slate-200 bg-white px-2 py-2">
-                            {new Date(item.date_updated).toLocaleString()}
-                          </td>
-                          <td className="border border-slate-200 bg-white px-2 py-2">
-                            <PatchRowButton id={item.id} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )
-            }}
+
+          <ListItems>
+            {({ items, sort, setSort }) => (
+              <SkillItemsTable
+                items={items as SerializedListItem<Skill>[]}
+                sort={sort}
+                setSort={setSort}
+              />
+            )}
           </ListItems>
 
           <div className="flex w-full flex-col items-center justify-between gap-4 rounded-b-lg border-t border-slate-200 bg-slate-50 px-4 py-5 md:flex-row">

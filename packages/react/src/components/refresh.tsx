@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import type { RefreshScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
@@ -6,34 +6,31 @@ type ListRefreshProps = {
   children?: (scope: RefreshScope) => ReactNode
 }
 
-export const ListRefresh = memo(({ children }: ListRefreshProps) => {
+export const ListRefresh = ({ children }: ListRefreshProps) => {
   const { listState } = useListContext()
   const { loader, refresh } = listState
   const { isLoading, initialLoading } = loader
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     refresh({ isRefresh: true })
-  }, [refresh])
+  }
 
-  const scope = useMemo(
-    (): RefreshScope => ({
-      isLoading,
-      refresh: handleRefresh,
-    }),
-    [isLoading, handleRefresh],
-  )
+  const scope: RefreshScope = {
+    isLoading,
+    refresh: handleRefresh,
+  }
 
   if (initialLoading) return null
 
-  if (children) {
-    return children(scope)
-  }
-
   return (
-    <div className="react-list-refresh">
-      <button onClick={handleRefresh} disabled={isLoading}>
-        {isLoading ? 'Loading...' : 'Refresh'}
-      </button>
+    <div className="react-list__refresh">
+      {typeof children === 'function'
+        ? children(scope)
+        : children || (
+            <button type="button" onClick={handleRefresh} disabled={isLoading}>
+              {isLoading ? 'Loading...' : 'Refresh'}
+            </button>
+          )}
     </div>
   )
-})
+}

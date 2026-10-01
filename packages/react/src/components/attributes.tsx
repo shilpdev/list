@@ -4,10 +4,10 @@ import { useListContext } from '../context/list-context'
 
 type ListAttributesProps = {
   children?: ReactNode | ((scope: AttributesScope) => ReactNode)
-  renderAttribute?: (args: RenderAttributeArgs) => ReactNode
+  attribute?: (args: RenderAttributeArgs) => ReactNode
 }
 
-export const ListAttributes = memo(({ children, renderAttribute }: ListAttributesProps) => {
+export const ListAttributes = memo(({ children, attribute: attributeFn }: ListAttributesProps) => {
   const { listState } = useListContext()
   const { attrs, attrSettings, updateAttr } = listState
 
@@ -29,37 +29,33 @@ export const ListAttributes = memo(({ children, renderAttribute }: ListAttribute
     [normalizedAttrs, attrSettings, updateAttr],
   )
 
-  if (typeof children === 'function') {
-    return children(scope)
-  }
-
-  if (children) {
-    return children
-  }
-
   return (
-    <div className="react-list-attributes">
-      {normalizedAttrs.map((attr, index) => {
-        if (renderAttribute) {
-          return renderAttribute({
-            key: `attr-${index}`,
-            attr,
-            updateAttr: updateAttr ?? (() => {}),
-            attrSettings: attrSettings ?? {},
-          })
-        }
+    <div className="react-list__attributes">
+      {typeof children === 'function'
+        ? children(scope)
+        : children
+          ? children
+          : normalizedAttrs.map((attr, index) => {
+              if (attributeFn) {
+                return attributeFn({
+                  key: `attr-${index}`,
+                  attr,
+                  updateAttr: updateAttr ?? (() => {}),
+                  attrSettings: attrSettings ?? {},
+                })
+              }
 
-        return (
-          <label key={`attr-${index}`}>
-            <span>{attr.label}</span>
-            <input
-              type="checkbox"
-              checked={attrSettings?.[attr.name]?.visible ?? true}
-              onChange={handleAttrChange(attr.name)}
-            />
-          </label>
-        )
-      })}
+              return (
+                <label key={`attr-${index}`}>
+                  <span>{attr.label}</span>
+                  <input
+                    type="checkbox"
+                    checked={attrSettings?.[attr.name]?.visible ?? true}
+                    onChange={handleAttrChange(attr.name)}
+                  />
+                </label>
+              )
+            })}
     </div>
   )
 })

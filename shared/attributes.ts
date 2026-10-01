@@ -1,7 +1,8 @@
-/** Column/attribute definition used by the attributes UI. */
 export interface ListAttribute {
   name: string;
   label?: string;
+  attrs?: ListAttribute[];
+  [key: string]: unknown;
 }
 
 /** Per-attribute settings keyed by attribute name. */

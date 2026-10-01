@@ -1,6 +1,6 @@
 export { default as VueList } from './components/list.vue'
 export { default as ListItems } from './components/items.vue'
-export { default as ListInitialLoader } from './components/initial-loader.vue'
+export { default as ListInitialLoader } from './components/loader-initial.vue'
 export { default as ListLoader } from './components/loader.vue'
 export { default as ListError } from './components/error.vue'
 export { default as ListPagination } from './components/pagination.vue'

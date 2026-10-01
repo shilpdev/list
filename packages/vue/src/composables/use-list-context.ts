@@ -7,7 +7,7 @@ export interface VueListInstanceContext<T = unknown> {
 
 export const LIST_CONTEXT_KEY: InjectionKey<VueListInstanceContext> = Symbol('vue-list-context')
 
-export function useListContext<T = unknown>(): VueListInstanceContext<T> {
+export function useListContext<T>(): VueListInstanceContext<T> {
   const context = inject(LIST_CONTEXT_KEY, undefined)
 
   if (!context) {

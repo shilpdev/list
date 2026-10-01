@@ -1,4 +1,4 @@
-import type { ListOptions, ListProviderConfig, ListResponse } from '../../../shared'
+import type { Filters, ListOptions, ListProviderConfig, ListResponse } from '../../../shared'
 
 type OmittedListOptions = 'onResponse' | 'afterPageChange' | 'afterLoadMore'
 
@@ -13,4 +13,5 @@ export interface VueListEmits<T = unknown> {
   afterPageChange: [response: ListResponse<T>]
   afterLoadMore: [response: ListResponse<T>]
   onItemSelect: [selection: T[], previous: T[]]
+  onFiltersChange: [filters: Filters]
 }

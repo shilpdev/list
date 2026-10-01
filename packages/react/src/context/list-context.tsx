@@ -3,7 +3,7 @@ import type { ListInstanceContext } from '../../../../shared'
 
 const ListContext = createContext<ListInstanceContext<unknown> | null>(null)
 
-export function ListContextProvider<T = unknown>({
+export function ListContextProvider<T>({
   value,
   children,
 }: {
@@ -17,7 +17,7 @@ export function ListContextProvider<T = unknown>({
   )
 }
 
-export function useListContext<T = unknown>(): ListInstanceContext<T> {
+export function useListContext<T>(): ListInstanceContext<T> {
   const context = useContext(ListContext)
   if (!context) {
     throw new Error('useListContext must be used within a ReactList')

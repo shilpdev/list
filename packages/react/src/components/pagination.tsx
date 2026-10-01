@@ -86,12 +86,16 @@ export const ListPagination = memo(
       return null
     }
 
+    if (typeof children === 'function') {
+      return <div className="react-list__pagination">{children(scope)}</div>
+    }
+
     if (children) {
-      return children(scope)
+      return <div className="react-list__pagination">{children}</div>
     }
 
     return (
-      <div className="react-list-pagination">
+      <div className="react-list__pagination">
         {renderFirst ? (
           renderFirst(scope)
         ) : (
