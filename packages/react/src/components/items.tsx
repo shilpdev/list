@@ -16,8 +16,8 @@ function ListItemsInner({ children, item: itemFn }: ListItemsProps) {
 
   const serializedItems = useMemo(
     () =>
-      items.map((item: any, index: number) => ({
-        ...item,
+      items.map((item: unknown, index: number) => ({
+        ...(item as object),
         _index: (page - 1) * perPage + index + 1,
       })),
     [items, page, perPage],
@@ -43,15 +43,19 @@ function ListItemsInner({ children, item: itemFn }: ListItemsProps) {
 
   return (
     <div className="react-list__list-items">
-      {itemFn
-        ? items.map((item: any, index: number) => (
-            <div key={getItemId(item, idKey) ?? index}>{itemFn({ item, index })}</div>
-          ))
-        : children && typeof children === 'function'
-          ? children(scope)
-          : items.map((item, index) => (
-              <pre key={getItemId(item, idKey) ?? index}>{JSON.stringify(item, null, 2)}</pre>
-            ))}
+      {children && typeof children === 'function'
+        ? children(scope)
+        : itemFn
+          ? serializedItems.map((item, index) => (
+              <div key={getItemId(item, idKey) ?? index}>{itemFn({ item, index })}</div>
+            ))
+          : children
+            ? children
+            : serializedItems.map((item, index) => (
+                <div key={getItemId(item, idKey) ?? index}>
+                  <pre>{JSON.stringify(item, null, 2)}</pre>
+                </div>
+              ))}
     </div>
   )
 }

@@ -1,10 +1,8 @@
 import type { Filters, ListOptions, ListProviderConfig, ListResponse } from '../../../shared'
 
-type OmittedListOptions = 'onResponse' | 'afterPageChange' | 'afterLoadMore'
-
 /** Props for the VueList root component. */
 export interface VueListProps<T = unknown>
-  extends Omit<ListOptions<T>, OmittedListOptions>,
+  extends ListOptions<T>,
     ListProviderConfig<T> {}
 
 /** Emits for the VueList root component. */

@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide, ref, watch } from 'vue'
+import { computed, onMounted, provide, ref, watch } from 'vue'
 import type {
   AttrSettings,
   Filters,
@@ -46,8 +46,6 @@ if (!props.requestHandler) {
   throw new Error('VueList: requestHandler is required.')
 }
 
-const requestHandler = props.requestHandler
-const stateManager = props.stateManager
 const defaultFilters = ref<Filters>({ ...(filters.value ?? {}) })
 
 const isLoadMore = computed(() => props.paginationMode === 'loadMore')
@@ -76,7 +74,7 @@ const buildContext = (): StateManagerContext => ({
 
 function getSavedState(): SavedListState {
   try {
-    return stateManager?.get?.(buildContext()) ?? {}
+    return props.stateManager?.get?.(buildContext()) ?? {}
   } catch (err) {
     console.error(err)
     return {}
@@ -111,14 +109,17 @@ const isEmpty = computed(() => items.value.length === 0)
 
 function notifyResponse(res: ListResponse) {
   emit('onResponse', res)
+  props.onResponse?.(res)
 }
 
 function notifyAfterPageChange(res: ListResponse) {
   emit('afterPageChange', res)
+  props.afterPageChange?.(res)
 }
 
 function notifyAfterLoadMore(res: ListResponse) {
   emit('afterLoadMore', res)
+  props.afterLoadMore?.(res)
 }
 
 function setItems(res: ListResponse) {
@@ -140,7 +141,7 @@ function setItems(res: ListResponse) {
 }
 
 function updateStateManager() {
-  stateManager?.set?.(buildContext())
+  props.stateManager?.set?.(buildContext())
 }
 
 function getData(addContext: RequestContextPatch = {}) {
@@ -148,7 +149,7 @@ function getData(addContext: RequestContextPatch = {}) {
   isLoading.value = true
   const currentRequestId = ++requestId
 
-  requestHandler({
+  props.requestHandler({
     ...buildContext(),
     isRefresh: false,
     ...addContext,
@@ -206,14 +207,18 @@ function setSelection(value: unknown[]) {
 }
 
 function setFilters(nextFilters: Filters) {
+  if (deepEqual(filters.value, nextFilters)) return
   filters.value = nextFilters
   emit('onFiltersChange', nextFilters)
+  props.onFiltersChange?.(nextFilters)
 }
 
 function clearFilters() {
   const nextFilters = { ...defaultFilters.value }
+  if (deepEqual(filters.value, nextFilters)) return
   filters.value = nextFilters
   emit('onFiltersChange', nextFilters)
+  props.onFiltersChange?.(nextFilters)
 }
 
 function refresh(addContext: RequestContextPatch = { isRefresh: true }) {
@@ -324,11 +329,13 @@ watch(filters, (newValue, oldValue) => {
 
 watch(selection, (newValue, oldValue) => {
   emit('onItemSelect', newValue, oldValue ?? [])
+  props.onItemSelect?.(newValue, oldValue ?? [])
 })
 
-stateManager?.init?.(buildContext())
-
-setPage(localPage.value)
+onMounted(() => {
+  props.stateManager?.init?.(buildContext())
+  setPage(localPage.value)
+})
 
 defineExpose({
   items,

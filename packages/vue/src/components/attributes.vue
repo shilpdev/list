@@ -2,7 +2,12 @@
   <div class="vue-list__attributes">
     <slot v-bind="scope">
       <template v-for="(attr, index) in scope.attrs" :key="`attr-${index}`">
-        <slot name="attribute" :attr="attr" :updateAttr="scope.updateAttr">
+        <slot
+          name="attribute"
+          :attr="attr"
+          :updateAttr="scope.updateAttr"
+          :attrSettings="scope.attrSettings"
+        >
           <label>
             <span>{{ attr.label }}</span>
             <input

@@ -8,6 +8,8 @@ export interface ListLifecycleCallbacks<T = unknown> {
   onResponse?: (response: ListResponse<T>) => void
   afterPageChange?: (response: ListResponse<T>) => void
   afterLoadMore?: (response: ListResponse<T>) => void
+  onItemSelect?: (selection: T[], previous: T[]) => void
+  onFiltersChange?: (filters: Filters) => void
 }
 
 /** Root list configuration shared by React and Vue implementations. */

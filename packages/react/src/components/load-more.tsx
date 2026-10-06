@@ -8,17 +8,11 @@ type ListLoadMoreProps = {
 
 export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
   const { listState } = useListContext()
-  const { data, count, pagination, setPage, loader, error } = listState
+  const { data, count, pagination, loader, error, loadMore } = listState
   const { page, perPage } = pagination
   const { isLoading } = loader
 
   const hasMoreItems = page * perPage < count
-
-  const loadMore = () => {
-    if (hasMoreItems && !isLoading) {
-      setPage(page + 1)
-    }
-  }
 
   const scope: LoadMoreScope = {
     isLoading,

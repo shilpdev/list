@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode
+} from 'react'
 import type {
   AttrSettings,
   Filters,
@@ -8,10 +15,10 @@ import type {
   ListRenderScope,
   ListState,
   RequestContextPatch,
-  SavedListState,
+  SavedListState
 } from '../../../../shared'
 import { ListContextProvider } from '../context/list-context'
-import { DEFAULT_ID_KEY, getItemId, isEqual } from '../utils'
+import { deepEqual, DEFAULT_ID_KEY, getItemId } from '../utils'
 import { hasActiveFilters } from './utils'
 
 type LocalInternalListState = Omit<InternalListState, 'page'> & {
@@ -174,26 +181,18 @@ function ReactList({
             ? [...previousItems, ...res.items]
             : res.items
 
-        let mergedForStateManager: LocalInternalListState | null = null
+        setState((prev) => ({
+          ...prev,
+          response: res,
+          selection: [],
+          items: newItems,
+          count: res.count,
+          error: null,
+          initializingState: false,
+          isLoading: false,
+        }))
 
-        setState((prev) => {
-          const merged = {
-            ...prev,
-            response: res,
-            selection: [],
-            items: newItems,
-            count: res.count,
-            error: null,
-            initializingState: false,
-            isLoading: false,
-          }
-          mergedForStateManager = merged
-          return merged
-        })
-
-        if (mergedForStateManager) {
-          updateStateManager(mergedForStateManager)
-        }
+        updateStateManager(currentState)
 
         onResponse?.(res)
         if (isLoadMore) {
@@ -270,13 +269,13 @@ function ReactList({
 
       clearFilters: () => {
         const nextFilters = { ...defaultFiltersRef.current }
-        if (isEqual(stateRef.current.filters, nextFilters)) return
+        if (deepEqual(stateRef.current.filters, nextFilters)) return
         applyState({ filters: nextFilters, page: 1 })
         onFiltersChange?.(nextFilters)
       },
 
       setFilters: (nextFilters: Filters) => {
-        if (isEqual(stateRef.current.filters, nextFilters)) return
+        if (deepEqual(stateRef.current.filters, nextFilters)) return
         applyState({ filters: nextFilters, page: 1 })
         onFiltersChange?.(nextFilters)
       },
@@ -385,12 +384,15 @@ function ReactList({
 
     initRef.current = true
     stateManager?.init?.(getContext(state))
+    if (state.filters && !deepEqual(state.filters, filters)) {
+      onFiltersChange?.(state.filters)
+    }
     handlers.setPage(state.page as number)
   }, [])
 
   useEffect(() => {
     if (!initRef.current) return
-    if (isEqual(filters, prevFiltersPropRef.current)) return
+    if (deepEqual(filters, prevFiltersPropRef.current)) return
 
     prevFiltersPropRef.current = filters
     applyState({ filters, page: 1 })

@@ -1,4 +1,4 @@
-import { memo, useMemo, type ReactNode } from 'react'
+import { Fragment, memo, useMemo, type ReactNode } from 'react'
 import type {
   PaginationComponentOptions,
   PaginationScope,
@@ -115,26 +115,24 @@ export const ListPagination = memo(
         {renderPages ? (
           renderPages(scope)
         ) : (
-          <div>
-            {pagesToDisplay.map((pageNum) => {
-              const isActive = pageNum === page
-              const pageScope: RenderPageArgs = { ...scope, page: pageNum, isActive }
+          pagesToDisplay.map((pageNum) => {
+            const isActive = pageNum === page
+            const pageScope: RenderPageArgs = { ...scope, page: pageNum, isActive }
 
-              return renderPage ? (
-                renderPage(pageScope)
-              ) : (
-                <div key={`page-${pageNum}`}>
-                  {isActive ? (
-                    <span>{pageNum}</span>
-                  ) : (
-                    <button type="button" onClick={() => navigation.setPage(pageNum)}>
-                      {pageNum}
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+            return renderPage ? (
+              <Fragment key={`page-${pageNum}`}>{renderPage(pageScope)}</Fragment>
+            ) : isActive ? (
+              <span key={`page-${pageNum}`}>{pageNum}</span>
+            ) : (
+              <button
+                key={`page-${pageNum}`}
+                type="button"
+                onClick={() => navigation.setPage(pageNum)}
+              >
+                {pageNum}
+              </button>
+            )
+          })
         )}
 
         {renderNext ? (
