@@ -1,4 +1,4 @@
-import { memo, useMemo, type ReactNode } from 'react'
+import { Fragment, memo, useMemo, type ReactNode } from 'react'
 import type {
   PaginationComponentOptions,
   PaginationScope,
@@ -28,7 +28,7 @@ export const ListPagination = memo(
     renderLast,
   }: ListPaginationProps) => {
     const { listState } = useListContext()
-    const { data, count, pagination, setPage, loader, error } = listState
+    const { rows, count, pagination, setPage, loader, error } = listState
     const { page, perPage } = pagination
     const { initialLoading } = loader
 
@@ -78,7 +78,7 @@ export const ListPagination = memo(
 
     if (initialLoading) return null
 
-    if (!data || data.length === 0) {
+    if (!rows || rows.length === 0) {
       return null
     }
 
@@ -86,12 +86,16 @@ export const ListPagination = memo(
       return null
     }
 
+    if (typeof children === 'function') {
+      return <div className="react-list__pagination">{children(scope)}</div>
+    }
+
     if (children) {
-      return children(scope)
+      return <div className="react-list__pagination">{children}</div>
     }
 
     return (
-      <div className="react-list-pagination">
+      <div className="react-list__pagination">
         {renderFirst ? (
           renderFirst(scope)
         ) : (
@@ -108,30 +112,26 @@ export const ListPagination = memo(
           </button>
         )}
 
-        {renderPages ? (
-          renderPages(scope)
-        ) : (
-          <div>
-            {pagesToDisplay.map((pageNum) => {
+        {renderPages
+          ? renderPages(scope)
+          : pagesToDisplay.map((pageNum) => {
               const isActive = pageNum === page
               const pageScope: RenderPageArgs = { ...scope, page: pageNum, isActive }
 
               return renderPage ? (
-                renderPage(pageScope)
+                <Fragment key={`page-${pageNum}`}>{renderPage(pageScope)}</Fragment>
+              ) : isActive ? (
+                <span key={`page-${pageNum}`}>{pageNum}</span>
               ) : (
-                <div key={`page-${pageNum}`}>
-                  {isActive ? (
-                    <span>{pageNum}</span>
-                  ) : (
-                    <button type="button" onClick={() => navigation.setPage(pageNum)}>
-                      {pageNum}
-                    </button>
-                  )}
-                </div>
+                <button
+                  key={`page-${pageNum}`}
+                  type="button"
+                  onClick={() => navigation.setPage(pageNum)}
+                >
+                  {pageNum}
+                </button>
               )
             })}
-          </div>
-        )}
 
         {renderNext ? (
           renderNext(scope)

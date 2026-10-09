@@ -1,12 +1,12 @@
 <template>
   <div
     v-if="!listState.loader.initialLoading && !listState.error && !listState.isEmpty"
-    class="vue-list__items"
+    class="vue-list__rows"
   >
-    <slot name="default" v-bind="scope">
-      <div v-for="(item, index) in scope.items" :key="getItemId(item, listState.idKey) ?? index">
-        <slot name="item" :item="item" :index="index">
-          <pre>{{ item }}</pre>
+    <slot v-bind="scope">
+      <div v-for="(row, index) in scope.rows" :key="getRowId(row, listState.idKey) ?? index">
+        <slot name="row" :row="row" :index="index">
+          <pre>{{ row }}</pre>
         </slot>
       </div>
     </slot>
@@ -15,23 +15,23 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ItemsScope } from '../../../../shared'
+import type { RowsScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
-import { getItemId } from '../utils'
+import { getRowId } from '../utils'
 
 defineOptions({
-  name: 'ListItems',
+  name: 'ListRows',
 })
 
 const { listState } = useListContext()
 
-const scope = computed((): ItemsScope => {
+const scope = computed((): RowsScope => {
   const state = listState.value
   const { page, perPage } = state.pagination
 
   return {
-    items: state.data.map((item, index) => ({
-      ...(item as object),
+    rows: state.rows.map((row, index) => ({
+      ...(row as object),
       _index: (page - 1) * perPage + index + 1,
     })),
     isLoading: state.loader.isLoading,

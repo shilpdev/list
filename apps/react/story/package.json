@@ -30,12 +30,12 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/browser-playwright": "latest",
-    "@vitest/coverage-v8": "latest",
+    "@vitest/browser-playwright": "5.0.1",
+    "@vitest/coverage-v8": "5.0.1",
+    "vitest": "5.0.1",
     "playwright": "latest",
     "storybook": "^10.5.7",
     "typescript": "~5.8.3",
-    "vite": "^8.2.0",
-    "vitest": "latest"
+    "vite": "^8.2.0"
   }
 }

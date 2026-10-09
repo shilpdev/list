@@ -5,14 +5,13 @@
         type="text"
         :value="localSearch"
         @input="handleInput(($event.target as HTMLInputElement).value)"
-        placeholder="Search"
+        placeholder="Search..."
       />
     </slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { debounce } from 'lodash-es'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import type { SearchComponentOptions, SearchScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
@@ -37,18 +36,25 @@ watch(
   },
 )
 
-const debouncedSetSearch = debounce((value: string) => {
-  listState.value.setSearch(value)
-}, props.debounceTime)
-
-onUnmounted(() => {
-  debouncedSetSearch.cancel()
-})
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 function handleInput(value: string) {
   localSearch.value = value
-  debouncedSetSearch(value)
+
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+
+  debounceTimer = setTimeout(() => {
+    listState.value.setSearch(value)
+  }, props.debounceTime)
 }
+
+onUnmounted(() => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+})
 
 const scope = computed(
   (): SearchScope => ({

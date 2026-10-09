@@ -8,7 +8,7 @@ type ListGoToProps = {
 
 export const ListGoTo = memo(({ children }: ListGoToProps) => {
   const { listState } = useListContext()
-  const { data, count, pagination, setPage, loader, error } = listState
+  const { rows, count, pagination, setPage, loader, error } = listState
   const { page, perPage } = pagination
   const { initialLoading } = loader
 
@@ -37,7 +37,7 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
 
   if (initialLoading) return null
 
-  if (!data || data.length === 0) {
+  if (!rows || rows.length === 0) {
     return null
   }
 
@@ -46,9 +46,11 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
   }
 
   return (
-    <div className="react-list-go-to">
-      {children ? (
+    <div className="react-list__go-to">
+      {typeof children === 'function' ? (
         children(scope)
+      ) : children ? (
+        children
       ) : (
         <select value={page} onChange={handlePageChange}>
           {pages.map((pageNum) => (

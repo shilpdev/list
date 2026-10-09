@@ -2,7 +2,6 @@
   <div
     v-if="listState.loader.isLoading && !listState.loader.initialLoading"
     class="vue-list__loader"
-    :class="positionClass"
   >
     <slot v-bind="scope">
       <p>Loading...</p>
@@ -12,20 +11,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { LoaderComponentOptions, LoaderScope } from '../../../../shared'
+import type { LoaderScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListLoader',
 })
 
-const props = withDefaults(defineProps<LoaderComponentOptions>(), {
-  position: 'overlay',
-})
-
 const { listState } = useListContext()
-
-const positionClass = computed(() => `vue-list__loader--${props.position}`)
 
 const scope = computed(
   (): LoaderScope => ({

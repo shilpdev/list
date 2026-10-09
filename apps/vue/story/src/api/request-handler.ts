@@ -34,7 +34,7 @@ export function createRequestHandler(
 
     if (options.forceEmpty) {
       return {
-        items: [],
+        rows: [],
         count: 0,
         meta: {},
       }
@@ -87,7 +87,7 @@ export function createRequestHandler(
     const data = (await response.json()) as EverestListResponse
 
     return {
-      items: data.data ?? [],
+      rows: data.data ?? [],
       count: data.meta?.filter_count ?? data.meta?.total_count ?? 0,
       meta: data.meta ?? {},
     }

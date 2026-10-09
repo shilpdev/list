@@ -44,7 +44,7 @@ export const ListSearch = memo(({ children, debounceTime = 500 }: ListSearchProp
   }
 
   return (
-    <div className="react-list-search">
+    <div className="react-list__search">
       {children ? (
         children(scope)
       ) : (

@@ -7,7 +7,6 @@
     "jsx": "preserve",
     "allowJs": true,
     "checkJs": false,
-    "types": ["vite/client"],
     "paths": {
       "@/*": ["./src/*"]
     },

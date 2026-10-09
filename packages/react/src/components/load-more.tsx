@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import type { LoadMoreScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
@@ -6,30 +6,21 @@ type ListLoadMoreProps = {
   children?: (scope: LoadMoreScope) => ReactNode
 }
 
-export const ListLoadMore = memo(({ children }: ListLoadMoreProps) => {
+export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
   const { listState } = useListContext()
-  const { data, count, pagination, setPage, loader, error } = listState
+  const { rows, count, pagination, loader, error, loadMore } = listState
   const { page, perPage } = pagination
   const { isLoading } = loader
 
-  const hasMoreItems = useMemo(() => page * perPage < count, [page, perPage, count])
+  const hasMoreRows = page * perPage < count
 
-  const loadMore = useCallback(() => {
-    if (hasMoreItems && !isLoading) {
-      setPage(page + 1)
-    }
-  }, [hasMoreItems, isLoading, setPage, page])
+  const scope: LoadMoreScope = {
+    isLoading,
+    loadMore,
+    hasMoreRows,
+  }
 
-  const scope = useMemo(
-    (): LoadMoreScope => ({
-      isLoading,
-      loadMore,
-      hasMoreItems,
-    }),
-    [isLoading, loadMore, hasMoreItems],
-  )
-
-  if (!data || data.length === 0) {
+  if (!rows || rows.length === 0) {
     return null
   }
 
@@ -37,18 +28,14 @@ export const ListLoadMore = memo(({ children }: ListLoadMoreProps) => {
     return null
   }
 
-  if (typeof children === 'function') {
-    return <div className="react-list-load-more">{children(scope)}</div>
-  }
-
-  if (children) {
-    return <div className="react-list-load-more">{children}</div>
-  }
-
   return (
-    <div className="react-list-load-more">
-      {hasMoreItems ? (
-        <button type="button" onClick={loadMore} disabled={isLoading}>
+    <div className="react-list__load-more">
+      {typeof children === 'function' ? (
+        children(scope)
+      ) : children ? (
+        children
+      ) : hasMoreRows ? (
+        <button type="button" onClick={loadMore}>
           Load More
         </button>
       ) : (
@@ -56,4 +43,4 @@ export const ListLoadMore = memo(({ children }: ListLoadMoreProps) => {
       )}
     </div>
   )
-})
+}
