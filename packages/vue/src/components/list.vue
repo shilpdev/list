@@ -107,23 +107,9 @@ let requestId = 0
 
 const isEmpty = computed(() => items.value.length === 0)
 
-function notifyResponse(res: ListResponse) {
+function setItems(res: ListResponse) {
   emit('onResponse', res)
   props.onResponse?.(res)
-}
-
-function notifyAfterPageChange(res: ListResponse) {
-  emit('afterPageChange', res)
-  props.afterPageChange?.(res)
-}
-
-function notifyAfterLoadMore(res: ListResponse) {
-  emit('afterLoadMore', res)
-  props.afterLoadMore?.(res)
-}
-
-function setItems(res: ListResponse) {
-  notifyResponse(res)
 
   if (isLoadMore.value) {
     if (localPage.value === 1) {
@@ -131,10 +117,12 @@ function setItems(res: ListResponse) {
     } else {
       items.value = items.value.concat(res.items)
     }
-    notifyAfterLoadMore(res)
+    emit('afterLoadMore', res)
+    props.afterLoadMore?.(res)
   } else {
     items.value = res.items
-    notifyAfterPageChange(res)
+    emit('afterPageChange', res)
+    props.afterPageChange?.(res)
   }
 
   count.value = res.count
@@ -149,11 +137,12 @@ function getData(addContext: RequestContextPatch = {}) {
   isLoading.value = true
   const currentRequestId = ++requestId
 
-  props.requestHandler({
-    ...buildContext(),
-    isRefresh: false,
-    ...addContext,
-  })
+  props
+    .requestHandler({
+      ...buildContext(),
+      isRefresh: false,
+      ...addContext,
+    })
     .then((res) => {
       if (currentRequestId !== requestId) return
       response.value = res

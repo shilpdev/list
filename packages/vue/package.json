@@ -30,9 +30,6 @@
   "peerDependencies": {
     "vue": "^3.5.0"
   },
-  "dependencies": {
-    "@vueuse/core": "^15.0.0"
-  },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
     "@vitejs/plugin-vue": "^5.2.3",

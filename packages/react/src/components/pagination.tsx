@@ -112,28 +112,26 @@ export const ListPagination = memo(
           </button>
         )}
 
-        {renderPages ? (
-          renderPages(scope)
-        ) : (
-          pagesToDisplay.map((pageNum) => {
-            const isActive = pageNum === page
-            const pageScope: RenderPageArgs = { ...scope, page: pageNum, isActive }
+        {renderPages
+          ? renderPages(scope)
+          : pagesToDisplay.map((pageNum) => {
+              const isActive = pageNum === page
+              const pageScope: RenderPageArgs = { ...scope, page: pageNum, isActive }
 
-            return renderPage ? (
-              <Fragment key={`page-${pageNum}`}>{renderPage(pageScope)}</Fragment>
-            ) : isActive ? (
-              <span key={`page-${pageNum}`}>{pageNum}</span>
-            ) : (
-              <button
-                key={`page-${pageNum}`}
-                type="button"
-                onClick={() => navigation.setPage(pageNum)}
-              >
-                {pageNum}
-              </button>
-            )
-          })
-        )}
+              return renderPage ? (
+                <Fragment key={`page-${pageNum}`}>{renderPage(pageScope)}</Fragment>
+              ) : isActive ? (
+                <span key={`page-${pageNum}`}>{pageNum}</span>
+              ) : (
+                <button
+                  key={`page-${pageNum}`}
+                  type="button"
+                  onClick={() => navigation.setPage(pageNum)}
+                >
+                  {pageNum}
+                </button>
+              )
+            })}
 
         {renderNext ? (
           renderNext(scope)

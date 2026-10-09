@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
   AttrSettings,
   Filters,
@@ -15,7 +8,7 @@ import type {
   ListRenderScope,
   ListState,
   RequestContextPatch,
-  SavedListState
+  SavedListState,
 } from '../../../../shared'
 import { ListContextProvider } from '../context/list-context'
 import { deepEqual, DEFAULT_ID_KEY, getItemId } from '../utils'

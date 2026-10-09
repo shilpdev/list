@@ -42,7 +42,7 @@ function ListItemsInner({ children, item: itemFn }: ListItemsProps) {
   if (error) return null
 
   return (
-    <div className="react-list__list-items">
+    <div className="react-list__items">
       {children && typeof children === 'function'
         ? children(scope)
         : itemFn

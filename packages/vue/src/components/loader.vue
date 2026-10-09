@@ -20,7 +20,6 @@ defineOptions({
 
 const { listState } = useListContext()
 
-
 const scope = computed(
   (): LoaderScope => ({
     isLoading: listState.value.loader.isLoading,
