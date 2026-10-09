@@ -1,6 +1,6 @@
 import type { Filters, MetaRecord, SortOrder } from './core';
 import type { ListHandlers } from './handlers';
-import type { ListAttribute, AttrSettings } from './attributes';
+import type { ListColumn, ColumnSettings } from './columns';
 import type { ListResponse } from './response';
 
 /** Pagination slice exposed on list state. */
@@ -24,7 +24,7 @@ export interface ListSort {
 
 /** Full reactive list state exposed to UI components and composables. */
 export interface ListState<T = unknown> extends ListHandlers<T> {
-  data: T[];
+  rows: T[];
   response: ListResponse<T> | null;
   error: Error | null;
   count: number;
@@ -34,16 +34,16 @@ export interface ListState<T = unknown> extends ListHandlers<T> {
   sort: ListSort;
   search: string;
   filters: Filters;
-  attrs: ListAttribute[];
-  attrSettings?: AttrSettings;
+  columns: ListColumn[];
+  columnSettings?: ColumnSettings;
   isEmpty: boolean;
   hasActiveFilters: boolean;
   isInitializing?: boolean;
   idKey?: string;
 }
 
-/** List item enriched with a display index (used by items scope). */
-export type SerializedListItem<T> = T & {
+/** Row enriched with a display index (used by the rows scope). */
+export type SerializedListRow<T> = T & {
   _index: number;
 };
 
@@ -55,8 +55,8 @@ export interface InternalListState<T = unknown> {
   sortOrder: SortOrder;
   search: string;
   filters: Filters;
-  attrSettings: AttrSettings;
-  items: T[];
+  columnSettings: ColumnSettings;
+  rows: T[];
   selection: T[];
   error: Error | null;
   response: ListResponse<T> | null;

@@ -8,6 +8,6 @@ export interface VueListEmits<T = unknown> {
   onResponse: [response: ListResponse<T>]
   afterPageChange: [response: ListResponse<T>]
   afterLoadMore: [response: ListResponse<T>]
-  onItemSelect: [selection: T[], previous: T[]]
+  onRowSelect: [selection: T[], previous: T[]]
   onFiltersChange: [filters: Filters]
 }

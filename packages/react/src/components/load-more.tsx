@@ -8,19 +8,19 @@ type ListLoadMoreProps = {
 
 export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
   const { listState } = useListContext()
-  const { data, count, pagination, loader, error, loadMore } = listState
+  const { rows, count, pagination, loader, error, loadMore } = listState
   const { page, perPage } = pagination
   const { isLoading } = loader
 
-  const hasMoreItems = page * perPage < count
+  const hasMoreRows = page * perPage < count
 
   const scope: LoadMoreScope = {
     isLoading,
     loadMore,
-    hasMoreItems,
+    hasMoreRows,
   }
 
-  if (!data || data.length === 0) {
+  if (!rows || rows.length === 0) {
     return null
   }
 
@@ -34,7 +34,7 @@ export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
         children(scope)
       ) : children ? (
         children
-      ) : hasMoreItems ? (
+      ) : hasMoreRows ? (
         <button type="button" onClick={loadMore}>
           Load More
         </button>

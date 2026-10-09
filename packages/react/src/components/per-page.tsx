@@ -8,7 +8,7 @@ type ListPerPageProps = PerPageComponentOptions & {
 
 export const ListPerPage = memo(({ children, options = [10, 25, 50, 100] }: ListPerPageProps) => {
   const { listState } = useListContext()
-  const { data, pagination, setPerPage, loader, error } = listState
+  const { rows, pagination, setPerPage, loader, error } = listState
   const { perPage } = pagination
   const { initialLoading } = loader
 
@@ -42,7 +42,7 @@ export const ListPerPage = memo(({ children, options = [10, 25, 50, 100] }: List
 
   if (initialLoading) return null
 
-  if (!data || data.length === 0) {
+  if (!rows || rows.length === 0) {
     return null
   }
 

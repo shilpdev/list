@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
-  AttrSettings,
+  ColumnSettings,
   Filters,
   InternalListState,
   ListOptions,
@@ -11,7 +11,7 @@ import type {
   SavedListState,
 } from '../../../../shared'
 import { ListContextProvider } from '../context/list-context'
-import { deepEqual, DEFAULT_ID_KEY, getItemId } from '../utils'
+import { deepEqual, DEFAULT_ID_KEY, getRowId } from '../utils'
 import { hasActiveFilters } from './utils'
 
 type LocalInternalListState = Omit<InternalListState, 'page'> & {
@@ -40,7 +40,7 @@ function ReactList({
   sortOrder = 'desc',
   search = '',
   filters = {},
-  attrs,
+  columns,
   version = 1,
   paginationMode = 'pagination',
   meta = {},
@@ -75,7 +75,7 @@ function ReactList({
         sortBy: currentState?.sortBy ?? sortBy,
         sortOrder: currentState?.sortOrder ?? sortOrder,
         filters: currentState?.filters ?? filters,
-        attrSettings: currentState?.attrSettings ?? {},
+        columnSettings: currentState?.columnSettings ?? {},
       }
     },
     [endpoint, version, meta, search, page, perPage, sortBy, sortOrder, filters],
@@ -91,7 +91,7 @@ function ReactList({
         sortBy: oldState?.sortBy,
         sortOrder: oldState?.sortOrder,
         search: oldState?.search,
-        attrSettings: oldState?.attrSettings,
+        columnSettings: oldState?.columnSettings,
         filters: oldState?.filters,
       }
     } catch (err) {
@@ -117,8 +117,8 @@ function ReactList({
       sortOrder: savedState.sortOrder != null ? savedState.sortOrder : sortOrder,
       search: savedState.search != null ? savedState.search : search,
       filters: savedState.filters != null ? savedState.filters : filters,
-      attrSettings: (savedState.attrSettings ?? {}) as AttrSettings,
-      items: [],
+      columnSettings: (savedState.columnSettings ?? {}) as ColumnSettings,
+      rows: [],
       selection: [],
       error: null,
       response: null,
@@ -152,7 +152,7 @@ function ReactList({
 
       try {
         const currentState = newState ?? stateRef.current
-        const previousItems = currentState.items
+        const previousRows = currentState.rows
         const res = await requestHandler({
           endpoint,
           version,
@@ -169,16 +169,16 @@ function ReactList({
 
         if (currentRequestId !== requestIdRef.current) return
 
-        const newItems =
+        const newRows =
           isLoadMore && (currentState.page as number) > 1
-            ? [...previousItems, ...res.items]
-            : res.items
+            ? [...previousRows, ...res.rows]
+            : res.rows
 
         setState((prev) => ({
           ...prev,
           response: res,
           selection: [],
-          items: newItems,
+          rows: newRows,
           count: res.count,
           error: null,
           initializingState: false,
@@ -198,7 +198,7 @@ function ReactList({
         setState((prev) => ({
           ...prev,
           error: toError(err),
-          items: [],
+          rows: [],
           count: 0,
           initializingState: false,
           isLoading: false,
@@ -275,39 +275,39 @@ function ReactList({
 
       refresh: (addContext: RequestContextPatch = { isRefresh: true }) => {
         if (isLoadMore) {
-          applyState({ page: 1, items: [] }, addContext)
+          applyState({ page: 1, rows: [] }, addContext)
         } else {
           fetchData(addContext)
         }
       },
 
-      updateItemById: (item: Record<string, unknown>, id: string | number) => {
+      updateRowById: (row: Record<string, unknown>, id: string | number) => {
         let matched = false
 
-        const newItems = stateRef.current.items.map((entry) => {
-          if (getItemId(entry, idKey) !== id) return entry
+        const newRows = stateRef.current.rows.map((entry) => {
+          if (getRowId(entry, idKey) !== id) return entry
           matched = true
-          return { ...(entry as Record<string, unknown>), ...item }
+          return { ...(entry as Record<string, unknown>), ...row }
         })
 
         if (!matched) {
           console.warn(
-            `ReactList: updateItemById did not find an item where ${idKey} === ${JSON.stringify(id)}. ` +
-              `Verify your items expose "${idKey}" and that the id type matches exactly.`,
+            `ReactList: updateRowById did not find a row where ${idKey} === ${JSON.stringify(id)}. ` +
+              `Verify your rows expose "${idKey}" and that the id type matches exactly.`,
           )
           return
         }
 
-        setState((prev) => ({ ...prev, items: newItems }))
+        setState((prev) => ({ ...prev, rows: newRows }))
       },
 
-      updateAttr: (attrName: string, settingKey: string, value: unknown) => {
+      updateColumn: (columnName: string, settingKey: string, value: unknown) => {
         const current = stateRef.current
         const newState = {
           ...current,
-          attrSettings: {
-            ...current.attrSettings,
-            [attrName]: { ...current.attrSettings?.[attrName], [settingKey]: value },
+          columnSettings: {
+            ...current.columnSettings,
+            [columnName]: { ...current.columnSettings?.[columnName], [settingKey]: value },
           },
         }
 
@@ -322,7 +322,7 @@ function ReactList({
 
   const memoizedState = useMemo(
     (): ListState => ({
-      data: state.items,
+      rows: state.rows,
       response: state.response,
       error: state.error,
       count: state.count,
@@ -330,7 +330,7 @@ function ReactList({
       pagination: {
         page: state.page as number,
         perPage: state.perPage,
-        hasMore: state.items.length < state.count,
+        hasMore: state.rows.length < state.count,
       },
       loader: {
         isLoading: state.isLoading,
@@ -340,17 +340,17 @@ function ReactList({
       hasActiveFilters: hasActiveFilters(state.filters, defaultFiltersRef.current),
       search: state.search,
       filters: state.filters,
-      attrs:
-        attrs ??
-        Object.keys((state.items[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
-      attrSettings: state.attrSettings,
-      isEmpty: state.items.length === 0,
+      columns:
+        columns ??
+        Object.keys((state.rows[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
+      columnSettings: state.columnSettings,
+      isEmpty: state.rows.length === 0,
       isInitializing: state.initializingState,
       idKey,
       ...handlers,
     }),
     [
-      state.items,
+      state.rows,
       state.response,
       state.error,
       state.count,
@@ -363,9 +363,9 @@ function ReactList({
       state.sortOrder,
       state.search,
       state.filters,
-      state.attrSettings,
+      state.columnSettings,
       handlers,
-      attrs,
+      columns,
       idKey,
     ],
   )

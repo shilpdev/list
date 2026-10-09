@@ -1,6 +1,6 @@
 import type { Filters, MetaRecord, PaginationMode, SortOrder } from './core'
 import type { ListResponse } from './response'
-import type { ListAttribute } from './attributes'
+import type { ListColumn } from './columns'
 import type { PaginationScope } from './scopes'
 
 /** Lifecycle hooks shared by React props and Vue emits. */
@@ -8,7 +8,7 @@ export interface ListLifecycleCallbacks<T = unknown> {
   onResponse?: (response: ListResponse<T>) => void
   afterPageChange?: (response: ListResponse<T>) => void
   afterLoadMore?: (response: ListResponse<T>) => void
-  onItemSelect?: (selection: T[], previous: T[]) => void
+  onRowSelect?: (selection: T[], previous: T[]) => void
   onFiltersChange?: (filters: Filters) => void
 }
 
@@ -24,7 +24,7 @@ export interface ListOptions<T = unknown> extends ListLifecycleCallbacks<T> {
   count?: number
   search?: string
   filters?: Filters
-  attrs?: ListAttribute[]
+  columns?: ListColumn[]
   version?: number | string
   paginationMode?: PaginationMode
   meta?: MetaRecord
@@ -51,9 +51,9 @@ export interface PerPageComponentOptions {
   options?: Array<number | PerPageOption>
 }
 
-/** Arguments passed to a custom item renderer. */
-export interface RenderItemArgs<T = unknown> {
-  item: any
+/** Arguments passed to a custom row renderer. */
+export interface RenderRowArgs<T = unknown> {
+  row: any
   index: number
 }
 

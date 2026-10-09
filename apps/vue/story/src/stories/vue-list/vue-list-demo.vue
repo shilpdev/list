@@ -55,7 +55,7 @@
         </div>
       </ListError>
 
-      <ListItems v-slot="{ items, sort, setSort }">
+      <ListRows v-slot="{ rows, sort, setSort }">
         <div class="vue-list-demo__table-wrap">
           <ListLoader>
             <p class="vue-list-demo__overlay">Updating...</p>
@@ -83,16 +83,16 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in items as unknown as Skill[]" :key="item.id">
-                <td>{{ item.id }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.status }}</td>
-                <td>{{ formatSkillDate(item.date_updated) }}</td>
+              <tr v-for="row in rows as unknown as Skill[]" :key="row.id">
+                <td>{{ row.id }}</td>
+                <td>{{ row.name }}</td>
+                <td>{{ row.status }}</td>
+                <td>{{ formatSkillDate(row.date_updated) }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-      </ListItems>
+      </ListRows>
 
       <div class="vue-list-demo__footer">
         <ListSummary v-slot="{ count: total, from, to }">
@@ -138,14 +138,14 @@
           </div>
         </ListPagination>
 
-        <ListLoadMore v-else v-slot="{ loadMore, hasMoreItems, isLoading }">
+        <ListLoadMore v-else v-slot="{ loadMore, hasMoreRows, isLoading }">
           <button
             type="button"
             class="vue-list-demo__button"
-            :disabled="!hasMoreItems || isLoading"
+            :disabled="!hasMoreRows || isLoading"
             @click="loadMore"
           >
-            {{ hasMoreItems ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded' }}
+            {{ hasMoreRows ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded' }}
           </button>
         </ListLoadMore>
       </div>
@@ -160,7 +160,7 @@ import {
   ListEmpty,
   ListError,
   ListInitialLoader,
-  ListItems,
+  ListRows,
   ListLoadMore,
   ListLoader,
   ListPagination,

@@ -2,7 +2,7 @@
   <div v-if="showSummary" class="vue-list__summary">
     <slot v-bind="scope">
       <span>
-        Showing <span>{{ scope.visibleCount }}</span> items (
+        Showing <span>{{ scope.visibleCount }}</span> rows (
         <span>{{ scope.from }} - {{ scope.to }}</span
         >) out of
         <span>{{ scope.count }}</span>
@@ -24,7 +24,7 @@ const { listState } = useListContext()
 
 const showSummary = computed(() => {
   const state = listState.value
-  return !state.loader.initialLoading && state.data.length > 0 && !state.error
+  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
 })
 
 const scope = computed((): SummaryScope => {
@@ -36,7 +36,7 @@ const scope = computed((): SummaryScope => {
   return {
     from,
     to,
-    visibleCount: state.data.length,
+    visibleCount: state.rows.length,
     count: state.count,
   }
 })

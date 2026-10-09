@@ -8,7 +8,7 @@ type ListGoToProps = {
 
 export const ListGoTo = memo(({ children }: ListGoToProps) => {
   const { listState } = useListContext()
-  const { data, count, pagination, setPage, loader, error } = listState
+  const { rows, count, pagination, setPage, loader, error } = listState
   const { page, perPage } = pagination
   const { initialLoading } = loader
 
@@ -37,7 +37,7 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
 
   if (initialLoading) return null
 
-  if (!data || data.length === 0) {
+  if (!rows || rows.length === 0) {
     return null
   }
 

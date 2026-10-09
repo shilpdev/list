@@ -8,9 +8,9 @@ import ReactList, {
   ListEmpty,
   ListError,
   ListInitialLoader,
-  ListItems,
   ListLoader,
   ListPagination,
+  ListRows,
   ListSearch,
   ListSummary,
 } from '@shilp.dev/react-list'
@@ -41,7 +41,7 @@ const requestHandler: RequestHandler<Skill> = async ({
   const res = await fetch(`/api/${endpoint}?${params}`)
   if (!res.ok) throw new Error(`Request failed (${res.status})`)
   const body = await res.json()
-  return { items: body.data ?? [], count: body.total ?? 0 }
+  return { rows: body.data ?? [], count: body.total ?? 0 }
 }
 
 export function SkillList() {
@@ -82,8 +82,8 @@ export function SkillList() {
 
       <ListError>{({ error }) => <p>{error.message}</p>}</ListError>
 
-      <ListItems>
-        {({ items, sort, setSort }) => (
+      <ListRows>
+        {({ rows, sort, setSort }) => (
           <div>
             <ListLoader>
               <p>Updating...</p>
@@ -109,17 +109,17 @@ export function SkillList() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.name}</td>
-                    <td>{item.status}</td>
+                {rows.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.name}</td>
+                    <td>{row.status}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-      </ListItems>
+      </ListRows>
 
       <ListSummary>
         {({ from, to, count }) => (
@@ -155,11 +155,11 @@ export function SkillList() {
 
 ```tsx
 <ReactList endpoint="skills" paginationMode="loadMore" requestHandler={requestHandler}>
-  <ListItems>{({ items }) => /* ... */ null}</ListItems>
+  <ListRows>{({ rows }) => /* ... */ null}</ListRows>
   <ListLoadMore>
-    {({ loadMore, hasMoreItems, isLoading }) => (
-      <button type="button" disabled={!hasMoreItems || isLoading} onClick={loadMore}>
-        {hasMoreItems ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded'}
+    {({ loadMore, hasMoreRows, isLoading }) => (
+      <button type="button" disabled={!hasMoreRows || isLoading} onClick={loadMore}>
+        {hasMoreRows ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded'}
       </button>
     )}
   </ListLoadMore>
@@ -169,19 +169,19 @@ export function SkillList() {
 ## Patch one row
 
 ```tsx
-import { ListItems, useListContext } from '@shilp.dev/react-list'
+import { ListRows, useListContext } from '@shilp.dev/react-list'
 
-function SkillRow({ item }: { item: Skill }) {
+function SkillRow({ row }: { row: Skill }) {
   const { listState } = useListContext<Skill>()
 
   async function onRename(name: string) {
-    const saved = await api.updateSkill(item.id, { name })
-    listState.updateItemById(saved, item.id)
+    const saved = await api.updateSkill(row.id, { name })
+    listState.updateRowById(saved, row.id)
   }
 
   return (
     <div>
-      {item.name}
+      {row.name}
       <button type="button" onClick={() => onRename('Updated')}>
         Save
       </button>
@@ -189,7 +189,7 @@ function SkillRow({ item }: { item: Skill }) {
   )
 }
 
-;<ListItems renderItem={({ item }) => <SkillRow item={item} />} />
+;<ListRows row={({ row }) => <SkillRow row={row} />} />
 ```
 
 ## Persist UI state

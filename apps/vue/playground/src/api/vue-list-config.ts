@@ -140,8 +140,17 @@ const vueListConfig: ListProviderConfig<Skill> = {
     },
 
     set(context: StateManagerContext) {
-      const { endpoint, version, search, page, perPage, sortBy, sortOrder, filters, attrSettings } =
-        context
+      const {
+        endpoint,
+        version,
+        search,
+        page,
+        perPage,
+        sortBy,
+        sortOrder,
+        filters,
+        columnSettings,
+      } = context
       const key = stateManagerKey(endpoint, version)
       localStorage.setItem(
         key,
@@ -152,7 +161,7 @@ const vueListConfig: ListProviderConfig<Skill> = {
           sortBy,
           sortOrder,
           filters,
-          attrSettings,
+          columnSettings,
         }),
       )
       setStateInSearchParams({

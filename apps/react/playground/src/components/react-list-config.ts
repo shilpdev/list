@@ -159,7 +159,7 @@ const reactListConfig: ListProviderConfig<Skill> = {
         sortBy,
         sortOrder,
         filters,
-        attrSettings,
+        columnSettings,
       } = context;
       const key = stateManagerKey(endpoint, version);
       localStorage.setItem(
@@ -171,7 +171,7 @@ const reactListConfig: ListProviderConfig<Skill> = {
           sortBy,
           sortOrder,
           filters,
-          attrSettings,
+          columnSettings,
         })
       );
       setStateInSearchParams({

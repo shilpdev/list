@@ -1,13 +1,13 @@
 import ReactList, {
-  ListAttributes,
+  ListColumns,
   ListEmpty,
   ListError,
   ListGoTo,
   ListInitialLoader,
-  ListItems,
   ListLoader,
   ListPagination,
   ListPerPage,
+  ListRows,
   ListSearch,
   ListSummary,
   useListContext,
@@ -18,7 +18,7 @@ import type {
   PaginationScope,
   PerPageScope,
   SearchScope,
-  SerializedListItem,
+  SerializedListRow,
   SortOrder,
   SummaryScope,
 } from '@shilp.dev/react-list'
@@ -41,7 +41,7 @@ function PatchRowButton({ id }: { id: Skill['id'] }) {
     <button
       type="button"
       onClick={() =>
-        listState.updateItemById(
+        listState.updateRowById(
           {
             name: `Patched ${new Date().toLocaleTimeString()}`,
             date_updated: new Date().toISOString(),
@@ -56,18 +56,18 @@ function PatchRowButton({ id }: { id: Skill['id'] }) {
   )
 }
 
-function SkillItemsTable({
-  items,
+function SkillRowsTable({
+  rows,
   sort,
   setSort,
 }: {
-  items: SerializedListItem<Skill>[]
+  rows: SerializedListRow<Skill>[]
   sort: { sortBy: string | null; sortOrder: SortOrder }
   setSort: (sort: { by: string; order: 'asc' | 'desc' }) => void
 }) {
   const { listState } = useListContext<Skill>()
-  const attrSettings = listState.attrSettings
-  const isVisible = (name: string) => attrSettings?.[name]?.visible ?? true
+  const columnSettings = listState.columnSettings
+  const isVisible = (name: string) => columnSettings?.[name]?.visible ?? true
 
   return (
     <div className="relative max-h-[70vh] w-full overflow-y-auto rounded-md border border-slate-200">
@@ -155,30 +155,30 @@ function SkillItemsTable({
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
-            <tr key={item.id}>
+          {rows.map((row) => (
+            <tr key={row.id}>
               {isVisible('id') && (
                 <td className="border border-slate-200 bg-white px-2 py-2">
-                  {item.id}
+                  {row.id}
                 </td>
               )}
               {isVisible('name') && (
                 <td className="border border-slate-200 bg-white px-2 py-2">
-                  {item.name}
+                  {row.name}
                 </td>
               )}
               {isVisible('status') && (
                 <td className="border border-slate-200 bg-white px-2 py-2">
-                  {item.status}
+                  {row.status}
                 </td>
               )}
               {isVisible('date_updated') && (
                 <td className="border border-slate-200 bg-white px-2 py-2">
-                  {new Date(item.date_updated).toLocaleString()}
+                  {new Date(row.date_updated).toLocaleString()}
                 </td>
               )}
               <td className="border border-slate-200 bg-white px-2 py-2">
-                <PatchRowButton id={item.id} />
+                <PatchRowButton id={row.id} />
               </td>
             </tr>
           ))}
@@ -204,7 +204,7 @@ const ListWrapper = () => {
         page={1}
         perPage={10}
         idKey="id"
-        attrs={[
+        columns={[
           { name: 'id', label: 'ID' },
           { name: 'name', label: 'Name' },
           { name: 'status', label: 'Status' },
@@ -234,41 +234,39 @@ const ListWrapper = () => {
 
           <div className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Attributes / Columns:
+              Columns:
             </span>
-            <ListAttributes>
-              {({ attrs, updateAttr, attrSettings }) => {
-                console.log({ attrs, attrSettings })
-                return (
-                  <div className="flex flex-wrap items-center gap-2">
-                    {attrs.map((attr) => {
-                      const attrName = typeof attr === 'string' ? attr : attr.name
-                      const attrLabel = typeof attr === 'string' ? attr : attr.label || attr.name
-                      const isVisible = attrSettings?.[attrName]?.visible ?? true
+            <ListColumns>
+              {({ columns, updateColumn, columnSettings }) => (
+                <div className="flex flex-wrap items-center gap-2">
+                  {columns.map((column) => {
+                    const columnName = typeof column === 'string' ? column : column.name
+                    const columnLabel =
+                      typeof column === 'string' ? column : column.label || column.name
+                    const isVisible = columnSettings?.[columnName]?.visible ?? true
 
-                      return (
-                        <label
-                          key={attrName}
-                          className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition ${
-                            isVisible
-                              ? 'border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-50'
-                              : 'border-slate-200 bg-slate-100 text-slate-400 line-through opacity-70'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isVisible}
-                            onChange={(e) => updateAttr?.(attrName, 'visible', e.target.checked)}
-                            className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-                          />
-                          <span>{attrLabel}</span>
-                        </label>
-                      )
-                    })}
-                  </div>
-                )
-              }}
-            </ListAttributes>
+                    return (
+                      <label
+                        key={columnName}
+                        className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition ${
+                          isVisible
+                            ? 'border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-50'
+                            : 'border-slate-200 bg-slate-100 text-slate-400 line-through opacity-70'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isVisible}
+                          onChange={(e) => updateColumn?.(columnName, 'visible', e.target.checked)}
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span>{columnLabel}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </ListColumns>
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
@@ -402,15 +400,15 @@ const ListWrapper = () => {
 
 
 
-          <ListItems>
-            {({ items, sort, setSort }) => (
-              <SkillItemsTable
-                items={items as SerializedListItem<Skill>[]}
+          <ListRows>
+            {({ rows, sort, setSort }) => (
+              <SkillRowsTable
+                rows={rows as SerializedListRow<Skill>[]}
                 sort={sort}
                 setSort={setSort}
               />
             )}
-          </ListItems>
+          </ListRows>
 
           <div className="flex w-full flex-col items-center justify-between gap-4 rounded-b-lg border-t border-slate-200 bg-slate-50 px-4 py-5 md:flex-row">
             <div className="flex w-full flex-wrap items-center gap-6">

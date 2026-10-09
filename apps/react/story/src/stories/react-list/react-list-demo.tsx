@@ -3,7 +3,7 @@ import ReactList, {
   ListEmpty,
   ListError,
   ListInitialLoader,
-  ListItems,
+  ListRows,
   ListLoadMore,
   ListLoader,
   ListPagination,
@@ -153,8 +153,8 @@ function ReactListDemoInner({
           )}
         </ListError>
 
-        <ListItems>
-          {({ items, sort, setSort }) => (
+        <ListRows>
+          {({ rows, sort, setSort }) => (
             <div className="react-list-demo__table-wrap">
               <ListLoader>
                 <p className="react-list-demo__overlay">Updating...</p>
@@ -186,19 +186,19 @@ function ReactListDemoInner({
                   </tr>
                 </thead>
                 <tbody>
-                  {(items as unknown as Skill[]).map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.id}</td>
-                      <td>{item.name}</td>
-                      <td>{item.status}</td>
-                      <td>{formatSkillDate(item.date_updated)}</td>
+                  {(rows as unknown as Skill[]).map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.id}</td>
+                      <td>{row.name}</td>
+                      <td>{row.status}</td>
+                      <td>{formatSkillDate(row.date_updated)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-        </ListItems>
+        </ListRows>
 
         <div className="react-list-demo__footer">
           <ListSummary>
@@ -265,14 +265,14 @@ function ReactListDemoInner({
             </ListPagination>
           ) : (
             <ListLoadMore>
-              {({ loadMore, hasMoreItems, isLoading }) => (
+              {({ loadMore, hasMoreRows, isLoading }) => (
                 <button
                   type="button"
                   className="react-list-demo__button"
-                  disabled={!hasMoreItems || isLoading}
+                  disabled={!hasMoreRows || isLoading}
                   onClick={loadMore}
                 >
-                  {hasMoreItems ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded'}
+                  {hasMoreRows ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded'}
                 </button>
               )}
             </ListLoadMore>

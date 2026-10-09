@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, onMounted, provide, ref, watch } from 'vue'
 import type {
-  AttrSettings,
+  ColumnSettings,
   Filters,
   ListResponse,
   ListState,
@@ -19,7 +19,7 @@ import type {
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'
 import type { VueListEmits, VueListProps } from '../types'
-import { DEFAULT_ID_KEY, getItemId } from '../utils'
+import { DEFAULT_ID_KEY, getRowId } from '../utils'
 
 defineOptions({
   name: 'VueList',
@@ -55,7 +55,7 @@ const localPerPage = ref<number>(props.perPage)
 const localSortBy = ref<string>(props.sortBy)
 const localSortOrder = ref<SortOrder>(props.sortOrder)
 const localSearch = ref<string>(props.search ?? '')
-const attrSettings = ref<AttrSettings>()
+const columnSettings = ref<ColumnSettings>()
 
 const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
 
@@ -69,7 +69,7 @@ const buildContext = (): StateManagerContext => ({
   sortBy: localSortBy.value,
   sortOrder: localSortOrder.value,
   filters: filters.value ?? {},
-  attrSettings: attrSettings.value,
+  columnSettings: columnSettings.value,
 })
 
 function getSavedState(): SavedListState {
@@ -93,10 +93,10 @@ if (savedState.perPage != null) localPerPage.value = savedState.perPage
 if (savedState.sortBy != null) localSortBy.value = savedState.sortBy
 if (savedState.sortOrder != null) localSortOrder.value = savedState.sortOrder
 if (savedState.search != null) localSearch.value = savedState.search
-if (savedState.attrSettings != null) attrSettings.value = savedState.attrSettings
+if (savedState.columnSettings != null) columnSettings.value = savedState.columnSettings
 if (savedState.filters != null) filters.value = savedState.filters
 
-const items = ref<unknown[]>([])
+const rows = ref<unknown[]>([])
 const selection = ref<unknown[]>([])
 const error = ref<Error | null>(null)
 const response = ref<ListResponse | null>(null)
@@ -105,22 +105,22 @@ const isLoading = ref(true)
 const initializingState = ref(true)
 let requestId = 0
 
-const isEmpty = computed(() => items.value.length === 0)
+const isEmpty = computed(() => rows.value.length === 0)
 
-function setItems(res: ListResponse) {
+function setRows(res: ListResponse) {
   emit('onResponse', res)
   props.onResponse?.(res)
 
   if (isLoadMore.value) {
     if (localPage.value === 1) {
-      items.value = res.items
+      rows.value = res.rows
     } else {
-      items.value = items.value.concat(res.items)
+      rows.value = rows.value.concat(res.rows)
     }
     emit('afterLoadMore', res)
     props.afterLoadMore?.(res)
   } else {
-    items.value = res.items
+    rows.value = res.rows
     emit('afterPageChange', res)
     props.afterPageChange?.(res)
   }
@@ -148,13 +148,13 @@ function getData(addContext: RequestContextPatch = {}) {
       response.value = res
       updateStateManager()
       selection.value = []
-      setItems(res)
+      setRows(res)
       initializingState.value = false
     })
     .catch((err: unknown) => {
       if (currentRequestId !== requestId) return
       error.value = toError(err)
-      items.value = []
+      rows.value = []
       count.value = 0
       initializingState.value = false
       // The list UI already surfaces the error via `error`.
@@ -212,7 +212,7 @@ function clearFilters() {
 
 function refresh(addContext: RequestContextPatch = { isRefresh: true }) {
   if (isLoadMore.value) {
-    items.value = []
+    rows.value = []
     setPage(1, addContext)
   } else {
     getData(addContext)
@@ -232,29 +232,29 @@ function loadMore() {
   }
 }
 
-function updateItemById(item: Partial<unknown>, id: string | number) {
+function updateRowById(row: Partial<unknown>, id: string | number) {
   let matched = false
 
-  const next = items.value.map((entry) => {
-    if (getItemId(entry, props.idKey) !== id) return entry
+  const next = rows.value.map((entry) => {
+    if (getRowId(entry, props.idKey) !== id) return entry
     matched = true
-    return { ...(entry as Record<string, unknown>), ...item }
+    return { ...(entry as Record<string, unknown>), ...row }
   })
 
   if (!matched) {
     console.warn(
-      `VueList: updateItemById did not find an item where ${props.idKey} === ${JSON.stringify(id)}. ` +
-        `Verify your items expose "${props.idKey}" and that the id type matches exactly.`,
+      `VueList: updateRowById did not find a row where ${props.idKey} === ${JSON.stringify(id)}. ` +
+      `Verify your rows expose "${props.idKey}" and that the id type matches exactly.`,
     )
     return
   }
 
-  items.value = next
+  rows.value = next
 }
 
-function updateAttr(name: string, prop: string, value: boolean | unknown) {
-  const current = attrSettings.value ?? {}
-  attrSettings.value = {
+function updateColumn(name: string, prop: string, value: boolean | unknown) {
+  const current = columnSettings.value ?? {}
+  columnSettings.value = {
     ...current,
     [name]: {
       ...current[name],
@@ -266,7 +266,7 @@ function updateAttr(name: string, prop: string, value: boolean | unknown) {
 
 const listState = computed(
   (): ListState => ({
-    data: items.value,
+    rows: rows.value,
     response: response.value,
     error: error.value,
     count: count.value,
@@ -274,7 +274,7 @@ const listState = computed(
     pagination: {
       page: localPage.value,
       perPage: localPerPage.value,
-      hasMore: items.value.length < count.value,
+      hasMore: rows.value.length < count.value,
     },
     loader: {
       isLoading: isLoading.value,
@@ -286,10 +286,10 @@ const listState = computed(
     },
     search: localSearch.value,
     filters: filters.value ?? {},
-    attrs:
-      props.attrs ??
-      Object.keys((items.value[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
-    attrSettings: attrSettings.value,
+    columns:
+      props.columns ??
+      Object.keys((rows.value[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
+    columnSettings: columnSettings.value,
     isEmpty: isEmpty.value,
     hasActiveFilters: hasActiveFilters(filters.value ?? {}, defaultFilters.value),
     isInitializing: initializingState.value,
@@ -303,8 +303,8 @@ const listState = computed(
     loadMore,
     refresh,
     setSelection,
-    updateItemById,
-    updateAttr,
+    updateRowById,
+    updateColumn,
   }),
 )
 
@@ -317,8 +317,8 @@ watch(filters, (newValue, oldValue) => {
 })
 
 watch(selection, (newValue, oldValue) => {
-  emit('onItemSelect', newValue, oldValue ?? [])
-  props.onItemSelect?.(newValue, oldValue ?? [])
+  emit('onRowSelect', newValue, oldValue ?? [])
+  props.onRowSelect?.(newValue, oldValue ?? [])
 })
 
 onMounted(() => {
@@ -327,7 +327,7 @@ onMounted(() => {
 })
 
 defineExpose({
-  items,
+  rows,
   response,
   isLoading,
   error,
@@ -342,7 +342,7 @@ defineExpose({
   loadMore,
   setFilters,
   clearFilters,
-  updateItemById,
-  updateAttr,
+  updateRowById,
+  updateColumn,
 })
 </script>
