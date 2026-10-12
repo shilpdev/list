@@ -17,7 +17,7 @@ defineOptions({
 const { listState } = useListContext()
 
 const showEmpty = computed(() => {
-  const state = listState.value
+  const state = listState
   return !state.loader.initialLoading && !state.loader.isLoading && state.isEmpty && !state.error
 })
 </script>

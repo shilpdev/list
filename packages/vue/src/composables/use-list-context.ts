@@ -1,18 +1,24 @@
 import { inject, type ComputedRef, type InjectionKey } from 'vue'
-import type { ListState } from '../../../../shared'
+import type { ListInstanceContext, ListState } from '../../../../shared'
 
-export interface VueListInstanceContext<T = unknown> {
+interface ProvidedListContext<T = unknown> {
   listState: ComputedRef<ListState<T>>
 }
 
-export const LIST_CONTEXT_KEY: InjectionKey<VueListInstanceContext> = Symbol('vue-list-context')
+export const LIST_CONTEXT_KEY: InjectionKey<ProvidedListContext> = Symbol('vue-list-context')
 
-export function useListContext<T>(): VueListInstanceContext<T> {
+export function useListContext<T>(): ListInstanceContext<T> {
   const context = inject(LIST_CONTEXT_KEY, undefined)
 
   if (!context) {
     throw new Error('useListContext must be used within a VueList component tree')
   }
 
-  return context as VueListInstanceContext<T>
+  const listState = new Proxy({} as ListState<T>, {
+    get(_target, key) {
+      return context.listState.value[key as keyof ListState<T>]
+    },
+  }) as ListState<T>
+
+  return { listState }
 }

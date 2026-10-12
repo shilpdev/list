@@ -211,6 +211,7 @@ const ListWrapper = () => {
           { name: 'date_updated', label: 'Update At' },
         ]}
         filters={filters}
+        onFiltersChange={setFilters}
         paginationMode="pagination"
         requestHandler={reactListConfig.requestHandler}
         stateManager={reactListConfig.stateManager}

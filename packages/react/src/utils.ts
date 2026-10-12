@@ -28,8 +28,6 @@ export const deepEqual = (a: unknown, b: unknown): boolean => {
   return true
 }
 
-export const isEqual = deepEqual
-
 export const DEFAULT_ID_KEY = 'id'
 
 export const getRowId = (

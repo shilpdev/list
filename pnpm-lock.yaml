@@ -249,10 +249,10 @@ importers:
   packages/react:
     dependencies:
       react:
-        specifier: ^18.2.0 || ^19.0.0
+        specifier: ^19.0.0
         version: 19.3.0
       react-dom:
-        specifier: ^18.2.0 || ^19.0.0
+        specifier: ^19.0.0
         version: 19.3.0(react@19.3.0)
     devDependencies:
       '@eslint/js':

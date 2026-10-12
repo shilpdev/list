@@ -26,7 +26,7 @@ defineOptions({
 const { listState } = useListContext()
 
 const scope = computed((): RowsScope => {
-  const state = listState.value
+  const state = listState
   const { page, perPage } = state.pagination
 
   return {

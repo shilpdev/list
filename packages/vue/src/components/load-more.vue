@@ -19,12 +19,12 @@ defineOptions({
 const { listState } = useListContext()
 
 const showContent = computed(() => {
-  const state = listState.value
+  const state = listState
   return state.rows.length > 0 && !state.error
 })
 
 const scope = computed((): LoadMoreScope => {
-  const state = listState.value
+  const state = listState
   const { page, perPage } = state.pagination
 
   return {

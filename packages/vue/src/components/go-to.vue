@@ -25,12 +25,12 @@ defineOptions({
 const { listState } = useListContext()
 
 const showContent = computed(() => {
-  const state = listState.value
+  const state = listState
   return !state.loader.initialLoading && state.rows.length > 0 && !state.error
 })
 
 const scope = computed((): GoToScope => {
-  const state = listState.value
+  const state = listState
   const { page, perPage } = state.pagination
   const pagesCount = Math.ceil(state.count / perPage)
   const pages = Array.from({ length: pagesCount }, (_, index) => index + 1)

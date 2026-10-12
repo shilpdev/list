@@ -23,12 +23,12 @@ defineOptions({
 const { listState } = useListContext()
 
 const showSummary = computed(() => {
-  const state = listState.value
+  const state = listState
   return !state.loader.initialLoading && state.rows.length > 0 && !state.error
 })
 
 const scope = computed((): SummaryScope => {
-  const state = listState.value
+  const state = listState
   const { page, perPage } = state.pagination
   const from = page * perPage - perPage + 1
   const to = Math.min(page * perPage, state.count)

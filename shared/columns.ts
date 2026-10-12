@@ -22,7 +22,6 @@ export type UpdateColumnFn = (
 
 /** Arguments passed to a custom column renderer. */
 export interface RenderColumnArgs {
-  key: string;
   column: ListColumn;
   updateColumn: UpdateColumnFn;
   columnSettings: ColumnSettings;

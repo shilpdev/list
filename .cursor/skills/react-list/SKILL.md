@@ -13,14 +13,14 @@ Headless React list: fetch, paginate, search, filter, sort. You own the UI via s
 
 Package: `@shilp.dev/react-list` (v1.1). All types ship with the package - import them from `@shilp.dev/react-list`.
 
-Peers: `react` and `react-dom` `^18.2 || ^19`. Do not import `@shilp.dev/vue-list`.
+Peers: `react` and `react-dom` `^19`. Do not import `@shilp.dev/vue-list`.
 
 ## Rules
 
 1. Wrap all list slots in `<ReactList>`. Slots use `useListContext()` and throw outside it.
 2. Always pass `requestHandler`. Missing it throws.
 3. Return `{ rows, count, meta? }` from `requestHandler`. Map your API into that shape.
-4. Drive extra filters from parent state via the `filters` prop. Do not call `setFilters` from a local form unless that form lives inside the list tree.
+4. Drive extra filters from parent state via `filters` and `onFiltersChange` (pass the state setter). `onFiltersChange` also runs when `stateManager` restores filters. Do not call `setFilters` from a local form unless that form lives inside the list tree.
 5. Patch one row with `updateRowById(partial, id)` after a successful row API. Do not `refresh()` for a single-field edit. Rows need an `id`.
 6. Use `paginationMode="loadMore"` with `ListLoadMore`, or default `"pagination"` with `ListPagination`. Do not mix both as the primary pager.
 
@@ -60,14 +60,14 @@ Required: `endpoint`, `requestHandler`.
 | `sortBy`                                           | `''`           |                                                 |
 | `sortOrder`                                        | `'desc'`       | `'asc' \| 'desc' \| ''`                         |
 | `search`                                           | `''`           |                                                 |
-| `filters`                                          | `{}`           | Parent-controlled query filters                 |
+| `filters`                                          | `{}`           | Parent-controlled query filters. Pair with `onFiltersChange`. |
 | `paginationMode`                                   | `'pagination'` | `'loadMore'` appends pages                      |
 | `version`                                          | `1`            | Passed to handler / state manager               |
 | `meta`                                             | `{}`           | Passed through to handler                       |
 | `columns`                                          |                | Column definitions (`string[]` or `{ name }[]`) |
 | `count`                                            | `0`            | Initial count before first fetch                |
 | `stateManager`                                     |                | Optional `{ init, get, set }` persistence       |
-| `onResponse` / `afterPageChange` / `afterLoadMore` |                | Lifecycle hooks                                 |
+| `onResponse` / `afterPageChange` / `afterLoadMore` / `onFiltersChange` | | Lifecycle hooks. `onFiltersChange` also fires when `stateManager` restores filters. |
 
 Children: `ReactNode` or `(state: ListState<T>) => ReactNode`.
 
@@ -107,7 +107,7 @@ const { listState } = useListContext<Row>()
 
 Data: `rows`, `count`, `error`, `response`, `isEmpty`, `hasActiveFilters`, `search`, `filters`, `selection`, `columns`, `columnSettings`.
 
-Slices: `loader.isLoading` / `loader.initialLoading`, `pagination.page` / `perPage` / `hasMore`, `sort.sortBy` / `sortOrder`.
+Slices: `loader.isLoading` / `loader.initialLoading`, `pagination.page` / `perPage` / `hasMore`, `sort.sortBy` (`null` when unset) / `sortOrder`.
 
 Handlers: `setPage`, `setPerPage`, `setSearch`, `setSort({ by, order })`, `setFilters`, `clearFilters`, `loadMore`, `refresh`, `setSelection`, `updateRowById`, `updateColumn`.
 

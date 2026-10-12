@@ -48,7 +48,13 @@ export function SkillList() {
   const [filters, setFilters] = useState<Record<string, string | undefined>>({})
 
   return (
-    <ReactList endpoint="skills" perPage={10} requestHandler={requestHandler} filters={filters}>
+    <ReactList
+      endpoint="skills"
+      perPage={10}
+      requestHandler={requestHandler}
+      filters={filters}
+      onFiltersChange={setFilters}
+    >
       <ListSearch>
         {({ search, setSearch }) => (
           <input

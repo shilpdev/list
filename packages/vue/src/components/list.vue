@@ -25,7 +25,10 @@ defineOptions({
   name: 'VueList',
 })
 
-type VueListComponentProps = Omit<VueListProps, 'filters'>
+type VueListComponentProps = Omit<
+  VueListProps,
+  'filters' | 'onResponse' | 'onRowSelect' | 'onFiltersChange'
+>
 
 const props = withDefaults(defineProps<VueListComponentProps>(), {
   idKey: DEFAULT_ID_KEY,
@@ -59,7 +62,7 @@ const columnSettings = ref<ColumnSettings>()
 
 const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
 
-const buildContext = (): StateManagerContext => ({
+const buildRequestContext = () => ({
   endpoint: props.endpoint,
   version: props.version,
   meta: props.meta,
@@ -69,6 +72,10 @@ const buildContext = (): StateManagerContext => ({
   sortBy: localSortBy.value,
   sortOrder: localSortOrder.value,
   filters: filters.value ?? {},
+})
+
+const buildContext = (): StateManagerContext => ({
+  ...buildRequestContext(),
   columnSettings: columnSettings.value,
 })
 
@@ -108,8 +115,7 @@ let requestId = 0
 const isEmpty = computed(() => rows.value.length === 0)
 
 function setRows(res: ListResponse) {
-  emit('onResponse', res)
-  props.onResponse?.(res)
+  emit('response', res)
 
   if (isLoadMore.value) {
     if (localPage.value === 1) {
@@ -139,7 +145,7 @@ function getData(addContext: RequestContextPatch = {}) {
 
   props
     .requestHandler({
-      ...buildContext(),
+      ...buildRequestContext(),
       isRefresh: false,
       ...addContext,
     })
@@ -198,16 +204,14 @@ function setSelection(value: unknown[]) {
 function setFilters(nextFilters: Filters) {
   if (deepEqual(filters.value, nextFilters)) return
   filters.value = nextFilters
-  emit('onFiltersChange', nextFilters)
-  props.onFiltersChange?.(nextFilters)
+  emit('filtersChange', nextFilters)
 }
 
 function clearFilters() {
   const nextFilters = { ...defaultFilters.value }
   if (deepEqual(filters.value, nextFilters)) return
   filters.value = nextFilters
-  emit('onFiltersChange', nextFilters)
-  props.onFiltersChange?.(nextFilters)
+  emit('filtersChange', nextFilters)
 }
 
 function refresh(addContext: RequestContextPatch = { isRefresh: true }) {
@@ -317,8 +321,7 @@ watch(filters, (newValue, oldValue) => {
 })
 
 watch(selection, (newValue, oldValue) => {
-  emit('onRowSelect', newValue, oldValue ?? [])
-  props.onRowSelect?.(newValue, oldValue ?? [])
+  emit('rowSelect', newValue, oldValue ?? [])
 })
 
 onMounted(() => {

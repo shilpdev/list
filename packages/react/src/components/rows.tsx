@@ -4,7 +4,7 @@ import { useListContext } from '../context/list-context'
 import { getRowId } from '../utils'
 
 type ListRowsProps = {
-  children?: (scope: RowsScope) => ReactNode
+  children?: ReactNode | ((scope: RowsScope) => ReactNode)
   row?: (args: RenderRowArgs) => ReactNode
 }
 
@@ -43,19 +43,19 @@ function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
 
   return (
     <div className="react-list__rows">
-      {children && typeof children === 'function'
-        ? children(scope)
+      {children
+        ? typeof children === 'function'
+          ? children(scope)
+          : children
         : rowFn
           ? serializedRows.map((row, index) => (
               <div key={getRowId(row, idKey) ?? index}>{rowFn({ row, index })}</div>
             ))
-          : children
-            ? children
-            : serializedRows.map((row, index) => (
-                <div key={getRowId(row, idKey) ?? index}>
-                  <pre>{JSON.stringify(row, null, 2)}</pre>
-                </div>
-              ))}
+          : serializedRows.map((row, index) => (
+              <div key={getRowId(row, idKey) ?? index}>
+                <pre>{JSON.stringify(row, null, 2)}</pre>
+              </div>
+            ))}
     </div>
   )
 }

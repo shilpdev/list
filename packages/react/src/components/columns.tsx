@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, type ReactNode } from 'react'
+import { Fragment, memo, useCallback, useMemo, type ReactNode } from 'react'
 import type { ColumnsScope, ListColumn, RenderColumnArgs } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
@@ -37,12 +37,15 @@ export const ListColumns = memo(({ children, column: columnFn }: ListColumnsProp
           ? children
           : normalizedColumns.map((column, index) => {
               if (columnFn) {
-                return columnFn({
-                  key: `column-${index}`,
-                  column,
-                  updateColumn: updateColumn ?? (() => {}),
-                  columnSettings: columnSettings ?? {},
-                })
+                return (
+                  <Fragment key={`column-${index}`}>
+                    {columnFn({
+                      column,
+                      updateColumn: updateColumn ?? (() => {}),
+                      columnSettings: columnSettings ?? {},
+                    })}
+                  </Fragment>
+                )
               }
 
               return (

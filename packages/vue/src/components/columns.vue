@@ -40,7 +40,7 @@ defineOptions({
 const { listState } = useListContext()
 
 const scope = computed((): ColumnsScope => {
-  const state = listState.value
+  const state = listState
 
   return {
     columns: state.columns as ListColumn[],

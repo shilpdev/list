@@ -3,7 +3,11 @@ import type { ListResponse } from './response'
 import type { ListColumn } from './columns'
 import type { PaginationScope } from './scopes'
 
-/** Lifecycle hooks shared by React props and Vue emits. */
+/**
+ * Lifecycle hooks. React passes them as props (`onResponse`, `afterPageChange`,
+ * `afterLoadMore`, `onRowSelect`, `onFiltersChange`). Vue emits `response`,
+ * `afterPageChange`, `afterLoadMore`, `rowSelect`, and `filtersChange`.
+ */
 export interface ListLifecycleCallbacks<T = unknown> {
   onResponse?: (response: ListResponse<T>) => void
   afterPageChange?: (response: ListResponse<T>) => void

@@ -1,11 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type Ref,
+} from 'react'
 import type {
   ColumnSettings,
   Filters,
   InternalListState,
+  ListHandlers,
   ListOptions,
   ListProviderConfig,
   ListRenderScope,
+  ListResponse,
   ListState,
   RequestContextPatch,
   SavedListState,
@@ -18,10 +29,34 @@ type LocalInternalListState = Omit<InternalListState, 'page'> & {
   page: number | string
 }
 
+/** Imperative API exposed via ref (mirrors VueList defineExpose). */
+export type ReactListHandle = {
+  rows: unknown[]
+  response: ListResponse | null
+  isLoading: boolean
+  error: Error | null
+  count: number
+  selection: unknown[]
+} & Pick<
+  ListHandlers,
+  | 'setPage'
+  | 'setPerPage'
+  | 'setSort'
+  | 'setSearch'
+  | 'setSelection'
+  | 'refresh'
+  | 'loadMore'
+  | 'setFilters'
+  | 'clearFilters'
+  | 'updateRowById'
+  | 'updateColumn'
+>
+
 export type ReactListProps = ListOptions &
   ListProviderConfig & {
     children?: ReactNode | ((state: ListRenderScope) => ReactNode)
-    onFiltersChange?: (filters: Filters) => void
+    /** React 19 ref-as-prop; use with useImperativeHandle for the imperative API. */
+    ref?: Ref<ReactListHandle>
   }
 
 const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
@@ -31,6 +66,7 @@ const toError = (err: unknown): Error => (err instanceof Error ? err : new Error
  * Provides list context to child components (`ListSearch`, `ListPagination`, etc.).
  */
 function ReactList({
+  ref,
   children,
   endpoint,
   idKey = DEFAULT_ID_KEY,
@@ -51,6 +87,7 @@ function ReactList({
   afterPageChange,
   afterLoadMore,
   onFiltersChange,
+  onRowSelect,
 }: ReactListProps) {
   if (!requestHandler) {
     throw new Error('ReactList: requestHandler is required.')
@@ -63,22 +100,27 @@ function ReactList({
 
   const isLoadMore = paginationMode === 'loadMore'
 
-  const getContext = useCallback(
-    (currentState?: LocalInternalListState) => {
-      return {
-        endpoint,
-        version,
-        meta,
-        search: currentState?.search ?? search,
-        page: (currentState?.page ?? page) as number,
-        perPage: currentState?.perPage ?? perPage,
-        sortBy: currentState?.sortBy ?? sortBy,
-        sortOrder: currentState?.sortOrder ?? sortOrder,
-        filters: currentState?.filters ?? filters,
-        columnSettings: currentState?.columnSettings ?? {},
-      }
-    },
+  const getRequestContext = useCallback(
+    (currentState?: LocalInternalListState) => ({
+      endpoint,
+      version,
+      meta,
+      search: currentState?.search ?? search,
+      page: (currentState?.page ?? page) as number,
+      perPage: currentState?.perPage ?? perPage,
+      sortBy: currentState?.sortBy ?? sortBy,
+      sortOrder: currentState?.sortOrder ?? sortOrder,
+      filters: currentState?.filters ?? filters,
+    }),
     [endpoint, version, meta, search, page, perPage, sortBy, sortOrder, filters],
+  )
+
+  const getContext = useCallback(
+    (currentState?: LocalInternalListState) => ({
+      ...getRequestContext(currentState),
+      columnSettings: currentState?.columnSettings ?? {},
+    }),
+    [getRequestContext],
   )
 
   const getSavedState = (): SavedListState => {
@@ -154,15 +196,7 @@ function ReactList({
         const currentState = newState ?? stateRef.current
         const previousRows = currentState.rows
         const res = await requestHandler({
-          endpoint,
-          version,
-          meta,
-          page: currentState.page as number,
-          perPage: currentState.perPage,
-          search: currentState.search,
-          sortBy: currentState.sortBy,
-          sortOrder: currentState.sortOrder,
-          filters: currentState.filters,
+          ...getRequestContext(currentState),
           isRefresh: false,
           ...addContext,
         })
@@ -208,10 +242,8 @@ function ReactList({
       }
     },
     [
-      endpoint,
-      version,
+      getRequestContext,
       isLoadMore,
-      meta,
       requestHandler,
       onResponse,
       afterLoadMore,
@@ -336,7 +368,7 @@ function ReactList({
         isLoading: state.isLoading,
         initialLoading: state.initializingState,
       },
-      sort: { sortBy: state.sortBy, sortOrder: state.sortOrder },
+      sort: { sortBy: state.sortBy || null, sortOrder: state.sortOrder },
       hasActiveFilters: hasActiveFilters(state.filters, defaultFiltersRef.current),
       search: state.search,
       filters: state.filters,
@@ -372,6 +404,42 @@ function ReactList({
 
   const contextValue = useMemo(() => ({ listState: memoizedState }), [memoizedState])
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      get rows() {
+        return stateRef.current.rows
+      },
+      get response() {
+        return stateRef.current.response
+      },
+      get isLoading() {
+        return stateRef.current.isLoading
+      },
+      get error() {
+        return stateRef.current.error
+      },
+      get count() {
+        return stateRef.current.count
+      },
+      get selection() {
+        return stateRef.current.selection
+      },
+      setPage: handlers.setPage,
+      setPerPage: handlers.setPerPage,
+      setSort: handlers.setSort,
+      setSearch: handlers.setSearch,
+      setSelection: handlers.setSelection,
+      refresh: handlers.refresh,
+      loadMore: handlers.loadMore,
+      setFilters: handlers.setFilters,
+      clearFilters: handlers.clearFilters,
+      updateRowById: handlers.updateRowById,
+      updateColumn: handlers.updateColumn,
+    }),
+    [handlers],
+  )
+
   useEffect(() => {
     if (!state.initializingState || initRef.current) return
 
@@ -388,8 +456,26 @@ function ReactList({
     if (deepEqual(filters, prevFiltersPropRef.current)) return
 
     prevFiltersPropRef.current = filters
+    // Parent echoed filters already applied (setFilters, clearFilters, or stateManager restore).
+    if (deepEqual(filters, stateRef.current.filters)) return
+
     applyState({ filters, page: 1 })
-  }, [filters])
+  }, [filters, applyState])
+
+  const prevSelectionRef = useRef(state.selection)
+  const selectionEffectReadyRef = useRef(false)
+
+  useEffect(() => {
+    if (!selectionEffectReadyRef.current) {
+      selectionEffectReadyRef.current = true
+      prevSelectionRef.current = state.selection
+      return
+    }
+
+    const previous = prevSelectionRef.current
+    prevSelectionRef.current = state.selection
+    onRowSelect?.(state.selection, previous)
+  }, [state.selection, onRowSelect])
 
   return (
     <ListContextProvider value={contextValue}>
@@ -400,4 +486,4 @@ function ReactList({
   )
 }
 
-export default ReactList as (props: ReactListProps) => ReactNode
+export default ReactList

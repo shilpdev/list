@@ -47,12 +47,12 @@ const props = withDefaults(defineProps<PaginationComponentOptions>(), {
 const { listState } = useListContext()
 
 const showContent = computed(() => {
-  const state = listState.value
+  const state = listState
   return !state.loader.initialLoading && state.rows.length > 0 && !state.error
 })
 
 const scope = computed((): PaginationScope => {
-  const state = listState.value
+  const state = listState
   const { page, perPage } = state.pagination
   const total = state.count
   const pagesCount = Math.ceil(total / perPage)

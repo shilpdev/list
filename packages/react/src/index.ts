@@ -1,4 +1,4 @@
-export type { ReactListProps } from './components/list'
+export type { ReactListHandle, ReactListProps } from './components/list'
 export { default, default as ReactList } from './components/list'
 export { ListGoTo } from './components/go-to'
 export { ListError } from './components/error'

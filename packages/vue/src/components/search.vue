@@ -25,10 +25,10 @@ const props = withDefaults(defineProps<SearchComponentOptions>(), {
 })
 
 const { listState } = useListContext()
-const localSearch = ref(listState.value.search)
+const localSearch = ref(listState.search)
 
 watch(
-  () => listState.value.search,
+  () => listState.search,
   (value) => {
     if (value !== localSearch.value) {
       localSearch.value = value
@@ -46,7 +46,7 @@ function handleInput(value: string) {
   }
 
   debounceTimer = setTimeout(() => {
-    listState.value.setSearch(value)
+    listState.setSearch(value)
   }, props.debounceTime)
 }
 

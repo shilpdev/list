@@ -5,9 +5,9 @@ export interface VueListProps<T = unknown> extends ListOptions<T>, ListProviderC
 
 /** Emits for the VueList root component. */
 export interface VueListEmits<T = unknown> {
-  onResponse: [response: ListResponse<T>]
+  response: [response: ListResponse<T>]
   afterPageChange: [response: ListResponse<T>]
   afterLoadMore: [response: ListResponse<T>]
-  onRowSelect: [selection: T[], previous: T[]]
-  onFiltersChange: [filters: Filters]
+  rowSelect: [selection: T[], previous: T[]]
+  filtersChange: [filters: Filters]
 }
