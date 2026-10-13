@@ -3,7 +3,7 @@ import type { SummaryScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListSummaryProps = {
-  children?: (scope: SummaryScope) => ReactNode
+  children?: ReactNode | ((scope: SummaryScope) => ReactNode)
 }
 
 export const ListSummary = ({ children }: ListSummaryProps) => {

@@ -196,69 +196,11 @@
           </ListError>
 
           <ListRows v-slot="{ rows, sort, setSort }">
-            <div
-              class="relative max-h-screen w-full overflow-y-auto rounded-md border border-slate-200"
-            >
-              <ListLoader>
-                <div
-                  class="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-sm"
-                >
-                  <UIcon
-                    name="i-svg-spinners:blocks-shuffle-3"
-                    class="h-12 w-12 animate-pulse text-primary-500"
-                  />
-                </div>
-              </ListLoader>
-
-              <table class="w-full whitespace-nowrap border-collapse">
-                <thead>
-                  <tr>
-                    <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">ID</th>
-                    <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                      <span class="inline-flex items-center gap-1">
-                        Name
-                        <button type="button" @click="toggleSort(sort, setSort, 'name')">
-                          <UIcon
-                            :name="sortIconName(sort, 'name')"
-                            class="size-5 cursor-pointer text-slate-700"
-                          />
-                        </button>
-                      </span>
-                    </th>
-                    <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                      Status
-                    </th>
-                    <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                      <span class="inline-flex items-center gap-1">
-                        Update At
-                        <button type="button" @click="toggleSort(sort, setSort, 'date_updated')">
-                          <UIcon
-                            :name="sortIconName(sort, 'date_updated')"
-                            class="size-5 cursor-pointer text-slate-700"
-                          />
-                        </button>
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="row in rows as unknown as Skill[]" :key="row.id">
-                    <td class="border border-slate-200 bg-white px-2 py-2">
-                      {{ row.id }}
-                    </td>
-                    <td class="border border-slate-200 bg-white px-2 py-2">
-                      {{ row.name }}
-                    </td>
-                    <td class="border border-slate-200 bg-white px-2 py-2">
-                      {{ row.status }}
-                    </td>
-                    <td class="border border-slate-200 bg-white px-2 py-2">
-                      {{ formatDate(row.date_updated) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <SkillRowsTable
+              :rows="rows as SerializedListRow<Skill>[]"
+              :sort="sort"
+              :set-sort="setSort"
+            />
           </ListRows>
 
           <div
@@ -391,7 +333,6 @@ import {
   ListGoTo,
   ListInitialLoader,
   ListRows,
-  ListLoader,
   ListPagination,
   ListPerPage,
   ListRefresh,
@@ -399,9 +340,10 @@ import {
   ListSummary,
   ListColumns,
 } from '@shilp.dev/vue-list'
-import type { ListSort } from '@shilp.dev/vue-list'
+import type { SerializedListRow } from '@shilp.dev/vue-list'
 import type { Skill, SkillFilters } from '@/types/skill'
 import vueListConfig, { getStateFromSearchParams } from '@/api/vue-list-config'
+import SkillRowsTable from '@/components/skill-rows-table.vue'
 
 defineOptions({
   name: 'playground-index-view',
@@ -421,25 +363,5 @@ function onColorChange(value: string) {
     ...filters.value,
     color: value === 'all' ? undefined : value,
   }
-}
-
-function toggleSort(
-  sort: ListSort,
-  setSort: (next: { by: string; order: 'asc' | 'desc' }) => void,
-  by: string,
-) {
-  const currentOrder = sort.sortBy === by ? sort.sortOrder : ''
-  const sorting: 'asc' | 'desc' = currentOrder === 'asc' ? 'desc' : 'asc'
-  setSort({ by, order: sorting })
-}
-
-function sortIconName(sort: ListSort, by: string) {
-  if (sort.sortBy !== by || sort.sortOrder === '') return 'i-mdi-sort'
-  if (sort.sortOrder === 'asc') return 'i-mdi-sort-ascending'
-  return 'i-mdi-sort-descending'
-}
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleString()
 }
 </script>

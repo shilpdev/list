@@ -15,7 +15,6 @@ import type {
   ListHandlers,
   ListOptions,
   ListProviderConfig,
-  ListRenderScope,
   ListResponse,
   ListState,
   RequestContextPatch,
@@ -54,7 +53,7 @@ export type ReactListHandle = {
 
 export type ReactListProps = ListOptions &
   ListProviderConfig & {
-    children?: ReactNode | ((state: ListRenderScope) => ReactNode)
+    children?: ReactNode | ((state: ListState) => ReactNode)
     /** React 19 ref-as-prop; use with useImperativeHandle for the imperative API. */
     ref?: Ref<ReactListHandle>
   }
@@ -96,6 +95,7 @@ function ReactList({
   const initRef = useRef(false)
   const defaultFiltersRef = useRef<Filters>({ ...filters })
   const prevFiltersPropRef = useRef<Filters>(filters)
+  const prevQueryRef = useRef({ page, perPage, search, sortBy, sortOrder, endpoint })
   const requestIdRef = useRef(0)
 
   const isLoadMore = paginationMode === 'loadMore'
@@ -461,6 +461,43 @@ function ReactList({
 
     applyState({ filters, page: 1 })
   }, [filters, applyState])
+
+  useEffect(() => {
+    if (!initRef.current) return
+
+    const prev = prevQueryRef.current
+    const pageChanged = page !== prev.page
+    const perPageChanged = perPage !== prev.perPage
+    const searchChanged = search !== prev.search
+    const sortByChanged = sortBy !== prev.sortBy
+    const sortOrderChanged = sortOrder !== prev.sortOrder
+    const endpointChanged = endpoint !== prev.endpoint
+
+    if (
+      !pageChanged &&
+      !perPageChanged &&
+      !searchChanged &&
+      !sortByChanged &&
+      !sortOrderChanged &&
+      !endpointChanged
+    ) {
+      return
+    }
+
+    prevQueryRef.current = { page, perPage, search, sortBy, sortOrder, endpoint }
+
+    const queryChanged =
+      perPageChanged || searchChanged || sortByChanged || sortOrderChanged || endpointChanged
+    const patch: Partial<LocalInternalListState> = {}
+    if (perPageChanged) patch.perPage = perPage
+    if (searchChanged) patch.search = search
+    if (sortByChanged) patch.sortBy = sortBy
+    if (sortOrderChanged) patch.sortOrder = sortOrder
+    if (pageChanged) patch.page = page
+    else if (queryChanged) patch.page = 1
+
+    applyState(patch)
+  }, [page, perPage, search, sortBy, sortOrder, endpoint, applyState])
 
   const prevSelectionRef = useRef(state.selection)
   const selectionEffectReadyRef = useRef(false)

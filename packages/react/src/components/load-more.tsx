@@ -3,7 +3,7 @@ import type { LoadMoreScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListLoadMoreProps = {
-  children?: (scope: LoadMoreScope) => ReactNode
+  children?: ReactNode | ((scope: LoadMoreScope) => ReactNode)
 }
 
 export const ListLoadMore = ({ children }: ListLoadMoreProps) => {

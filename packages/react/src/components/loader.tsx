@@ -21,13 +21,7 @@ export const ListLoader = ({ children }: ListLoaderProps) => {
 
   return (
     <div className="react-list__loader">
-      {typeof children === 'function'
-        ? children(scope)
-        : children || (
-            <div>
-              <p>Loading...</p>
-            </div>
-          )}
+      {typeof children === 'function' ? children(scope) : children || <p>Loading...</p>}
     </div>
   )
 }

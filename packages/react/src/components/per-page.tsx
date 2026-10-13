@@ -3,7 +3,7 @@ import type { PerPageComponentOptions, PerPageScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListPerPageProps = PerPageComponentOptions & {
-  children?: (scope: PerPageScope) => ReactNode
+  children?: ReactNode | ((scope: PerPageScope) => ReactNode)
 }
 
 export const ListPerPage = memo(({ children, options = [10, 25, 50, 100] }: ListPerPageProps) => {

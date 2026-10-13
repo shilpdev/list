@@ -320,6 +320,48 @@ watch(filters, (newValue, oldValue) => {
   setPage(1)
 })
 
+watch(
+  () =>
+    [
+      props.page,
+      props.perPage,
+      props.search ?? '',
+      props.sortBy,
+      props.sortOrder,
+      props.endpoint,
+    ] as const,
+  (next, prev) => {
+    if (initializingState.value || !prev) return
+
+    const [page, perPage, search, sortBy, sortOrder, endpoint] = next
+    const [prevPage, prevPerPage, prevSearch, prevSortBy, prevSortOrder, prevEndpoint] = prev
+    const pageChanged = page !== prevPage
+    const perPageChanged = perPage !== prevPerPage
+    const searchChanged = search !== prevSearch
+    const sortByChanged = sortBy !== prevSortBy
+    const sortOrderChanged = sortOrder !== prevSortOrder
+    const endpointChanged = endpoint !== prevEndpoint
+
+    if (
+      !pageChanged &&
+      !perPageChanged &&
+      !searchChanged &&
+      !sortByChanged &&
+      !sortOrderChanged &&
+      !endpointChanged
+    ) {
+      return
+    }
+
+    if (perPageChanged) localPerPage.value = perPage
+    if (searchChanged) localSearch.value = search
+    if (sortByChanged) localSortBy.value = sortBy
+    if (sortOrderChanged) localSortOrder.value = sortOrder
+
+    setPage(pageChanged ? page : 1)
+  },
+)
+
 watch(selection, (newValue, oldValue) => {
   emit('rowSelect', newValue, oldValue ?? [])
 })

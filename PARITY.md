@@ -18,7 +18,7 @@ Compared `packages/react` and `packages/vue` (with `shared/`) by reading the sou
 | A10 | Fixed | Med | requestHandler / stateManager reactivity | Follow re-renders. | Read once from props; later changes are ignored. | list.vue | Update: Vue no longer captures `const requestHandler = props.requestHandler` / `stateManager` at setup. Both packages resolve the current prop on each fetch / stateManager call. |
 | A11 | Fixed | High | Stale state overwrite | fetchData builds state from a snapshot taken at request start. setSelection / updateColumn during an in-flight request are overwritten. | Independent refs; not affected. | list.tsx fetchData | Update: fetchData now merges into the latest state with setState(prev => ...), so selection and column changes made during a request survive. N1 is fixed. |
 | A12 | Fixed | Med | Search debounce | Timer cleared on unmount; debounceTime read live. | useDebounceFn from @vueuse/core (extra runtime dependency); not cancelled on unmount; debounceTime captured once. | search.tsx, search.vue | Update: Vue ListSearch uses a manual timer, cancelled on unmount, with debounceTime read live. @vueuse/core is no longer used in the source but is still listed in packages/vue/package.json dependencies. |
-| A13 | Open | Low | Prop reactivity | Only filters reacts. | Only filters reacts. | Both: page, perPage, search, sortBy, endpoint ignored after mount. The old docs claim all props react. |
+| A13 | Fixed | Low | Prop reactivity | Only filters reacts. | Only filters reacts. | Both: page, perPage, search, sortBy, endpoint ignored after mount. The old docs claim all props react. | Update: After mount, page, perPage, search, sortBy, sortOrder, and endpoint refetch in both packages. A perPage, search, sort, or endpoint change resets to page 1 unless page changes in the same update. Restored state is left alone because those props have not changed yet. |
 
 ## B. Props, events and public API
 
@@ -27,10 +27,10 @@ Compared `packages/react` and `packages/vue` (with `shared/`) by reading the sou
 | B1 | Fixed | High | Lifecycle hooks | Props: onResponse, afterPageChange, afterLoadMore. | Emits with the same names (listener is @on-response). | shared/options.ts says "shared by React props and Vue emits" | Update: Vue emits response, afterPageChange, afterLoadMore, rowSelect, and filtersChange (@response, @after-page-change, @after-load-more, @row-select, @filters-change). onResponse, onRowSelect, and onFiltersChange are listeners only, so each handler runs once. |
 | B2 | Fixed | High | Selection and filter events | No selection callback. Has onFiltersChange. | Emits onRowSelect(selection, previous). Uses update:filters. | list.vue watch(selection) | Update: Both support onFiltersChange and onRowSelect (React via selection effect; Vue via watch). Restored filters are written back on both (see A2). |
 | B3 | Fixed | Med | Imperative access | None (no ref / useImperativeHandle). | defineExpose of rows, state and handlers; omits updateColumn. | list.vue defineExpose | Update: React exposes ReactListHandle via ref (rows/response/isLoading/error/count/selection + handlers including updateColumn). Vue defineExpose matches. |
-| B4 | Open | Low | Exports | Default export plus named ReactList. Exports ReactListProps. | Named VueList only. Also exports LIST_CONTEXT_KEY, VueListProps, VueListEmits. | index.ts, main.ts |
+| B4 | Fixed | Low | Exports | Default export plus named ReactList. Exports ReactListProps. | Named VueList only. Also exports LIST_CONTEXT_KEY, VueListProps, VueListEmits. | index.ts, main.ts | Update: Vue also default-exports VueList. VueListEmits and LIST_CONTEXT_KEY stay because Vue has emits and inject. |
 | B5 | Fixed | Med | useListContext() | Returns { listState } as plain values. | Returns { listState: ComputedRef }; consumers need .value. Shared ListInstanceContext only fits React. | list-context.tsx, use-list-context.ts | Update: Vue useListContext returns ListInstanceContext. listState is a proxy over the computed, so script reads listState.rows with no .value. |
-| B6 | Open | Low | Root children / slot | children is a node or a function of ListRenderScope. | Default slot bound to ListState. | list.tsx, list.vue |
-| B7 | Open | Low | Slot types | Most children typed function-only, though runtime also accepts nodes. | Slots accept either. | search, rows, go-to, load-more, per-page, summary, refresh |
+| B6 | Fixed | Low | Root children / slot | children is a node or a function of ListRenderScope. | Default slot bound to ListState. | list.tsx, list.vue | Update: ListRenderScope is ListState. React children are a node or (state: ListState) => node. Vue's default slot is bound to listState. |
+| B7 | Fixed | Low | Slot types | Most children typed function-only, though runtime also accepts nodes. | Slots accept either. | search, rows, go-to, load-more, per-page, summary, refresh | Update: Those React slots, plus ListPagination, type children as a node or a render function. ListSearch renders a node as-is instead of calling it. |
 
 ## C. Components: naming, props and slot scope
 
@@ -39,19 +39,19 @@ Compared `packages/react` and `packages/vue` (with `shared/`) by reading the sou
 | C1 | Fixed | Med | ListRows | row render prop gets { row, index } from serialized rows (has _index). children-as-function wins over row. | #row slot comes from scope.rows (has _index). Default slot overrides #row. | rows.tsx, rows.vue | Update: React children (function or node) win over row, matching Vue's default slot. row still receives { row, index } from serialized rows. |
 | C2 | Fixed | Med | ListColumns | column prop receives { key, column, updateColumn, columnSettings }. | #column slot receives { column, updateColumn, columnSettings } (no key). | columns.tsx, columns.vue | Update: React column callback no longer receives key. The mapped result is wrapped in a keyed Fragment. |
 | C3 | Fixed | Med | ListPagination | renderFirst / renderPrev / renderPages / renderPage / renderNext / renderLast. renderPage gets the full scope; its result has no key (React warning). | Slots first / prev / pages / page / next / last. #page gets only { page, isActive }. | pagination.tsx, pagination.vue | Update: renderPage and #page both receive the pagination scope with page and isActive overridden. Each React page is wrapped in a keyed Fragment. render* props are the React names for those Vue slots. |
-| C4 | Open | Low | ListEmpty | children is node-only. | Default slot, no scope. | Same behaviour; only the React type spells it out |
+| C4 | Fixed | Low | ListEmpty | children is node-only. | Default slot, no scope. | Same behaviour; only the React type spells it out | Update: Vue's default slot is typed with no props, matching React's node-only children. |
 
 ## D. HTML output
 
 | # | Status | Pri | Area | React | Vue | Where |
 |---|---|---|---|---|---|---|
 | D1 | Fixed | High | Root wrapper | No wrapper element. | <div class="vue-list"> around everything. | list.tsx, list.vue template | Update: React now renders <div class="react-list"> around children. |
-| D2 | Open | Low | ListEmpty / ListLoader fallback | <div><p>…</p></div> | <p>…</p> | empty, loader |
+| D2 | Fixed | Low | ListEmpty / ListLoader fallback | <div><p>…</p></div> | <p>…</p> | empty, loader | Update: React fallbacks are a bare `<p>`, matching Vue and ListInitialLoader. |
 | D3 | Fixed | Med | ListPagination structure | Pages inside <div>, each page in <div key>. | Flat <span> / <button>, no wrappers. | pagination | Update: React pages are a flat span or button under react-list__pagination. Custom renderPage output is a keyed Fragment, which adds no DOM node. |
-| D4 | Open | Low | ListRows fallback | <div><pre>…</pre></div> per row (JSON includes _index). | <div> wrapper with <pre>…</pre> (object includes _index). | rows |
+| D4 | Fixed | Low | ListRows fallback | <div><pre>…</pre></div> per row (JSON includes _index). | <div> wrapper with <pre>…</pre> (object includes _index). | rows | Update: Vue fallback uses JSON.stringify(row, null, 2), matching React. Both still wrap each row in a div. |
 | D5 | Fixed | High | Buttons | ListRefresh button lacks type="button" (submits a surrounding form). ListLoadMore button gets disabled={isLoading}. | Both have type="button"; LoadMore button is not disabled while loading. | refresh, load-more | Update: React Refresh button has type="button"; React LoadMore button is no longer disabled while loading. |
 | D6 | Fixed | Low | Search placeholder | "Search..." | "Search" | search | Update: Vue placeholder is now "Search...". |
-| D7 | Open | Low | Select events | onChange | @input | go-to, per-page |
+| D7 | Fixed | Low | Select events | onChange | @input | go-to, per-page | Update: Vue go-to and per-page selects listen to @change, matching React's onChange and ListColumns. |
 
 ## N. New findings from the changes
 
@@ -61,4 +61,4 @@ Compared `packages/react` and `packages/vue` (with `shared/`) by reading the sou
 
 ## Suggested order
 
-Remaining open items are all low priority: A13, B4, B6-B7, C4, D2, D4, D7. Decide which package is the reference when they disagree.
+No open items remain.

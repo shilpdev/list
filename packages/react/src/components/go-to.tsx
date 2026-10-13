@@ -3,7 +3,7 @@ import type { GoToScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListGoToProps = {
-  children?: (scope: GoToScope) => ReactNode
+  children?: ReactNode | ((scope: GoToScope) => ReactNode)
 }
 
 export const ListGoTo = memo(({ children }: ListGoToProps) => {

@@ -3,7 +3,7 @@ import type { SearchComponentOptions, SearchScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListSearchProps = SearchComponentOptions & {
-  children?: (scope: SearchScope) => ReactNode
+  children?: ReactNode | ((scope: SearchScope) => ReactNode)
 }
 
 export const ListSearch = memo(({ children, debounceTime = 500 }: ListSearchProps) => {
@@ -45,8 +45,10 @@ export const ListSearch = memo(({ children, debounceTime = 500 }: ListSearchProp
 
   return (
     <div className="react-list__search">
-      {children ? (
+      {typeof children === 'function' ? (
         children(scope)
+      ) : children ? (
+        children
       ) : (
         <input
           type="text"

@@ -51,15 +51,15 @@ const requestHandler: RequestHandler<Row> = async (ctx) => {
 
 ## ReactList props
 
-Required: `endpoint`, `requestHandler`.
+Required: `endpoint`, `requestHandler`. A later `endpoint` change refetches from page 1.
 
 | Prop                                               | Default        | Notes                                           |
 | -------------------------------------------------- | -------------- | ----------------------------------------------- |
-| `page`                                             | `1`            | Initial page                                    |
-| `perPage`                                          | `25`           | Page size                                       |
-| `sortBy`                                           | `''`           |                                                 |
-| `sortOrder`                                        | `'desc'`       | `'asc' \| 'desc' \| ''`                         |
-| `search`                                           | `''`           |                                                 |
+| `page`                                             | `1`            | Refetches when changed after mount              |
+| `perPage`                                          | `25`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
+| `sortBy`                                           | `''`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
+| `sortOrder`                                        | `'desc'`       | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
+| `search`                                           | `''`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
 | `filters`                                          | `{}`           | Parent-controlled query filters. Pair with `onFiltersChange`. |
 | `paginationMode`                                   | `'pagination'` | `'loadMore'` appends pages                      |
 | `version`                                          | `1`            | Passed to handler / state manager               |

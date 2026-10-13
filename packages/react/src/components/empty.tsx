@@ -14,13 +14,5 @@ export const ListEmpty = ({ children }: ListEmptyProps) => {
     return null
   }
 
-  return (
-    <div className="react-list__empty">
-      {children || (
-        <div>
-          <p>No data found!</p>
-        </div>
-      )}
-    </div>
-  )
+  return <div className="react-list__empty">{children || <p>No data found!</p>}</div>
 }

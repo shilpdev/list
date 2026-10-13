@@ -14,6 +14,10 @@ defineOptions({
   name: 'ListEmpty',
 })
 
+defineSlots<{
+  default(): unknown
+}>()
+
 const { listState } = useListContext()
 
 const showEmpty = computed(() => {

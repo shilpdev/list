@@ -7,7 +7,7 @@ import type {
 import { useListContext } from '../context/list-context'
 
 type ListPaginationProps = PaginationComponentOptions & {
-  children?: (scope: PaginationScope) => ReactNode
+  children?: ReactNode | ((scope: PaginationScope) => ReactNode)
   renderFirst?: (scope: PaginationScope) => ReactNode
   renderPrev?: (scope: PaginationScope) => ReactNode
   renderPages?: (scope: PaginationScope) => ReactNode

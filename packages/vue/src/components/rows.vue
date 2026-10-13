@@ -6,7 +6,7 @@
     <slot v-bind="scope">
       <div v-for="(row, index) in scope.rows" :key="getRowId(row, listState.idKey) ?? index">
         <slot name="row" :row="row" :index="index">
-          <pre>{{ row }}</pre>
+          <pre>{{ JSON.stringify(row, null, 2) }}</pre>
         </slot>
       </div>
     </slot>

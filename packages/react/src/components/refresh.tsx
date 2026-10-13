@@ -3,7 +3,7 @@ import type { RefreshScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListRefreshProps = {
-  children?: (scope: RefreshScope) => ReactNode
+  children?: ReactNode | ((scope: RefreshScope) => ReactNode)
 }
 
 export const ListRefresh = ({ children }: ListRefreshProps) => {

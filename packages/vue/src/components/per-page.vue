@@ -3,7 +3,7 @@
     <slot v-bind="scope">
       <select
         :value="scope.perPage"
-        @input="scope.setPerPage(Number(($event.target as HTMLSelectElement).value))"
+        @change="scope.setPerPage(Number(($event.target as HTMLSelectElement).value))"
       >
         <option
           v-for="option in scope.options"

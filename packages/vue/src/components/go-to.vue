@@ -3,7 +3,7 @@
     <slot v-bind="scope">
       <select
         :value="scope.page"
-        @input="scope.setPage(Number(($event.target as HTMLSelectElement).value))"
+        @change="scope.setPage(Number(($event.target as HTMLSelectElement).value))"
       >
         <option v-for="pageNum in scope.pages" :key="`page-${pageNum}`" :value="pageNum">
           Page {{ pageNum }}
