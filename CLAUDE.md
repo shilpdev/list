@@ -22,7 +22,7 @@ Treat the code and `shared/` types as the source of truth for the current API; u
 ## Layout
 
 - `packages/react`, `packages/vue` — the published libraries (built with Vite lib mode, output to `dist/`).
-- `shared/` — framework-agnostic TypeScript **types only** (`ListOptions`, `RequestContext`, `ListResponse`, `ListInstanceContext`, etc.). Not a workspace package: both libraries import it by relative path (`../../../../shared`) and Vite's `dts` plugin inlines it (`rollupTypes: true`) into the emitted `.d.ts`. When changing the list API, update `shared/` first, then keep both React and Vue implementations in sync.
+- `shared/` — framework-agnostic TypeScript **types only** (`ListOptions`, `ListContext`, `ListResponse`, `ListInstanceContext`, etc.). Not a workspace package: both libraries import it by relative path (`../../../../shared`) and Vite's `dts` plugin inlines it (`rollupTypes: true`) into the emitted `.d.ts`. When changing the list API, update `shared/` first, then keep both React and Vue implementations in sync.
 - `apps/{react,vue}/playground` — Vite apps for manual testing against the packages.
 - `apps/{react,vue}/story` — Storybook apps; their stories double as the test suite (Vitest + Playwright browser via `@storybook/addon-vitest`). There are no unit tests inside `packages/`.
 - `.cursor/skills/react-list/` — usage documentation for the public API (props, slots, `requestHandler` contract).

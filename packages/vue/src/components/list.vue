@@ -9,12 +9,11 @@ import { computed, onMounted, provide, ref, watch } from 'vue'
 import type {
   ColumnSettings,
   Filters,
+  ListContext,
   ListResponse,
   ListState,
-  RequestContextPatch,
   SavedListState,
   SortOrder,
-  StateManagerContext,
 } from '../../../../shared'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'
@@ -62,7 +61,7 @@ const columnSettings = ref<ColumnSettings>()
 
 const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
 
-const buildRequestContext = () => ({
+const buildContext = (): ListContext => ({
   endpoint: props.endpoint,
   version: props.version,
   meta: props.meta,
@@ -72,11 +71,7 @@ const buildRequestContext = () => ({
   sortBy: localSortBy.value,
   sortOrder: localSortOrder.value,
   filters: filters.value ?? {},
-})
-
-const buildContext = (): StateManagerContext => ({
-  ...buildRequestContext(),
-  columnSettings: columnSettings.value,
+  columnSettings: columnSettings.value ?? {},
 })
 
 function getSavedState(): SavedListState {
@@ -138,14 +133,14 @@ function updateStateManager() {
   props.stateManager?.set?.(buildContext())
 }
 
-function getData(addContext: RequestContextPatch = {}) {
+function getData(addContext: Partial<ListContext> = {}) {
   error.value = null
   isLoading.value = true
   const currentRequestId = ++requestId
 
   props
     .requestHandler({
-      ...buildRequestContext(),
+      ...buildContext(),
       isRefresh: false,
       ...addContext,
     })
@@ -173,7 +168,7 @@ function getData(addContext: RequestContextPatch = {}) {
     })
 }
 
-function setPage(value: number | string, addContext?: RequestContextPatch) {
+function setPage(value: number | string, addContext?: Partial<ListContext>) {
   let nextPage: number | string = value
   if (value === 0) {
     nextPage = ''
@@ -214,7 +209,7 @@ function clearFilters() {
   emit('filtersChange', nextFilters)
 }
 
-function refresh(addContext: RequestContextPatch = { isRefresh: true }) {
+function refresh(addContext: Partial<ListContext> = { isRefresh: true }) {
   if (isLoadMore.value) {
     rows.value = []
     setPage(1, addContext)
@@ -284,10 +279,8 @@ const listState = computed(
       isLoading: isLoading.value,
       initialLoading: initializingState.value,
     },
-    sort: {
-      sortBy: localSortBy.value || null,
-      sortOrder: localSortOrder.value,
-    },
+    sortBy: localSortBy.value || null,
+    sortOrder: localSortOrder.value,
     search: localSearch.value,
     filters: filters.value ?? {},
     columns:

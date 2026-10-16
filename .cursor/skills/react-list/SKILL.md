@@ -39,11 +39,11 @@ import ShilpList, {
 import type { RequestHandler } from '@shilp.dev/react-list'
 ```
 
-`requestHandler` receives `RequestContext` and must return `Promise<ListResponse<T>>`:
+`requestHandler` receives `ListContext` and must return `Promise<ListResponse<T>>`:
 
 ```ts
 const requestHandler: RequestHandler<Row> = async (ctx) => {
-  // ctx: endpoint, page, perPage, search, sortBy, sortOrder, filters, version, meta, isRefresh?
+  // ctx: endpoint, page, perPage, search, sortBy, sortOrder, filters, version, meta, columnSettings?, isRefresh?
   const res = await fetchList(ctx)
   return { rows: res.data, count: res.total, meta: res.meta }
 }
@@ -107,7 +107,7 @@ const { listState } = useListContext<Row>()
 
 Data: `rows`, `count`, `error`, `response`, `isEmpty`, `hasActiveFilters`, `search`, `filters`, `selection`, `columns`, `columnSettings`.
 
-Slices: `loader.isLoading` / `loader.initialLoading`, `pagination.page` / `perPage` / `hasMore`, `sort.sortBy` (`null` when unset) / `sortOrder`.
+Slices: `loader.isLoading` / `loader.initialLoading`, `pagination.page` / `perPage` / `hasMore`, `sortBy` (`null` when unset) / `sortOrder`.
 
 Handlers: `setPage`, `setPerPage`, `setSearch`, `setSort({ by, order })`, `setFilters`, `clearFilters`, `loadMore`, `refresh`, `setSelection`, `updateRowById`, `updateColumn`.
 

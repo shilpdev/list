@@ -11,21 +11,34 @@ import {
 import type {
   ColumnSettings,
   Filters,
-  InternalListState,
+  ListContext,
   ListHandlers,
   ListOptions,
-  ListProviderConfig,
   ListResponse,
   ListState,
-  RequestContextPatch,
   SavedListState,
+  SortOrder,
 } from '../../../../shared'
 import { ListContextProvider } from '../context/list-context'
 import { deepEqual, DEFAULT_ID_KEY, getRowId } from '../utils'
 import { hasActiveFilters } from './utils'
 
-type LocalInternalListState = Omit<InternalListState, 'page'> & {
+type LocalInternalListState = {
   page: number | string
+  perPage: number
+  sortBy: string
+  sortOrder: SortOrder
+  search: string
+  filters: Filters
+  columnSettings: ColumnSettings
+  rows: unknown[]
+  selection: unknown[]
+  error: Error | null
+  response: ListResponse | null
+  count: number
+  isLoading: boolean
+  initializingState: boolean
+  confirmedPage: number | null
 }
 
 /** Imperative API exposed via ref (mirrors ShilpList defineExpose). */
@@ -51,12 +64,11 @@ export type ShilpListHandle = {
   | 'updateColumn'
 >
 
-export type ShilpListProps = ListOptions &
-  ListProviderConfig & {
-    children?: ReactNode | ((state: ListState) => ReactNode)
-    /** React 19 ref-as-prop; use with useImperativeHandle for the imperative API. */
-    ref?: Ref<ShilpListHandle>
-  }
+export type ShilpListProps = ListOptions & {
+  children?: ReactNode | ((state: ListState) => ReactNode)
+  /** React 19 ref-as-prop; use with useImperativeHandle for the imperative API. */
+  ref?: Ref<ShilpListHandle>
+}
 
 const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
 
@@ -100,8 +112,8 @@ function ShilpList({
 
   const isLoadMore = paginationMode === 'loadMore'
 
-  const getRequestContext = useCallback(
-    (currentState?: LocalInternalListState) => ({
+  const getContext = useCallback(
+    (currentState?: LocalInternalListState): ListContext => ({
       endpoint,
       version,
       meta,
@@ -111,16 +123,9 @@ function ShilpList({
       sortBy: currentState?.sortBy ?? sortBy,
       sortOrder: currentState?.sortOrder ?? sortOrder,
       filters: currentState?.filters ?? filters,
-    }),
-    [endpoint, version, meta, search, page, perPage, sortBy, sortOrder, filters],
-  )
-
-  const getContext = useCallback(
-    (currentState?: LocalInternalListState) => ({
-      ...getRequestContext(currentState),
       columnSettings: currentState?.columnSettings ?? {},
     }),
-    [getRequestContext],
+    [endpoint, version, meta, search, page, perPage, sortBy, sortOrder, filters],
   )
 
   const getSavedState = (): SavedListState => {
@@ -186,7 +191,7 @@ function ShilpList({
   // Memoised because it is a dependency of `applyState` and `handlers`.
   const fetchData = useCallback(
     async (
-      addContext: RequestContextPatch = {},
+      addContext: Partial<ListContext> = {},
       newState: LocalInternalListState | null = null,
     ) => {
       const currentRequestId = ++requestIdRef.current
@@ -196,7 +201,7 @@ function ShilpList({
         const currentState = newState ?? stateRef.current
         const previousRows = currentState.rows
         const res = await requestHandler({
-          ...getRequestContext(currentState),
+          ...getContext(currentState),
           isRefresh: false,
           ...addContext,
         })
@@ -242,7 +247,7 @@ function ShilpList({
       }
     },
     [
-      getRequestContext,
+      getContext,
       isLoadMore,
       requestHandler,
       onResponse,
@@ -253,7 +258,7 @@ function ShilpList({
   )
 
   const applyState = useCallback(
-    (patch: Partial<LocalInternalListState>, addContext: RequestContextPatch = {}) => {
+    (patch: Partial<LocalInternalListState>, addContext: Partial<ListContext> = {}) => {
       const nextState = { ...stateRef.current, ...patch }
       setState(nextState)
       fetchData(addContext, nextState)
@@ -263,7 +268,7 @@ function ShilpList({
 
   const handlers = useMemo(
     () => ({
-      setPage: (value: number | string, addContext?: RequestContextPatch) => {
+      setPage: (value: number | string, addContext?: Partial<ListContext>) => {
         const coerced = value === 0 ? '' : value
         if (coerced === '' || coerced === null || coerced === undefined) {
           return
@@ -305,7 +310,7 @@ function ShilpList({
         onFiltersChange?.(nextFilters)
       },
 
-      refresh: (addContext: RequestContextPatch = { isRefresh: true }) => {
+      refresh: (addContext: Partial<ListContext> = { isRefresh: true }) => {
         if (isLoadMore) {
           applyState({ page: 1, rows: [] }, addContext)
         } else {
@@ -368,7 +373,8 @@ function ShilpList({
         isLoading: state.isLoading,
         initialLoading: state.initializingState,
       },
-      sort: { sortBy: state.sortBy || null, sortOrder: state.sortOrder },
+      sortBy: state.sortBy || null,
+      sortOrder: state.sortOrder,
       hasActiveFilters: hasActiveFilters(state.filters, defaultFiltersRef.current),
       search: state.search,
       filters: state.filters,

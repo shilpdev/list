@@ -26,7 +26,8 @@ import { Icon } from '@iconify/react'
 import { useState } from 'react'
 
 import type { Skill, SkillFilters } from '../types/skill'
-import reactListConfig, { getStateFromSearchParams } from './react-list-config'
+import requestHandler from '../api/request-handler'
+import { getStateFromSearchParams, stateManager } from './react-list-config'
 
 function nextSortOrder(current: SortOrder): 'asc' | 'desc' | '' {
   if (current === '') return 'asc'
@@ -58,11 +59,11 @@ function PatchRowButton({ id }: { id: Skill['id'] }) {
 
 function SkillRowsTable({
   rows,
-  sort,
+  sortOrder,
   setSort,
 }: {
   rows: SerializedListRow<Skill>[]
-  sort: { sortBy: string | null; sortOrder: SortOrder }
+  sortOrder: SortOrder
   setSort: (sort: { by: string; order: 'asc' | 'desc' }) => void
 }) {
   const { listState } = useListContext<Skill>()
@@ -95,7 +96,7 @@ function SkillRowsTable({
                   <button
                     type="button"
                     onClick={() => {
-                      const sorting = nextSortOrder(sort.sortOrder)
+                      const sorting = nextSortOrder(sortOrder)
                       setSort({
                         by: 'name',
                         order: sorting as 'asc' | 'desc',
@@ -104,9 +105,9 @@ function SkillRowsTable({
                   >
                     <Icon
                       icon={
-                        sort.sortOrder === ''
+                        sortOrder === ''
                           ? 'mi:sort'
-                          : sort.sortOrder === 'asc'
+                          : sortOrder === 'asc'
                             ? 'lucide:sort-asc'
                             : 'lucide:sort-desc'
                       }
@@ -128,7 +129,7 @@ function SkillRowsTable({
                   <button
                     type="button"
                     onClick={() => {
-                      const sorting = nextSortOrder(sort.sortOrder)
+                      const sorting = nextSortOrder(sortOrder)
                       setSort({
                         by: 'date_updated',
                         order: sorting as 'asc' | 'desc',
@@ -137,9 +138,9 @@ function SkillRowsTable({
                   >
                     <Icon
                       icon={
-                        sort.sortOrder === ''
+                        sortOrder === ''
                           ? 'mi:sort'
-                          : sort.sortOrder === 'asc'
+                          : sortOrder === 'asc'
                             ? 'lucide:sort-asc'
                             : 'lucide:sort-desc'
                       }
@@ -213,8 +214,8 @@ const ListWrapper = () => {
         filters={filters}
         onFiltersChange={setFilters}
         paginationMode="pagination"
-        requestHandler={reactListConfig.requestHandler}
-        stateManager={reactListConfig.stateManager}
+        requestHandler={requestHandler}
+        stateManager={stateManager}
       >
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center">
@@ -402,10 +403,10 @@ const ListWrapper = () => {
 
 
           <ListRows>
-            {({ rows, sort, setSort }) => (
+            {({ rows, sortOrder, setSort }) => (
               <SkillRowsTable
                 rows={rows as SerializedListRow<Skill>[]}
-                sort={sort}
+                sortOrder={sortOrder}
                 setSort={setSort}
               />
             )}

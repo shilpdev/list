@@ -10,7 +10,7 @@ type ListRowsProps = {
 
 function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
   const { listState } = useListContext()
-  const { rows = [], loader, error, setSort, sort, pagination, idKey } = listState
+  const { rows = [], loader, error, setSort, sortBy, sortOrder, pagination, idKey } = listState
   const { initialLoading, isLoading } = loader
   const { page, perPage } = pagination
 
@@ -28,9 +28,10 @@ function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
       rows: serializedRows,
       isLoading,
       setSort,
-      sort,
+      sortBy,
+      sortOrder,
     }),
-    [serializedRows, isLoading, setSort, sort],
+    [serializedRows, isLoading, setSort, sortBy, sortOrder],
   )
 
   if (initialLoading) return null

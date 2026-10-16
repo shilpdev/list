@@ -55,7 +55,7 @@
         </div>
       </ListError>
 
-      <ListRows v-slot="{ rows, sort, setSort }">
+      <ListRows v-slot="{ rows, sortBy, sortOrder, setSort }">
         <div class="vue-list-demo__table-wrap">
           <ListLoader>
             <p class="vue-list-demo__overlay">Updating...</p>
@@ -66,7 +66,7 @@
               <tr>
                 <th>ID</th>
                 <th>
-                  <button type="button" class="vue-list-demo__sort" @click="toggleSort(sort, setSort, 'name')">
+                  <button type="button" class="vue-list-demo__sort" @click="toggleSort(sortBy, sortOrder, setSort, 'name')">
                     Name
                   </button>
                 </th>
@@ -75,7 +75,7 @@
                   <button
                     type="button"
                     class="vue-list-demo__sort"
-                    @click="toggleSort(sort, setSort, 'date_updated')"
+                    @click="toggleSort(sortBy, sortOrder, setSort, 'date_updated')"
                   >
                     Updated
                   </button>
@@ -155,7 +155,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { ListSort } from '@shilp.dev/vue-list'
+import type { SortOrder } from '@shilp.dev/vue-list'
 import {
   ListEmpty,
   ListError,
@@ -240,11 +240,12 @@ function onStatusChange(value: string) {
 }
 
 function toggleSort(
-  sort: ListSort,
+  sortBy: string | null,
+  sortOrder: SortOrder,
   setSort: (next: { by: string; order: 'asc' | 'desc' }) => void,
   by: string,
 ) {
-  const currentOrder = sort.sortBy === by ? sort.sortOrder : ''
+  const currentOrder = sortBy === by ? sortOrder : ''
   const order: 'asc' | 'desc' = currentOrder === 'asc' ? 'desc' : 'asc'
   setSort({ by, order })
 }

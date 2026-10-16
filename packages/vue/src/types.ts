@@ -1,7 +1,7 @@
-import type { Filters, ListOptions, ListProviderConfig, ListResponse } from '../../../shared'
+import type { Filters, ListOptions, ListResponse } from '../../../shared'
 
 /** Props for the ShilpList root component. */
-export interface ShilpListProps<T = unknown> extends ListOptions<T>, ListProviderConfig<T> {}
+export type ShilpListProps<T = unknown> = ListOptions<T>
 
 /** Emits for the ShilpList root component. */
 export interface ShilpListEmits<T = unknown> {

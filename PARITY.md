@@ -1,64 +1,75 @@
-# React vs Vue list: parity inconsistencies
+# ShilpList parity: React vs Vue
 
-Compared `packages/react` and `packages/vue` (with `shared/`) by reading the source. Not run (typecheck and lint pass). Priority: High / Med / Low. Status: Fixed / Partial / Open / New, re-verified after the latest changes.
+Compared `packages/react` and `packages/vue` (with `shared/`) by reading the source after the rows/columns rename, the `ShilpList` rename and the `shared/` split. `pnpm typecheck` and `pnpm lint` pass; the app and Storybook tests were not run. Status: Fixed / Open. Priority: High / Med / Low.
+
+All 31 original findings (A–D) and N1 are fixed. 9 findings are open: N2–N9 are small leftovers and N10 is a shared bug.
 
 ## A. Behaviour and logic
 
-| # | Status | Pri | Area | React | Vue | Where |
+| # | Status | Pri | Area | Original gap | Current state | Where |
 |---|---|---|---|---|---|---|
-| A1 | Fixed | High | setFilters / clearFilters | Always applies filters, resets to page 1, refetches, calls onFiltersChange. Refetches even when filters are unchanged. | Only writes the filters model; a watcher refetches. Skips when filters are equal or while initializing, so clearFilters() on default filters does nothing. | list.tsx:233, list.vue:216, list.vue:292 | Update: React now skips equal filters like Vue. Small leftover: Vue still emits onFiltersChange even when filters are unchanged, and ignores changes while initializing. |
-| A2 | Fixed | Med | Filters binding | One-way prop plus onFiltersChange. Filters restored by stateManager stay internal; the parent is not told. | v-model (defineModel). Restored filters are written back to the parent via update:filters. | list.tsx, list.vue | Update: React calls onFiltersChange when restored filters differ from the prop. A parent echo of those filters does not reset the page or refetch. |
-| A3 | Fixed | High | Equality helper | deepEqual ignores undefined keys and key order. A second helper, isEqual, also exists in utils.ts. | deepEqual is JSON.stringify(a) === JSON.stringify(b), so key order matters. | components/utils.ts, utils.ts, list-utils.ts | Update: Both use the same deepEqual (ignore undefined keys / key order). React's unused isEqual alias was removed; hasActiveFilters uses deepEqual in both packages. |
-| A4 | Fixed | High | loadMore() | No guard: always page + 1. ListLoadMore calls setPage(page + 1) with its own guard. | Guarded by hasMore && !isLoading. ListLoadMore calls state.loadMore. | list.tsx, list.vue:226 | Update: React loadMore() is guarded like Vue. ListLoadMore in both packages calls state.loadMore. |
-| A5 | Fixed | High | setPage('') and string pages | Stores '' as the page. A string page like '2' makes loadMore compute '2' + 1 = '21'. | Returns early and keeps the old page. Coerces with Number(). | list.tsx:setPage, list.vue:setPage | Update: React setPage now returns early on empty values and coerces with Number(), like Vue. |
-| A6 | Fixed | High | requestHandler context | No columnSettings; isRefresh is undefined unless passed. | Sends buildContext() including columnSettings, plus isRefresh: false by default. | list.tsx:153, list.vue:132 | Update: Both send isRefresh: false and omit columnSettings from requestHandler (it stays on StateManagerContext only). |
-| A7 | Fixed | High | Callback timing | onResponse, then afterLoadMore / afterPageChange, then rows are set. Callbacks see old rows. | Sets response and state manager, emits onResponse, sets rows, then emits afterX. Callbacks see new rows. | list.tsx, list.vue setRows | Update: React now updates state, calls the state manager, then onResponse and afterX. Order matches Vue closely enough. N1 is fixed. |
-| A8 | Fixed | Low | sort.sortBy empty value | '' | null (localSortBy \|\| null) | list.tsx, list.vue | Update: React exposes sort.sortBy as null when empty, matching Vue and ListSort. Internal sortBy stays a string. |
-| A9 | Fixed | Med | Initial fetch timing | stateManager.init and first setPage run in a mount useEffect (client only). | Both run synchronously in setup, so they also run during SSR. | list.tsx, list.vue | Update: Vue now runs stateManager.init and the first setPage in onMounted. Both packages defer them until mount, so neither fetches during SSR. |
-| A10 | Fixed | Med | requestHandler / stateManager reactivity | Follow re-renders. | Read once from props; later changes are ignored. | list.vue | Update: Vue no longer captures `const requestHandler = props.requestHandler` / `stateManager` at setup. Both packages resolve the current prop on each fetch / stateManager call. |
-| A11 | Fixed | High | Stale state overwrite | fetchData builds state from a snapshot taken at request start. setSelection / updateColumn during an in-flight request are overwritten. | Independent refs; not affected. | list.tsx fetchData | Update: fetchData now merges into the latest state with setState(prev => ...), so selection and column changes made during a request survive. N1 is fixed. |
-| A12 | Fixed | Med | Search debounce | Timer cleared on unmount; debounceTime read live. | useDebounceFn from @vueuse/core (extra runtime dependency); not cancelled on unmount; debounceTime captured once. | search.tsx, search.vue | Update: Vue ListSearch uses a manual timer, cancelled on unmount, with debounceTime read live. @vueuse/core is no longer used in the source but is still listed in packages/vue/package.json dependencies. |
-| A13 | Fixed | Low | Prop reactivity | Only filters reacts. | Only filters reacts. | Both: page, perPage, search, sortBy, endpoint ignored after mount. The old docs claim all props react. | Update: After mount, page, perPage, search, sortBy, sortOrder, and endpoint refetch in both packages. A perPage, search, sort, or endpoint change resets to page 1 unless page changes in the same update. Restored state is left alone because those props have not changed yet. |
+| A1 | Fixed | High | setFilters / clearFilters | React always refetched; Vue skipped equal filters. | Both skip equal filters, then apply, reset to page 1 and notify (onFiltersChange / filtersChange). Leftover: Vue ignores a filters change that happens before the first response (`initializingState`); React applies it. | list.tsx handlers, list.vue setFilters / watch(filters) |
+| A2 | Fixed | Med | Filters binding | Restored filters stayed internal in React but were written to the parent in Vue. | React calls onFiltersChange on mount when restored filters differ from the prop, and ignores a parent echo. Vue writes restored filters to the v-model. Leftover: Vue does not emit `filtersChange` for restored filters (see N2). | list.tsx init effect, list.vue setup |
+| A3 | Fixed | High | Equality helper | Vue used JSON.stringify; React had two helpers. | Both use the same `deepEqual` (ignores undefined keys and key order) and the same `hasActiveFilters` logic. The code is duplicated in each package. | react/src/utils.ts, vue/src/list-utils.ts |
+| A4 | Fixed | High | loadMore() | React had no guard; ListLoadMore bypassed the root handler. | Root `loadMore` is guarded by hasMore and !isLoading in both. ListLoadMore calls `loadMore` from state in both. | list.tsx, list.vue, load-more |
+| A5 | Fixed | High | setPage('') and string pages | React stored '' and string pages; `'2' + 1` gave `'21'`. | React returns early on empty values and coerces with Number(). Leftover: Vue does not guard NaN (see N3). | list.tsx setPage, list.vue setPage |
+| A6 | Fixed | High | requestHandler context | Vue sent attrSettings and isRefresh: false; React did not. | Both build one `ListContext` (including `columnSettings`) and send it, plus `isRefresh: false`, to `requestHandler`; the same builder feeds every `stateManager` call. | list.tsx getContext, list.vue buildContext |
+| A7 | Fixed | High | Callback timing | Callbacks and state-manager writes ran in a different order. | Both: response stored, state manager called, `onResponse`, then `afterLoadMore` / `afterPageChange`. Vue emits `response` before it assigns rows, React after; callbacks only receive the response, so this is not observable. | list.tsx fetchData, list.vue setRows |
+| A8 | Fixed | Low | sortBy empty value | React gave '', Vue gave null. | Both expose `sortBy` as `null` when empty. | list.tsx, list.vue |
+| A9 | Fixed | Med | Initial fetch timing | React fetched after mount; Vue fetched in setup (also on SSR). | Both run `stateManager.init` and the first `setPage` after mount (React effect, Vue `onMounted`). | list.tsx, list.vue |
+| A10 | Fixed | Med | requestHandler / stateManager reactivity | Vue read them once at setup. | Vue reads `props.requestHandler` and `props.stateManager` on every call, like React. | list.vue |
+| A11 | Fixed | High | Stale state overwrite | React overwrote selection and column changes made during a request. | fetchData merges with `setState(prev => ...)`, so those changes survive. See N4 for one remaining snapshot. | list.tsx fetchData |
+| A12 | Fixed | Med | Search debounce | Vue used @vueuse/core and never cancelled. | Vue ListSearch uses its own timer, cancelled on unmount, with debounceTime read live. `@vueuse/core` is no longer a dependency of packages/vue. | search.tsx, search.vue, packages/vue/package.json |
+| A13 | Fixed | Low | Prop reactivity | Only `filters` reacted after mount. | page, perPage, search, sortBy, sortOrder and endpoint refetch in both packages. A change other than page resets to page 1. Leftover: Vue ignores these changes until the first response; React applies them once mounted. | list.tsx prop effect, list.vue watch |
 
 ## B. Props, events and public API
 
-| # | Status | Pri | Area | React | Vue | Where |
+| # | Status | Pri | Area | Original gap | Current state | Where |
 |---|---|---|---|---|---|---|
-| B1 | Fixed | High | Lifecycle hooks | Props: onResponse, afterPageChange, afterLoadMore. | Emits with the same names (listener is @on-response). | shared/options.ts says "shared by React props and Vue emits" | Update: Vue emits response, afterPageChange, afterLoadMore, rowSelect, and filtersChange (@response, @after-page-change, @after-load-more, @row-select, @filters-change). onResponse, onRowSelect, and onFiltersChange are listeners only, so each handler runs once. |
-| B2 | Fixed | High | Selection and filter events | No selection callback. Has onFiltersChange. | Emits onRowSelect(selection, previous). Uses update:filters. | list.vue watch(selection) | Update: Both support onFiltersChange and onRowSelect (React via selection effect; Vue via watch). Restored filters are written back on both (see A2). |
-| B3 | Fixed | Med | Imperative access | None (no ref / useImperativeHandle). | defineExpose of rows, state and handlers; omits updateColumn. | list.vue defineExpose | Update: React exposes ReactListHandle via ref (rows/response/isLoading/error/count/selection + handlers including updateColumn). Vue defineExpose matches. |
-| B4 | Fixed | Low | Exports | Default export plus named ReactList. Exports ReactListProps. | Named VueList only. Also exports LIST_CONTEXT_KEY, VueListProps, VueListEmits. | index.ts, main.ts | Update: Vue also default-exports VueList. VueListEmits and LIST_CONTEXT_KEY stay because Vue has emits and inject. |
-| B5 | Fixed | Med | useListContext() | Returns { listState } as plain values. | Returns { listState: ComputedRef }; consumers need .value. Shared ListInstanceContext only fits React. | list-context.tsx, use-list-context.ts | Update: Vue useListContext returns ListInstanceContext. listState is a proxy over the computed, so script reads listState.rows with no .value. |
-| B6 | Fixed | Low | Root children / slot | children is a node or a function of ListRenderScope. | Default slot bound to ListState. | list.tsx, list.vue | Update: ListRenderScope is ListState. React children are a node or (state: ListState) => node. Vue's default slot is bound to listState. |
-| B7 | Fixed | Low | Slot types | Most children typed function-only, though runtime also accepts nodes. | Slots accept either. | search, rows, go-to, load-more, per-page, summary, refresh | Update: Those React slots, plus ListPagination, type children as a node or a render function. ListSearch renders a node as-is instead of calling it. |
+| B1 | Fixed | High | Lifecycle hooks | Props in React, emits named `onX` in Vue. | Vue emits `response`, `afterPageChange`, `afterLoadMore`, `rowSelect`, `filtersChange`. React uses the matching props. Leftover: Vue also accepts `afterPageChange` / `afterLoadMore` as props and calls both (see N5). | shared/list.ts, types.ts, list.vue |
+| B2 | Fixed | High | Selection and filter events | Selection event was Vue-only. | `onRowSelect` (React effect) and `rowSelect` (Vue watch) both exist. Both also fire on every fetch (see N6). | list.tsx, list.vue |
+| B3 | Fixed | Med | Imperative access | React had no ref API. | React exposes `ShilpListHandle` through `ref` (React 19 ref-as-prop; the package peer is now ^19). Vue `defineExpose` has the same members including `updateColumn`. | list.tsx, list.vue |
+| B4 | Fixed | Low | Exports | Vue had no default export. | Both default-export `ShilpList` and export it by name. Vue also exports `LIST_CONTEXT_KEY` and `ShilpListEmits`; React exports `ShilpListHandle`. | index.ts, main.ts |
+| B5 | Fixed | Med | useListContext() | Vue returned a ComputedRef. | Vue returns `ListInstanceContext` with a Proxy over the computed, so `listState.rows` needs no `.value`. See N7 for destructuring. | use-list-context.ts |
+| B6 | Fixed | Low | Root children / slot | React and Vue typed the root scope differently. | `ListRenderScope` is `ListState`. React children is a node or `(state) => node`; Vue's default slot is bound to the state. | list.tsx, list.vue |
+| B7 | Fixed | Low | Slot types | React children typed function-only. | All React slot components accept a node or a render function; ListSearch renders a node as-is. | search, rows, go-to, load-more, per-page, summary, refresh, pagination |
 
 ## C. Components: naming, props and slot scope
 
-| # | Status | Pri | Area | React | Vue | Where |
+| # | Status | Pri | Area | Original gap | Current state | Where |
 |---|---|---|---|---|---|---|
-| C1 | Fixed | Med | ListRows | row render prop gets { row, index } from serialized rows (has _index). children-as-function wins over row. | #row slot comes from scope.rows (has _index). Default slot overrides #row. | rows.tsx, rows.vue | Update: React children (function or node) win over row, matching Vue's default slot. row still receives { row, index } from serialized rows. |
-| C2 | Fixed | Med | ListColumns | column prop receives { key, column, updateColumn, columnSettings }. | #column slot receives { column, updateColumn, columnSettings } (no key). | columns.tsx, columns.vue | Update: React column callback no longer receives key. The mapped result is wrapped in a keyed Fragment. |
-| C3 | Fixed | Med | ListPagination | renderFirst / renderPrev / renderPages / renderPage / renderNext / renderLast. renderPage gets the full scope; its result has no key (React warning). | Slots first / prev / pages / page / next / last. #page gets only { page, isActive }. | pagination.tsx, pagination.vue | Update: renderPage and #page both receive the pagination scope with page and isActive overridden. Each React page is wrapped in a keyed Fragment. render* props are the React names for those Vue slots. |
-| C4 | Fixed | Low | ListEmpty | children is node-only. | Default slot, no scope. | Same behaviour; only the React type spells it out | Update: Vue's default slot is typed with no props, matching React's node-only children. |
+| C1 | Fixed | Med | ListRows | `item` won over children in React; Vue's default slot won over `#item`. | Children (node or function) win over `row` in React, matching Vue. `row` / `#row` both receive serialized rows with `_index`. | rows.tsx, rows.vue |
+| C2 | Fixed | Med | ListColumns | React callback received `key` and `columnSettings`; Vue slot had no `key`. | Both pass `{ column, updateColumn, columnSettings }`. React wraps the result in a keyed Fragment. | columns.tsx, columns.vue |
+| C3 | Fixed | Med | ListPagination | `renderPage` and `#page` had different scopes; no key in React. | Both pass the full pagination scope with `page` and `isActive` overridden. Names differ by framework (`renderFirst` etc. versus slots `first` etc.). | pagination.tsx, pagination.vue |
+| C4 | Fixed | Low | ListEmpty | React type was node-only, Vue untyped. | Vue default slot is typed with no props. | empty.tsx, empty.vue |
 
 ## D. HTML output
 
-| # | Status | Pri | Area | React | Vue | Where |
+| # | Status | Pri | Area | Original gap | Current state | Where |
 |---|---|---|---|---|---|---|
-| D1 | Fixed | High | Root wrapper | No wrapper element. | <div class="vue-list"> around everything. | list.tsx, list.vue template | Update: React now renders <div class="react-list"> around children. |
-| D2 | Fixed | Low | ListEmpty / ListLoader fallback | <div><p>…</p></div> | <p>…</p> | empty, loader | Update: React fallbacks are a bare `<p>`, matching Vue and ListInitialLoader. |
-| D3 | Fixed | Med | ListPagination structure | Pages inside <div>, each page in <div key>. | Flat <span> / <button>, no wrappers. | pagination | Update: React pages are a flat span or button under react-list__pagination. Custom renderPage output is a keyed Fragment, which adds no DOM node. |
-| D4 | Fixed | Low | ListRows fallback | <div><pre>…</pre></div> per row (JSON includes _index). | <div> wrapper with <pre>…</pre> (object includes _index). | rows | Update: Vue fallback uses JSON.stringify(row, null, 2), matching React. Both still wrap each row in a div. |
-| D5 | Fixed | High | Buttons | ListRefresh button lacks type="button" (submits a surrounding form). ListLoadMore button gets disabled={isLoading}. | Both have type="button"; LoadMore button is not disabled while loading. | refresh, load-more | Update: React Refresh button has type="button"; React LoadMore button is no longer disabled while loading. |
-| D6 | Fixed | Low | Search placeholder | "Search..." | "Search" | search | Update: Vue placeholder is now "Search...". |
-| D7 | Fixed | Low | Select events | onChange | @input | go-to, per-page | Update: Vue go-to and per-page selects listen to @change, matching React's onChange and ListColumns. |
+| D1 | Fixed | High | Root wrapper | Only Vue rendered a root div. | Both render a root div (`react-list`, `vue-list`). | list.tsx, list.vue |
+| D2 | Fixed | Low | ListEmpty / ListLoader fallback | React wrapped the text in an extra div. | Both render a bare `<p>`. | empty, loader |
+| D3 | Fixed | Med | ListPagination structure | React wrapped pages in divs. | Both render flat span / button elements. | pagination |
+| D4 | Fixed | Low | ListRows fallback | Output differed. | Both render `<div><pre>JSON</pre></div>` per row. | rows |
+| D5 | Fixed | High | Buttons | React Refresh lacked `type="button"`; React LoadMore was disabled while loading. | All default buttons have `type="button"`; LoadMore is not disabled in either. | refresh, load-more |
+| D6 | Fixed | Low | Search placeholder | 'Search...' versus 'Search'. | Both use 'Search...'. | search |
+| D7 | Fixed | Low | Select events | onChange versus @input. | Both use change events. | go-to, per-page |
 
-## N. New findings from the changes
+## N. New findings
 
-| # | Status | Pri | Area | React | Vue | Where |
+| # | Status | Pri | Area | Original gap | Current state | Where |
 |---|---|---|---|---|---|---|
-| N1 | Fixed | Med | State manager call in fetchData | updateStateManager is called after a setState(prev => ...) updater that assigns mergedForStateManager. React may run updaters later, during render, so the variable can still be null and stateManager.set is skipped. In StrictMode dev the updater also runs twice. | Calls stateManager.set synchronously after the response. | list.tsx fetchData | Update: React calls updateStateManager(currentState) synchronously after scheduling setState, using the request snapshot. stateManager.set is not skipped, and StrictMode does not run it twice. |
+| N1 | Fixed | Med | State manager call in fetchData | The call depended on a variable assigned inside a setState updater. | `updateStateManager` is called synchronously after the response, outside the updater. | list.tsx fetchData |
+| N2 | Open | Low | Filters restored by stateManager | — | React calls `onFiltersChange` for restored filters; Vue updates the v-model but does not emit `filtersChange`. | list.tsx init effect, list.vue setup |
+| N3 | Open | Low | Vue setPage with invalid values | — | React ignores NaN and 0 after `Number()`. Vue only guards `0` and `''`, so `setPage('abc')` sets the page to NaN and fetches. | list.vue setPage |
+| N4 | Open | Low | State manager snapshot | — | React saves the state from when the request started (`updateStateManager(currentState)`), so `columnSettings` changed during the request are not saved. Vue saves from live refs. | list.tsx fetchData |
+| N5 | Open | Low | Callback props on Vue | — | `afterPageChange` and `afterLoadMore` are both Vue props and emits, and both are called. `onResponse`, `onRowSelect`, `onFiltersChange` are emits only. Consumers have two ways to subscribe to some events and one to others. | list.vue setRows, types.ts |
+| N6 | Open | Med | Selection event fires on every fetch | — | Each response sets `selection` to a new `[]`, so `onRowSelect` / `rowSelect` fires with `([], previous)` after every fetch even when nothing was selected. Same in both packages. | list.tsx fetchData + selection effect, list.vue getData + watch(selection) |
+| N7 | Open | Low | Vue useListContext destructuring | — | The Proxy implements only `get`. `const { rows } = listState` in `setup` captures a one-time value, and `{ ...listState }` is empty. React re-renders, so it has no equivalent trap. | use-list-context.ts |
+| N8 | Open | Low | ListSummary default text | — | React says "Showing N items"; Vue says "Showing N rows" (left over from the items → rows rename). | summary.tsx, summary.vue |
+| N9 | Open | Low | CSS class prefix | — | Classes are `react-list__*` and `vue-list__*`, and Vue's inject key is `'vue-list-context'`, although both root components are now named `ShilpList`. Decide whether a shared `shilp-list` prefix is wanted. | all components, use-list-context.ts |
+| N10 | Open | Med | `pagination.hasMore` in pagination mode | — | Both compute `rows.length < count`. In page mode `rows` holds only the current page, so `hasMore` is true on the last page whenever count exceeds the page size. Correct only in loadMore mode. Not a parity gap, same in both. | list.tsx memoizedState, list.vue listState |
 
 ## Suggested order
 
-No open items remain.
+N6 and N10 first (both packages, user-visible). Then N5, N2, N3, N4, N7, N8, and decide N9.

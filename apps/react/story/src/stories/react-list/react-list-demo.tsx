@@ -12,7 +12,7 @@ import ShilpList, {
   ListSearch,
   ListSummary,
 } from '@shilp.dev/react-list'
-import type { ListSort } from '@shilp.dev/react-list'
+import type { SortOrder } from '@shilp.dev/react-list'
 import {
   createRequestHandler,
   type CreateRequestHandlerOptions,
@@ -36,11 +36,12 @@ export interface ReactListDemoProps {
 }
 
 function toggleSort(
-  sort: ListSort,
+  sortBy: string | null,
+  sortOrder: SortOrder,
   setSort: (next: { by: string; order: 'asc' | 'desc' }) => void,
   by: string,
 ) {
-  const currentOrder = sort.sortBy === by ? sort.sortOrder : ''
+  const currentOrder = sortBy === by ? sortOrder : ''
   const order: 'asc' | 'desc' = currentOrder === 'asc' ? 'desc' : 'asc'
   setSort({ by, order })
 }
@@ -154,7 +155,7 @@ function ReactListDemoInner({
         </ListError>
 
         <ListRows>
-          {({ rows, sort, setSort }) => (
+          {({ rows, sortBy, sortOrder, setSort }) => (
             <div className="react-list-demo__table-wrap">
               <ListLoader>
                 <p className="react-list-demo__overlay">Updating...</p>
@@ -168,7 +169,7 @@ function ReactListDemoInner({
                       <button
                         type="button"
                         className="react-list-demo__sort"
-                        onClick={() => toggleSort(sort, setSort, 'name')}
+                        onClick={() => toggleSort(sortBy, sortOrder, setSort, 'name')}
                       >
                         Name
                       </button>
@@ -178,7 +179,7 @@ function ReactListDemoInner({
                       <button
                         type="button"
                         className="react-list-demo__sort"
-                        onClick={() => toggleSort(sort, setSort, 'date_updated')}
+                        onClick={() => toggleSort(sortBy, sortOrder, setSort, 'date_updated')}
                       >
                         Updated
                       </button>

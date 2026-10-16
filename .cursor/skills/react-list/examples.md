@@ -89,7 +89,7 @@ export function SkillList() {
       <ListError>{({ error }) => <p>{error.message}</p>}</ListError>
 
       <ListRows>
-        {({ rows, sort, setSort }) => (
+        {({ rows, sortBy, sortOrder, setSort }) => (
           <div>
             <ListLoader>
               <p>Updating...</p>
@@ -104,7 +104,7 @@ export function SkillList() {
                         setSort({
                           by: 'name',
                           order:
-                            sort.sortBy === 'name' && sort.sortOrder === 'asc' ? 'desc' : 'asc',
+                            sortBy === 'name' && sortOrder === 'asc' ? 'desc' : 'asc',
                         })
                       }
                     >

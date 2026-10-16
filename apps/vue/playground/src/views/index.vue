@@ -10,8 +10,8 @@
         :per-page="10"
         v-model:filters="filters"
         pagination-mode="pagination"
-        :request-handler="vueListConfig.requestHandler"
-        :state-manager="vueListConfig.stateManager"
+        :request-handler="requestHandler"
+        :state-manager="stateManager"
         :columns="[
           { name: 'id', label: 'ID' },
           { name: 'name', label: 'Name' },
@@ -195,10 +195,11 @@
             </div>
           </ListError>
 
-          <ListRows v-slot="{ rows, sort, setSort }">
+          <ListRows v-slot="{ rows, sortBy, sortOrder, setSort }">
             <SkillRowsTable
               :rows="rows as SerializedListRow<Skill>[]"
-              :sort="sort"
+              :sort-by="sortBy"
+              :sort-order="sortOrder"
               :set-sort="setSort"
             />
           </ListRows>
@@ -342,7 +343,8 @@ import {
 } from '@shilp.dev/vue-list'
 import type { SerializedListRow } from '@shilp.dev/vue-list'
 import type { Skill, SkillFilters } from '@/types/skill'
-import vueListConfig, { getStateFromSearchParams } from '@/api/vue-list-config'
+import requestHandler from '@/api/request-handler'
+import { getStateFromSearchParams, stateManager } from '@/api/vue-list-config'
 import SkillRowsTable from '@/components/skill-rows-table.vue'
 
 defineOptions({

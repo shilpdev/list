@@ -1,5 +1,5 @@
 import { Fragment, memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { ColumnsScope, ListColumn, RenderColumnArgs } from '../../../../shared'
+import type { ColumnsScope, RenderColumnArgs } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListColumnsProps = {
@@ -11,8 +11,6 @@ export const ListColumns = memo(({ children, column: columnFn }: ListColumnsProp
   const { listState } = useListContext()
   const { columns, columnSettings, updateColumn } = listState
 
-  const normalizedColumns = columns as ListColumn[]
-
   const handleColumnChange = useCallback(
     (columnName: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
       updateColumn?.(columnName, 'visible', e.target.checked)
@@ -22,11 +20,11 @@ export const ListColumns = memo(({ children, column: columnFn }: ListColumnsProp
 
   const scope = useMemo(
     (): ColumnsScope => ({
-      columns: normalizedColumns,
+      columns,
       columnSettings: columnSettings ?? {},
       updateColumn: updateColumn ?? (() => {}),
     }),
-    [normalizedColumns, columnSettings, updateColumn],
+    [columns, columnSettings, updateColumn],
   )
 
   return (
@@ -35,7 +33,7 @@ export const ListColumns = memo(({ children, column: columnFn }: ListColumnsProp
         ? children(scope)
         : children
           ? children
-          : normalizedColumns.map((column, index) => {
+          : columns.map((column, index) => {
               if (columnFn) {
                 return (
                   <Fragment key={`column-${index}`}>

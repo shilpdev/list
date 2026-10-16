@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ColumnsScope, ListColumn } from '../../../../shared'
+import type { ColumnsScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
@@ -43,7 +43,7 @@ const scope = computed((): ColumnsScope => {
   const state = listState
 
   return {
-    columns: state.columns as ListColumn[],
+    columns: state.columns,
     columnSettings: state.columnSettings ?? {},
     updateColumn: state.updateColumn ?? (() => {}),
   }

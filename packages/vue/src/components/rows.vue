@@ -36,7 +36,8 @@ const scope = computed((): RowsScope => {
     })),
     isLoading: state.loader.isLoading,
     setSort: state.setSort,
-    sort: state.sort,
+    sortBy: state.sortBy,
+    sortOrder: state.sortOrder,
   }
 })
 </script>

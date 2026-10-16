@@ -1,13 +1,11 @@
 import type {
   Filters,
-  ListProviderConfig,
   SavedListState,
   SortOrder,
-  StateManagerContext,
+  StateManager,
+  ListContext,
 } from '@shilp.dev/react-list';
 
-import requestHandler from '../api/request-handler';
-import type { Skill } from '../types/skill';
 
 const LIST_PARAM_KEYS = [
   'page',
@@ -137,22 +135,33 @@ function setStateInSearchParams(state: {
   window.history.pushState({}, '', url);
 }
 
-const reactListConfig: ListProviderConfig<Skill> = {
-  stateManager: {
-    init(context: StateManagerContext) {
-      const { endpoint, version } = context;
-      const allKeys = `react-list--${endpoint}--`;
-      const latestKey = stateManagerKey(endpoint, version);
-      const staleKeys = Object.keys(localStorage).filter(
-        (key) => key.startsWith(allKeys) && key !== latestKey
-      );
-      staleKeys.forEach((key) => localStorage.removeItem(key));
-    },
+export const stateManager: StateManager = {
+  init(context: ListContext) {
+    const { endpoint, version } = context;
+    const allKeys = `react-list--${endpoint}--`;
+    const latestKey = stateManagerKey(endpoint, version);
+    const staleKeys = Object.keys(localStorage).filter(
+      (key) => key.startsWith(allKeys) && key !== latestKey
+    );
+    staleKeys.forEach((key) => localStorage.removeItem(key));
+  },
 
-    set(context: StateManagerContext) {
-      const {
-        endpoint,
-        version,
+  set(context: ListContext) {
+    const {
+      endpoint,
+      version,
+      search,
+      page,
+      perPage,
+      sortBy,
+      sortOrder,
+      filters,
+      columnSettings,
+    } = context;
+    const key = stateManagerKey(endpoint, version);
+    localStorage.setItem(
+      key,
+      JSON.stringify({
         search,
         page,
         perPage,
@@ -160,52 +169,35 @@ const reactListConfig: ListProviderConfig<Skill> = {
         sortOrder,
         filters,
         columnSettings,
-      } = context;
-      const key = stateManagerKey(endpoint, version);
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          search,
-          page,
-          perPage,
-          sortBy,
-          sortOrder,
-          filters,
-          columnSettings,
-        })
-      );
-      setStateInSearchParams({
-        page,
-        perPage,
-        search,
-        sortBy,
-        sortOrder,
-        filters,
-      });
-    },
-
-    get(context: StateManagerContext): SavedListState | null {
-      const { endpoint, version } = context;
-      const key = stateManagerKey(endpoint, version);
-      const urlState = getStateFromSearchParams();
-
-      try {
-        const saved = localStorage.getItem(key);
-        const parsed = saved ? (JSON.parse(saved) as SavedListState) : null;
-
-        if (urlState == null && parsed == null) return null;
-
-        return {
-          ...parsed,
-          ...urlState,
-        };
-      } catch {
-        return urlState;
-      }
-    },
+      })
+    );
+    setStateInSearchParams({
+      page,
+      perPage,
+      search,
+      sortBy,
+      sortOrder,
+      filters,
+    });
   },
 
-  requestHandler,
-};
+  get(context: ListContext): SavedListState | null {
+    const { endpoint, version } = context;
+    const key = stateManagerKey(endpoint, version);
+    const urlState = getStateFromSearchParams();
 
-export default reactListConfig;
+    try {
+      const saved = localStorage.getItem(key);
+      const parsed = saved ? (JSON.parse(saved) as SavedListState) : null;
+
+      if (urlState == null && parsed == null) return null;
+
+      return {
+        ...parsed,
+        ...urlState,
+      };
+    } catch {
+      return urlState;
+    }
+  },
+};

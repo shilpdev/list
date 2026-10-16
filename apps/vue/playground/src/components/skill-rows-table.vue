@@ -76,12 +76,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ListLoader, useListContext } from '@shilp.dev/vue-list'
-import type { ListSort, SerializedListRow } from '@shilp.dev/vue-list'
+import type { SerializedListRow, SortOrder } from '@shilp.dev/vue-list'
 import type { Skill } from '@/types/skill'
 
 const props = defineProps<{
   rows: SerializedListRow<Skill>[]
-  sort: ListSort
+  sortBy: string | null
+  sortOrder: SortOrder
   setSort: (next: { by: string; order: 'asc' | 'desc' }) => void
 }>()
 
@@ -93,14 +94,14 @@ function isVisible(name: string) {
 }
 
 function toggleSort(by: string) {
-  const currentOrder = props.sort.sortBy === by ? props.sort.sortOrder : ''
+  const currentOrder = props.sortBy === by ? props.sortOrder : ''
   const sorting: 'asc' | 'desc' = currentOrder === 'asc' ? 'desc' : 'asc'
   props.setSort({ by, order: sorting })
 }
 
 function sortIconName(by: string) {
-  if (props.sort.sortBy !== by || props.sort.sortOrder === '') return 'i-mdi-sort'
-  if (props.sort.sortOrder === 'asc') return 'i-mdi-sort-ascending'
+  if (props.sortBy !== by || props.sortOrder === '') return 'i-mdi-sort'
+  if (props.sortOrder === 'asc') return 'i-mdi-sort-ascending'
   return 'i-mdi-sort-descending'
 }
 
