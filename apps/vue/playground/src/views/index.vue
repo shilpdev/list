@@ -1,9 +1,9 @@
 <template>
   <div class="flex min-h-screen items-start justify-center bg-slate-100 p-6">
     <div class="w-full max-w-350 rounded-xl bg-white p-8 text-slate-800 shadow-lg">
-      <h2 class="mb-6 text-3xl font-bold text-slate-700">Vue List Playground (TypeScript)</h2>
+      <h2 class="mb-6 text-3xl font-bold text-slate-700">Shilp List Playground (Vue + TypeScript)</h2>
 
-      <VueList
+      <ShilpList
         endpoint="skills"
         search=""
         :page="1"
@@ -319,7 +319,7 @@
             </ListPagination>
           </div>
         </div>
-      </VueList>
+      </ShilpList>
     </div>
   </div>
 </template>
@@ -327,7 +327,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import {
-  VueList,
+  ShilpList,
   ListEmpty,
   ListError,
   ListGoTo,

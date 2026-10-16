@@ -1,10 +1,10 @@
 ---
 name: react-list
 description: >-
-  Implements and integrates @shilp.dev/react-list (ReactList, ListRows,
+  Implements and integrates @shilp.dev/react-list (ShilpList, ListRows,
   ListPagination, requestHandler, updateRowById). Use when building React
   lists, tables, pagination, search, load-more, or when the user mentions
-  @shilp.dev/react-list or ReactList.
+  @shilp.dev/react-list or ShilpList.
 ---
 
 # @shilp.dev/react-list
@@ -17,7 +17,7 @@ Peers: `react` and `react-dom` `^19`. Do not import `@shilp.dev/vue-list`.
 
 ## Rules
 
-1. Wrap all list slots in `<ReactList>`. Slots use `useListContext()` and throw outside it.
+1. Wrap all list slots in `<ShilpList>`. Slots use `useListContext()` and throw outside it.
 2. Always pass `requestHandler`. Missing it throws.
 3. Return `{ rows, count, meta? }` from `requestHandler`. Map your API into that shape.
 4. Drive extra filters from parent state via `filters` and `onFiltersChange` (pass the state setter). `onFiltersChange` also runs when `stateManager` restores filters. Do not call `setFilters` from a local form unless that form lives inside the list tree.
@@ -27,7 +27,7 @@ Peers: `react` and `react-dom` `^19`. Do not import `@shilp.dev/vue-list`.
 ## Setup
 
 ```tsx
-import ReactList, {
+import ShilpList, {
   ListEmpty,
   ListError,
   ListInitialLoader,
@@ -49,7 +49,7 @@ const requestHandler: RequestHandler<Row> = async (ctx) => {
 }
 ```
 
-## ReactList props
+## ShilpList props
 
 Required: `endpoint`, `requestHandler`. A later `endpoint` change refetches from page 1.
 
@@ -73,7 +73,7 @@ Children: `ReactNode` or `(state: ListState<T>) => ReactNode`.
 
 ## Slots
 
-All slots must be descendants of `ReactList`. Most hide themselves during initial load, empty, or error.
+All slots must be descendants of `ShilpList`. Most hide themselves during initial load, empty, or error.
 
 | Component           | When it renders                              | Children scope                                                         |
 | ------------------- | -------------------------------------------- | ---------------------------------------------------------------------- |

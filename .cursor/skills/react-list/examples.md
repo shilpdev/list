@@ -4,7 +4,7 @@
 
 ```tsx
 import { useState } from 'react'
-import ReactList, {
+import ShilpList, {
   ListEmpty,
   ListError,
   ListInitialLoader,
@@ -48,7 +48,7 @@ export function SkillList() {
   const [filters, setFilters] = useState<Record<string, string | undefined>>({})
 
   return (
-    <ReactList
+    <ShilpList
       endpoint="skills"
       perPage={10}
       requestHandler={requestHandler}
@@ -152,7 +152,7 @@ export function SkillList() {
           </div>
         )}
       </ListPagination>
-    </ReactList>
+    </ShilpList>
   )
 }
 ```
@@ -160,7 +160,7 @@ export function SkillList() {
 ## Load more
 
 ```tsx
-<ReactList endpoint="skills" paginationMode="loadMore" requestHandler={requestHandler}>
+<ShilpList endpoint="skills" paginationMode="loadMore" requestHandler={requestHandler}>
   <ListRows>{({ rows }) => /* ... */ null}</ListRows>
   <ListLoadMore>
     {({ loadMore, hasMoreRows, isLoading }) => (
@@ -169,7 +169,7 @@ export function SkillList() {
       </button>
     )}
   </ListLoadMore>
-</ReactList>
+</ShilpList>
 ```
 
 ## Patch one row
@@ -211,7 +211,7 @@ const stateManager = {
   },
 }
 
-<ReactList endpoint="skills" requestHandler={requestHandler} stateManager={stateManager}>
+<ShilpList endpoint="skills" requestHandler={requestHandler} stateManager={stateManager}>
   {/* ... */}
-</ReactList>
+</ShilpList>
 ```

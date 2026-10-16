@@ -1,4 +1,4 @@
-import ReactList, {
+import ShilpList, {
   ListColumns,
   ListEmpty,
   ListError,
@@ -196,9 +196,9 @@ const ListWrapper = () => {
 
   return (
     <div className="w-full max-w-350 rounded-xl bg-white p-8 text-slate-800 shadow-lg">
-      <h2 className="mb-6 text-3xl font-bold text-slate-700">React List Playground (TypeScript)</h2>
+      <h2 className="mb-6 text-3xl font-bold text-slate-700">Shilp List Playground (React + TypeScript)</h2>
 
-      <ReactList
+      <ShilpList
         endpoint="skills"
         search=""
         page={1}
@@ -543,7 +543,7 @@ const ListWrapper = () => {
             </ListPagination>
           </div>
         </div>
-      </ReactList>
+      </ShilpList>
     </div>
   )
 }

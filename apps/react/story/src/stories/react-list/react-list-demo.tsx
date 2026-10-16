@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import ReactList, {
+import ShilpList, {
   ListEmpty,
   ListError,
   ListInitialLoader,
@@ -89,7 +89,7 @@ function ReactListDemoInner({
 
   return (
     <div className="react-list-demo">
-      <ReactList
+      <ShilpList
         endpoint={endpoint}
         page={page}
         perPage={perPage}
@@ -278,7 +278,7 @@ function ReactListDemoInner({
             </ListLoadMore>
           )}
         </div>
-      </ReactList>
+      </ShilpList>
     </div>
   )
 }

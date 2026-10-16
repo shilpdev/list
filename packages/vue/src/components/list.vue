@@ -18,19 +18,19 @@ import type {
 } from '../../../../shared'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'
-import type { VueListEmits, VueListProps } from '../types'
+import type { ShilpListEmits, ShilpListProps } from '../types'
 import { DEFAULT_ID_KEY, getRowId } from '../utils'
 
 defineOptions({
-  name: 'VueList',
+  name: 'ShilpList',
 })
 
-type VueListComponentProps = Omit<
-  VueListProps,
+type ShilpListComponentProps = Omit<
+  ShilpListProps,
   'filters' | 'onResponse' | 'onRowSelect' | 'onFiltersChange'
 >
 
-const props = withDefaults(defineProps<VueListComponentProps>(), {
+const props = withDefaults(defineProps<ShilpListComponentProps>(), {
   idKey: DEFAULT_ID_KEY,
   page: 1,
   perPage: 25,
@@ -42,11 +42,11 @@ const props = withDefaults(defineProps<VueListComponentProps>(), {
   meta: () => ({}),
 })
 
-const emit = defineEmits<VueListEmits>()
+const emit = defineEmits<ShilpListEmits>()
 const filters = defineModel<Filters>('filters', { default: () => ({}) })
 
 if (!props.requestHandler) {
-  throw new Error('VueList: requestHandler is required.')
+  throw new Error('ShilpList: requestHandler is required.')
 }
 
 const defaultFilters = ref<Filters>({ ...(filters.value ?? {}) })
@@ -247,7 +247,7 @@ function updateRowById(row: Partial<unknown>, id: string | number) {
 
   if (!matched) {
     console.warn(
-      `VueList: updateRowById did not find a row where ${props.idKey} === ${JSON.stringify(id)}. ` +
+      `ShilpList: updateRowById did not find a row where ${props.idKey} === ${JSON.stringify(id)}. ` +
       `Verify your rows expose "${props.idKey}" and that the id type matches exactly.`,
     )
     return

@@ -1,6 +1,6 @@
 <template>
   <div class="vue-list-demo">
-    <VueList
+    <ShilpList
       :key="listKey"
       :endpoint="endpoint"
       :page="page"
@@ -149,7 +149,7 @@
           </button>
         </ListLoadMore>
       </div>
-    </VueList>
+    </ShilpList>
   </div>
 </template>
 
@@ -168,7 +168,7 @@ import {
   ListRefresh,
   ListSearch,
   ListSummary,
-  VueList,
+  ShilpList,
 } from '@shilp.dev/vue-list'
 import {
   createRequestHandler,

@@ -11,7 +11,7 @@ export function useListContext<T>(): ListInstanceContext<T> {
   const context = inject(LIST_CONTEXT_KEY, undefined)
 
   if (!context) {
-    throw new Error('useListContext must be used within a VueList component tree')
+    throw new Error('useListContext must be used within a ShilpList component tree')
   }
 
   const listState = new Proxy({} as ListState<T>, {

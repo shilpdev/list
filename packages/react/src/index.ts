@@ -1,5 +1,5 @@
-export type { ReactListHandle, ReactListProps } from './components/list'
-export { default, default as ReactList } from './components/list'
+export type { ShilpListHandle, ShilpListProps } from './components/list'
+export { default, default as ShilpList } from './components/list'
 export { ListGoTo } from './components/go-to'
 export { ListError } from './components/error'
 export { ListEmpty } from './components/empty'

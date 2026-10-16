@@ -6,7 +6,7 @@ defineOptions({
 
 <template>
   <main class="story-app">
-    <h1>Vue List Storybook</h1>
+    <h1>Shilp List Storybook</h1>
     <p>Run <code>pnpm storybook</code> to browse component stories.</p>
   </main>
 </template>

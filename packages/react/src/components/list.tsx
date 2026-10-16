@@ -28,8 +28,8 @@ type LocalInternalListState = Omit<InternalListState, 'page'> & {
   page: number | string
 }
 
-/** Imperative API exposed via ref (mirrors VueList defineExpose). */
-export type ReactListHandle = {
+/** Imperative API exposed via ref (mirrors ShilpList defineExpose). */
+export type ShilpListHandle = {
   rows: unknown[]
   response: ListResponse | null
   isLoading: boolean
@@ -51,20 +51,20 @@ export type ReactListHandle = {
   | 'updateColumn'
 >
 
-export type ReactListProps = ListOptions &
+export type ShilpListProps = ListOptions &
   ListProviderConfig & {
     children?: ReactNode | ((state: ListState) => ReactNode)
     /** React 19 ref-as-prop; use with useImperativeHandle for the imperative API. */
-    ref?: Ref<ReactListHandle>
+    ref?: Ref<ShilpListHandle>
   }
 
 const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
 
 /**
- * ReactList root component for data fetching, pagination, and state management.
+ * ShilpList root component for data fetching, pagination, and state management.
  * Provides list context to child components (`ListSearch`, `ListPagination`, etc.).
  */
-function ReactList({
+function ShilpList({
   ref,
   children,
   endpoint,
@@ -87,9 +87,9 @@ function ReactList({
   afterLoadMore,
   onFiltersChange,
   onRowSelect,
-}: ReactListProps) {
+}: ShilpListProps) {
   if (!requestHandler) {
-    throw new Error('ReactList: requestHandler is required.')
+    throw new Error('ShilpList: requestHandler is required.')
   }
 
   const initRef = useRef(false)
@@ -324,7 +324,7 @@ function ReactList({
 
         if (!matched) {
           console.warn(
-            `ReactList: updateRowById did not find a row where ${idKey} === ${JSON.stringify(id)}. ` +
+            `ShilpList: updateRowById did not find a row where ${idKey} === ${JSON.stringify(id)}. ` +
               `Verify your rows expose "${idKey}" and that the id type matches exactly.`,
           )
           return
@@ -523,4 +523,4 @@ function ReactList({
   )
 }
 
-export default ReactList
+export default ShilpList
