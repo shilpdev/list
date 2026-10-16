@@ -1,9 +1,9 @@
-import type { ListAttribute, AttrSettings, UpdateAttrFn } from './attributes';
-import type { ListState, ListSort, SerializedListItem } from './state';
+import type { ListColumn, ColumnSettings, UpdateColumnFn } from './columns';
+import type { ListState, ListSort, SerializedListRow } from './state';
 
-/** Scope for items list slot. */
-export interface ItemsScope<T = unknown> {
-  items: SerializedListItem<T>[];
+/** Scope for the rows slot. */
+export interface RowsScope<T = unknown> {
+  rows: SerializedListRow<T>[];
   isLoading: boolean;
   setSort: (sort: { by: string; order: 'asc' | 'desc' }) => void;
   sort: ListSort;
@@ -44,7 +44,7 @@ export interface PaginationScope {
 export interface LoadMoreScope {
   isLoading: boolean;
   loadMore: () => void;
-  hasMoreItems: boolean;
+  hasMoreRows: boolean;
 }
 
 /** Scope for go-to-page slot. */
@@ -83,11 +83,11 @@ export interface ErrorScope {
   error: Error;
 }
 
-/** Scope for attributes slot. */
-export interface AttributesScope {
-  attrs: ListAttribute[];
-  attrSettings: AttrSettings;
-  updateAttr: UpdateAttrFn;
+/** Scope for the columns slot. */
+export interface ColumnsScope {
+  columns: ListColumn[];
+  columnSettings: ColumnSettings;
+  updateColumn: UpdateColumnFn;
 }
 
 /** Scope for root list render function / default slot. */

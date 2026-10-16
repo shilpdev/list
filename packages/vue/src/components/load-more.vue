@@ -1,7 +1,7 @@
 <template>
   <div v-if="showContent" class="vue-list__load-more">
     <slot v-bind="scope">
-      <button v-if="scope.hasMoreItems" type="button" @click="scope.loadMore">Load More</button>
+      <button v-if="scope.hasMoreRows" type="button" @click="scope.loadMore">Load More</button>
       <p v-else>— That's all —</p>
     </slot>
   </div>
@@ -19,18 +19,18 @@ defineOptions({
 const { listState } = useListContext()
 
 const showContent = computed(() => {
-  const state = listState.value
-  return state.data.length > 0 && !state.error
+  const state = listState
+  return state.rows.length > 0 && !state.error
 })
 
 const scope = computed((): LoadMoreScope => {
-  const state = listState.value
+  const state = listState
   const { page, perPage } = state.pagination
 
   return {
     isLoading: state.loader.isLoading,
     loadMore: state.loadMore,
-    hasMoreItems: page * perPage < state.count,
+    hasMoreRows: page * perPage < state.count,
   }
 })
 </script>

@@ -1,13 +1,13 @@
 <template>
-  <div class="v-list">
+  <div class="vue-list">
     <slot v-bind="listState" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, provide, watch } from 'vue'
+import { computed, onMounted, provide, ref, watch } from 'vue'
 import type {
-  AttrSettings,
+  ColumnSettings,
   Filters,
   ListResponse,
   ListState,
@@ -16,18 +16,21 @@ import type {
   SortOrder,
   StateManagerContext,
 } from '../../../../shared'
-import type { VueListEmits, VueListProps } from '../types'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'
-import { attrSerializer, DEFAULT_ID_KEY, getItemId } from '../utils'
+import type { ShilpListEmits, ShilpListProps } from '../types'
+import { DEFAULT_ID_KEY, getRowId } from '../utils'
 
 defineOptions({
-  name: 'VueList',
+  name: 'ShilpList',
 })
 
-type VueListComponentProps = Omit<VueListProps, 'filters'>
+type ShilpListComponentProps = Omit<
+  ShilpListProps,
+  'filters' | 'onResponse' | 'onRowSelect' | 'onFiltersChange'
+>
 
-const props = withDefaults(defineProps<VueListComponentProps>(), {
+const props = withDefaults(defineProps<ShilpListComponentProps>(), {
   idKey: DEFAULT_ID_KEY,
   page: 1,
   perPage: 25,
@@ -39,15 +42,13 @@ const props = withDefaults(defineProps<VueListComponentProps>(), {
   meta: () => ({}),
 })
 
-const emit = defineEmits<VueListEmits>()
+const emit = defineEmits<ShilpListEmits>()
 const filters = defineModel<Filters>('filters', { default: () => ({}) })
 
 if (!props.requestHandler) {
-  throw new Error('VueList: requestHandler is required.')
+  throw new Error('ShilpList: requestHandler is required.')
 }
 
-const requestHandler = props.requestHandler
-const stateManager = props.stateManager
 const defaultFilters = ref<Filters>({ ...(filters.value ?? {}) })
 
 const isLoadMore = computed(() => props.paginationMode === 'loadMore')
@@ -57,11 +58,11 @@ const localPerPage = ref<number>(props.perPage)
 const localSortBy = ref<string>(props.sortBy)
 const localSortOrder = ref<SortOrder>(props.sortOrder)
 const localSearch = ref<string>(props.search ?? '')
-const attrSettings = ref<AttrSettings>()
+const columnSettings = ref<ColumnSettings>()
 
 const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
 
-const buildContext = (): StateManagerContext => ({
+const buildRequestContext = () => ({
   endpoint: props.endpoint,
   version: props.version,
   meta: props.meta,
@@ -71,12 +72,16 @@ const buildContext = (): StateManagerContext => ({
   sortBy: localSortBy.value,
   sortOrder: localSortOrder.value,
   filters: filters.value ?? {},
-  attrSettings: attrSettings.value,
+})
+
+const buildContext = (): StateManagerContext => ({
+  ...buildRequestContext(),
+  columnSettings: columnSettings.value,
 })
 
 function getSavedState(): SavedListState {
   try {
-    return stateManager?.get?.(buildContext()) ?? {}
+    return props.stateManager?.get?.(buildContext()) ?? {}
   } catch (err) {
     console.error(err)
     return {}
@@ -95,10 +100,10 @@ if (savedState.perPage != null) localPerPage.value = savedState.perPage
 if (savedState.sortBy != null) localSortBy.value = savedState.sortBy
 if (savedState.sortOrder != null) localSortOrder.value = savedState.sortOrder
 if (savedState.search != null) localSearch.value = savedState.search
-if (savedState.attrSettings != null) attrSettings.value = savedState.attrSettings
+if (savedState.columnSettings != null) columnSettings.value = savedState.columnSettings
 if (savedState.filters != null) filters.value = savedState.filters
 
-const items = ref<unknown[]>([])
+const rows = ref<unknown[]>([])
 const selection = ref<unknown[]>([])
 const error = ref<Error | null>(null)
 const response = ref<ListResponse | null>(null)
@@ -107,45 +112,30 @@ const isLoading = ref(true)
 const initializingState = ref(true)
 let requestId = 0
 
-const serializedAttrs = computed(() => {
-  const attrs = props.attrs || Object.keys((items.value[0] as Record<string, unknown>) || {})
-  return attrSerializer(attrs)
-})
+const isEmpty = computed(() => rows.value.length === 0)
 
-const isEmpty = computed(() => items.value.length === 0)
-
-function notifyResponse(res: ListResponse) {
-  emit('onResponse', res)
-}
-
-function notifyAfterPageChange(res: ListResponse) {
-  emit('afterPageChange', res)
-}
-
-function notifyAfterLoadMore(res: ListResponse) {
-  emit('afterLoadMore', res)
-}
-
-function setItems(res: ListResponse) {
-  notifyResponse(res)
+function setRows(res: ListResponse) {
+  emit('response', res)
 
   if (isLoadMore.value) {
     if (localPage.value === 1) {
-      items.value = res.items
+      rows.value = res.rows
     } else {
-      items.value = items.value.concat(res.items)
+      rows.value = rows.value.concat(res.rows)
     }
-    notifyAfterLoadMore(res)
+    emit('afterLoadMore', res)
+    props.afterLoadMore?.(res)
   } else {
-    items.value = res.items
-    notifyAfterPageChange(res)
+    rows.value = res.rows
+    emit('afterPageChange', res)
+    props.afterPageChange?.(res)
   }
 
   count.value = res.count
 }
 
 function updateStateManager() {
-  stateManager?.set?.(buildContext())
+  props.stateManager?.set?.(buildContext())
 }
 
 function getData(addContext: RequestContextPatch = {}) {
@@ -153,23 +143,24 @@ function getData(addContext: RequestContextPatch = {}) {
   isLoading.value = true
   const currentRequestId = ++requestId
 
-  requestHandler({
-    ...buildContext(),
-    isRefresh: false,
-    ...addContext,
-  })
+  props
+    .requestHandler({
+      ...buildRequestContext(),
+      isRefresh: false,
+      ...addContext,
+    })
     .then((res) => {
       if (currentRequestId !== requestId) return
       response.value = res
       updateStateManager()
       selection.value = []
-      setItems(res)
+      setRows(res)
       initializingState.value = false
     })
     .catch((err: unknown) => {
       if (currentRequestId !== requestId) return
       error.value = toError(err)
-      items.value = []
+      rows.value = []
       count.value = 0
       initializingState.value = false
       // The list UI already surfaces the error via `error`.
@@ -211,16 +202,21 @@ function setSelection(value: unknown[]) {
 }
 
 function setFilters(nextFilters: Filters) {
+  if (deepEqual(filters.value, nextFilters)) return
   filters.value = nextFilters
+  emit('filtersChange', nextFilters)
 }
 
 function clearFilters() {
-  filters.value = { ...defaultFilters.value }
+  const nextFilters = { ...defaultFilters.value }
+  if (deepEqual(filters.value, nextFilters)) return
+  filters.value = nextFilters
+  emit('filtersChange', nextFilters)
 }
 
 function refresh(addContext: RequestContextPatch = { isRefresh: true }) {
   if (isLoadMore.value) {
-    items.value = []
+    rows.value = []
     setPage(1, addContext)
   } else {
     getData(addContext)
@@ -240,40 +236,41 @@ function loadMore() {
   }
 }
 
-function updateItemById(item: Partial<unknown>, id: string | number) {
+function updateRowById(row: Partial<unknown>, id: string | number) {
   let matched = false
 
-  const next = items.value.map((entry) => {
-    if (getItemId(entry, props.idKey) !== id) return entry
+  const next = rows.value.map((entry) => {
+    if (getRowId(entry, props.idKey) !== id) return entry
     matched = true
-    return { ...(entry as Record<string, unknown>), ...item }
+    return { ...(entry as Record<string, unknown>), ...row }
   })
 
   if (!matched) {
     console.warn(
-      `VueList: updateItemById did not find an item where ${props.idKey} === ${JSON.stringify(id)}. ` +
-        `Verify your items expose "${props.idKey}" and that the id type matches exactly.`,
+      `ShilpList: updateRowById did not find a row where ${props.idKey} === ${JSON.stringify(id)}. ` +
+      `Verify your rows expose "${props.idKey}" and that the id type matches exactly.`,
     )
     return
   }
 
-  items.value = next
+  rows.value = next
 }
 
-function updateAttr(name: string, prop: string, value: boolean | unknown) {
-  if (!attrSettings.value) {
-    attrSettings.value = {}
+function updateColumn(name: string, prop: string, value: boolean | unknown) {
+  const current = columnSettings.value ?? {}
+  columnSettings.value = {
+    ...current,
+    [name]: {
+      ...current[name],
+      [prop]: value,
+    },
   }
-  if (!attrSettings.value[name]) {
-    attrSettings.value[name] = {}
-  }
-  attrSettings.value[name][prop] = value
   updateStateManager()
 }
 
 const listState = computed(
   (): ListState => ({
-    data: items.value,
+    rows: rows.value,
     response: response.value,
     error: error.value,
     count: count.value,
@@ -281,7 +278,7 @@ const listState = computed(
     pagination: {
       page: localPage.value,
       perPage: localPerPage.value,
-      hasMore: items.value.length < count.value,
+      hasMore: rows.value.length < count.value,
     },
     loader: {
       isLoading: isLoading.value,
@@ -293,8 +290,10 @@ const listState = computed(
     },
     search: localSearch.value,
     filters: filters.value ?? {},
-    attrs: serializedAttrs.value,
-    attrSettings: attrSettings.value,
+    columns:
+      props.columns ??
+      Object.keys((rows.value[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
+    columnSettings: columnSettings.value,
     isEmpty: isEmpty.value,
     hasActiveFilters: hasActiveFilters(filters.value ?? {}, defaultFilters.value),
     isInitializing: initializingState.value,
@@ -308,8 +307,8 @@ const listState = computed(
     loadMore,
     refresh,
     setSelection,
-    updateItemById,
-    updateAttr,
+    updateRowById,
+    updateColumn,
   }),
 )
 
@@ -321,24 +320,59 @@ watch(filters, (newValue, oldValue) => {
   setPage(1)
 })
 
+watch(
+  () =>
+    [
+      props.page,
+      props.perPage,
+      props.search ?? '',
+      props.sortBy,
+      props.sortOrder,
+      props.endpoint,
+    ] as const,
+  (next, prev) => {
+    if (initializingState.value || !prev) return
+
+    const [page, perPage, search, sortBy, sortOrder, endpoint] = next
+    const [prevPage, prevPerPage, prevSearch, prevSortBy, prevSortOrder, prevEndpoint] = prev
+    const pageChanged = page !== prevPage
+    const perPageChanged = perPage !== prevPerPage
+    const searchChanged = search !== prevSearch
+    const sortByChanged = sortBy !== prevSortBy
+    const sortOrderChanged = sortOrder !== prevSortOrder
+    const endpointChanged = endpoint !== prevEndpoint
+
+    if (
+      !pageChanged &&
+      !perPageChanged &&
+      !searchChanged &&
+      !sortByChanged &&
+      !sortOrderChanged &&
+      !endpointChanged
+    ) {
+      return
+    }
+
+    if (perPageChanged) localPerPage.value = perPage
+    if (searchChanged) localSearch.value = search
+    if (sortByChanged) localSortBy.value = sortBy
+    if (sortOrderChanged) localSortOrder.value = sortOrder
+
+    setPage(pageChanged ? page : 1)
+  },
+)
+
 watch(selection, (newValue, oldValue) => {
-  emit('onItemSelect', newValue, oldValue ?? [])
+  emit('rowSelect', newValue, oldValue ?? [])
 })
 
-if (!attrSettings.value) {
-  const settings: AttrSettings = {}
-  for (const item of serializedAttrs.value) {
-    settings[item.name] = { visible: true }
-  }
-  attrSettings.value = settings
-}
-
-stateManager?.init?.(buildContext())
-
-setPage(localPage.value)
+onMounted(() => {
+  props.stateManager?.init?.(buildContext())
+  setPage(localPage.value)
+})
 
 defineExpose({
-  items,
+  rows,
   response,
   isLoading,
   error,
@@ -353,6 +387,7 @@ defineExpose({
   loadMore,
   setFilters,
   clearFilters,
-  updateItemById,
+  updateRowById,
+  updateColumn,
 })
 </script>

@@ -19,7 +19,7 @@ const { listState } = useListContext()
 
 const scope = computed(
   (): InitialLoaderScope => ({
-    loading: listState.value.loader.initialLoading,
+    loading: listState.loader.initialLoading,
   }),
 )
 </script>

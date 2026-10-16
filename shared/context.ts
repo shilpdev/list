@@ -20,11 +20,11 @@ export interface RequestContext extends BaseListContext {
 
 /** Context passed to `stateManager` methods. */
 export interface StateManagerContext extends BaseListContext {
-  attrSettings?: AttrSettingsContext;
+  columnSettings?: ColumnSettingsContext;
 }
 
-/** Attribute visibility settings persisted by the state manager. */
-export type AttrSettingsContext = Record<
+/** Column visibility settings persisted by the state manager. */
+export type ColumnSettingsContext = Record<
   string,
   {
     visible?: boolean;
@@ -40,7 +40,7 @@ export interface SavedListState {
   sortOrder?: SortOrder;
   search?: string;
   filters?: Filters;
-  attrSettings?: AttrSettingsContext;
+  columnSettings?: ColumnSettingsContext;
 }
 
 /** Additional context that can be passed when changing page or refreshing. */

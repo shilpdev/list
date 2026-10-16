@@ -3,7 +3,7 @@
     <slot v-bind="scope">
       <select
         :value="scope.page"
-        @input="scope.setPage(Number(($event.target as HTMLSelectElement).value))"
+        @change="scope.setPage(Number(($event.target as HTMLSelectElement).value))"
       >
         <option v-for="pageNum in scope.pages" :key="`page-${pageNum}`" :value="pageNum">
           Page {{ pageNum }}
@@ -25,12 +25,12 @@ defineOptions({
 const { listState } = useListContext()
 
 const showContent = computed(() => {
-  const state = listState.value
-  return !state.loader.initialLoading && state.data.length > 0 && !state.error
+  const state = listState
+  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
 })
 
 const scope = computed((): GoToScope => {
-  const state = listState.value
+  const state = listState
   const { page, perPage } = state.pagination
   const pagesCount = Math.ceil(state.count / perPage)
   const pages = Array.from({ length: pagesCount }, (_, index) => index + 1)

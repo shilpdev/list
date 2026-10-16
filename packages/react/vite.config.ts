@@ -23,7 +23,7 @@ export default defineConfig({
     },
     lib: {
       entry: "src/index.ts",
-      name: "ReactList",
+      name: "ShilpList",
       fileName: "index",
       formats: ["es", "cjs"],
     },

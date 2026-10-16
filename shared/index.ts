@@ -7,6 +7,6 @@ export type * from './config';
 export type * from './response';
 export type * from './state';
 export type * from './handlers';
-export type * from './attributes';
+export type * from './columns';
 export type * from './scopes';
 export type * from './options';

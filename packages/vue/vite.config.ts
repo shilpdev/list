@@ -26,7 +26,7 @@ export default defineConfig({
     lib: {
       entry: path.resolve(__dirname, 'src/main.ts'),
       fileName: 'index',
-      name: 'VueList',
+      name: 'ShilpList',
       formats: ['es', 'cjs'],
     },
     rollupOptions: {

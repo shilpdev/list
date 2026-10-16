@@ -61,14 +61,14 @@ const requestHandler: RequestHandler<Skill> = async ({
     const data = await response.json();
 
     return {
-      items: data.data as Skill[],
+      rows: data.data as Skill[],
       count: data.meta?.total_count || data.meta?.filter_count || 0,
       meta: data.meta || {},
     };
   } catch (error) {
     console.error('API request failed:', error);
     return {
-      items: [],
+      rows: [],
       count: 0,
     };
   }

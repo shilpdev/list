@@ -21,8 +21,8 @@ const { listState } = useListContext()
 
 const scope = computed(
   (): RefreshScope => ({
-    isLoading: listState.value.loader.isLoading,
-    refresh: () => listState.value.refresh({ isRefresh: true }),
+    isLoading: listState.loader.isLoading,
+    refresh: () => listState.refresh({ isRefresh: true }),
   }),
 )
 </script>

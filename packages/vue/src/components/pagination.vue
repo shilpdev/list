@@ -11,7 +11,7 @@
 
       <slot name="pages" v-bind="scope">
         <template v-for="item in scope.pagesToDisplay" :key="item">
-          <slot name="page" :page="item" :isActive="item === scope.page">
+          <slot name="page" v-bind="scope" :page="item" :isActive="item === scope.page">
             <span v-if="item === scope.page">{{ item }}</span>
             <button v-else type="button" @click="scope.setPage(item)">
               {{ item }}
@@ -47,12 +47,12 @@ const props = withDefaults(defineProps<PaginationComponentOptions>(), {
 const { listState } = useListContext()
 
 const showContent = computed(() => {
-  const state = listState.value
-  return !state.loader.initialLoading && state.data.length > 0 && !state.error
+  const state = listState
+  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
 })
 
 const scope = computed((): PaginationScope => {
-  const state = listState.value
+  const state = listState
   const { page, perPage } = state.pagination
   const total = state.count
   const pagesCount = Math.ceil(total / perPage)

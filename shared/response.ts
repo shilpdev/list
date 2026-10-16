@@ -3,7 +3,7 @@ import type { RequestContext } from './context';
 
 /** Standard shape returned by `requestHandler`. */
 export interface ListResponse<T = unknown> {
-  items: T[];
+  rows: T[];
   count: number;
   meta?: MetaRecord;
 }

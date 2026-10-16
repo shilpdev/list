@@ -29,14 +29,14 @@
     "@storybook/vue3-vite": "^10.5.7",
     "@types/node": "^24.13.3",
     "@vitejs/plugin-vue": "^6.0.8",
-    "@vitest/browser-playwright": "latest",
-    "@vitest/coverage-v8": "latest",
+    "@vitest/browser-playwright": "5.0.1",
+    "@vitest/coverage-v8": "5.0.1",
     "@vue/tsconfig": "^0.9.1",
     "playwright": "latest",
     "storybook": "^10.5.7",
     "typescript": "~6.0.2",
     "vite": "^8.2.0",
-    "vitest": "latest",
+    "vitest": "5.0.1",
     "vue-tsc": "^3.3.8"
   }
 }

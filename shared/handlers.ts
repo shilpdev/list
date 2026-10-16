@@ -12,9 +12,9 @@ export interface ListHandlers<T = unknown> {
   loadMore: () => void;
   refresh: (context?: RequestContextPatch) => void;
   setSelection: (selection: T[]) => void;
-  updateItemById: (item: Partial<T>, id: string | number) => void;
-  updateAttr?: (
-    attrName: string,
+  updateRowById: (row: Partial<T>, id: string | number) => void;
+  updateColumn?: (
+    columnName: string,
     settingKey: string,
     value: boolean | unknown
   ) => void;

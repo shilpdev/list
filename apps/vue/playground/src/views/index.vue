@@ -1,11 +1,9 @@
 <template>
   <div class="flex min-h-screen items-start justify-center bg-slate-100 p-6">
     <div class="w-full max-w-350 rounded-xl bg-white p-8 text-slate-800 shadow-lg">
-      <h2 class="mb-6 text-3xl font-bold text-slate-700">
-        Vue List Playground (TypeScript)
-      </h2>
+      <h2 class="mb-6 text-3xl font-bold text-slate-700">Shilp List Playground (Vue + TypeScript)</h2>
 
-      <VueList
+      <ShilpList
         endpoint="skills"
         search=""
         :page="1"
@@ -14,6 +12,12 @@
         pagination-mode="pagination"
         :request-handler="vueListConfig.requestHandler"
         :state-manager="vueListConfig.stateManager"
+        :columns="[
+          { name: 'id', label: 'ID' },
+          { name: 'name', label: 'Name' },
+          { name: 'status', label: 'Status' },
+          { name: 'date_updated', label: 'Update At' },
+        ]"
       >
         <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center">
@@ -29,6 +33,38 @@
               </div>
             </ListSearch>
           </div>
+
+          <ListColumns v-slot="{ columns, updateColumn, columnSettings }">
+            <div class="flex flex-wrap items-center gap-2">
+              <label
+                v-for="column in columns"
+                :key="column.name"
+                class="flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition"
+                :class="
+                  (columnSettings?.[column.name]?.visible ?? true)
+                    ? 'border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-50'
+                    : 'border-slate-200 bg-slate-100 text-slate-400 line-through opacity-70'
+                "
+              >
+                <input
+                  type="checkbox"
+                  :checked="columnSettings?.[column.name]?.visible ?? true"
+                  @change="
+                    updateColumn?.(
+                      column.name,
+                      'visible',
+                      ($event.target as HTMLInputElement).checked,
+                    )
+                  "
+                  class="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                />
+
+                <span>
+                  {{ column.label || column.name }}
+                </span>
+              </label>
+            </div>
+          </ListColumns>
 
           <div class="flex flex-wrap items-center gap-3">
             <div class="relative flex items-center gap-2">
@@ -107,10 +143,7 @@
                 <div
                   class="relative rounded-full bg-linear-to-br from-slate-50 to-slate-100 p-8 shadow-inner"
                 >
-                  <UIcon
-                    name="i-mdi-file-search-outline"
-                    class="h-16 w-16 text-slate-400"
-                  />
+                  <UIcon name="i-mdi-file-search-outline" class="h-16 w-16 text-slate-400" />
                 </div>
               </div>
 
@@ -162,79 +195,13 @@
             </div>
           </ListError>
 
-          <ListItems v-slot="{ items, sort, setSort }">
-            <div
-              class="relative max-h-screen w-full overflow-y-auto rounded-md border border-slate-200"
-            >
-              <ListLoader>
-                <div
-                  class="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-sm"
-                >
-                  <UIcon
-                    name="i-svg-spinners:blocks-shuffle-3"
-                    class="h-12 w-12 animate-pulse text-primary-500"
-                  />
-                </div>
-              </ListLoader>
-
-              <table class="w-full whitespace-nowrap border-collapse">
-                <thead>
-                  <tr>
-                    <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                      ID
-                    </th>
-                    <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                      <span class="inline-flex items-center gap-1">
-                        Name
-                        <button type="button" @click="toggleSort(sort, setSort, 'name')">
-                          <UIcon
-                            :name="sortIconName(sort, 'name')"
-                            class="size-5 cursor-pointer text-slate-700"
-                          />
-                        </button>
-                      </span>
-                    </th>
-                    <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                      Status
-                    </th>
-                    <th class="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                      <span class="inline-flex items-center gap-1">
-                        Update At
-                        <button
-                          type="button"
-                          @click="toggleSort(sort, setSort, 'date_updated')"
-                        >
-                          <UIcon
-                            :name="sortIconName(sort, 'date_updated')"
-                            class="size-5 cursor-pointer text-slate-700"
-                          />
-                        </button>
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="item in items as unknown as Skill[]"
-                    :key="item.id"
-                  >
-                    <td class="border border-slate-200 bg-white px-2 py-2">
-                      {{ item.id }}
-                    </td>
-                    <td class="border border-slate-200 bg-white px-2 py-2">
-                      {{ item.name }}
-                    </td>
-                    <td class="border border-slate-200 bg-white px-2 py-2">
-                      {{ item.status }}
-                    </td>
-                    <td class="border border-slate-200 bg-white px-2 py-2">
-                      {{ formatDate(item.date_updated) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </ListItems>
+          <ListRows v-slot="{ rows, sort, setSort }">
+            <SkillRowsTable
+              :rows="rows as SerializedListRow<Skill>[]"
+              :sort="sort"
+              :set-sort="setSort"
+            />
+          </ListRows>
 
           <div
             class="flex w-full flex-col items-center justify-between gap-4 rounded-b-lg border-t border-slate-200 bg-slate-50 px-4 py-5 md:flex-row"
@@ -289,17 +256,7 @@
             </div>
 
             <ListPagination
-              v-slot="{
-                page,
-                pagesToDisplay,
-                hasNext,
-                hasPrev,
-                prev,
-                next,
-                first,
-                last,
-                setPage,
-              }"
+              v-slot="{ page, pagesToDisplay, hasNext, hasPrev, prev, next, first, last, setPage }"
             >
               <div class="flex items-center gap-1">
                 <button
@@ -362,7 +319,7 @@
             </ListPagination>
           </div>
         </div>
-      </VueList>
+      </ShilpList>
     </div>
   </div>
 </template>
@@ -370,22 +327,23 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import {
-  VueList,
+  ShilpList,
   ListEmpty,
   ListError,
   ListGoTo,
   ListInitialLoader,
-  ListItems,
-  ListLoader,
+  ListRows,
   ListPagination,
   ListPerPage,
   ListRefresh,
   ListSearch,
   ListSummary,
+  ListColumns,
 } from '@shilp.dev/vue-list'
-import type { ListSort } from '@shilp.dev/vue-list'
+import type { SerializedListRow } from '@shilp.dev/vue-list'
 import type { Skill, SkillFilters } from '@/types/skill'
 import vueListConfig, { getStateFromSearchParams } from '@/api/vue-list-config'
+import SkillRowsTable from '@/components/skill-rows-table.vue'
 
 defineOptions({
   name: 'playground-index-view',
@@ -405,25 +363,5 @@ function onColorChange(value: string) {
     ...filters.value,
     color: value === 'all' ? undefined : value,
   }
-}
-
-function toggleSort(
-  sort: ListSort,
-  setSort: (next: { by: string; order: 'asc' | 'desc' }) => void,
-  by: string,
-) {
-  const currentOrder = sort.sortBy === by ? sort.sortOrder : ''
-  const sorting: 'asc' | 'desc' = currentOrder === 'asc' ? 'desc' : 'asc'
-  setSort({ by, order: sorting })
-}
-
-function sortIconName(sort: ListSort, by: string) {
-  if (sort.sortBy !== by || sort.sortOrder === '') return 'i-mdi-sort'
-  if (sort.sortOrder === 'asc') return 'i-mdi-sort-ascending'
-  return 'i-mdi-sort-descending'
-}
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleString()
 }
 </script>

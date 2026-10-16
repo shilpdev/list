@@ -3,7 +3,7 @@
     <slot v-bind="scope">
       <select
         :value="scope.perPage"
-        @input="scope.setPerPage(Number(($event.target as HTMLSelectElement).value))"
+        @change="scope.setPerPage(Number(($event.target as HTMLSelectElement).value))"
       >
         <option
           v-for="option in scope.options"
@@ -33,8 +33,8 @@ const props = withDefaults(defineProps<PerPageComponentOptions>(), {
 const { listState } = useListContext()
 
 const showContent = computed(() => {
-  const state = listState.value
-  return !state.loader.initialLoading && state.data.length > 0 && !state.error
+  const state = listState
+  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
 })
 
 const serializedOptions = computed(() => {
@@ -51,8 +51,8 @@ const serializedOptions = computed(() => {
 
 const scope = computed(
   (): PerPageScope => ({
-    perPage: listState.value.pagination.perPage,
-    setPerPage: listState.value.setPerPage,
+    perPage: listState.pagination.perPage,
+    setPerPage: listState.setPerPage,
     options: serializedOptions.value,
   }),
 )
