@@ -1,7 +1,7 @@
+import type { ListScope } from './common'
+
 /** Scope for go-to-page slot. */
-export interface GoToScope {
-  setPage: (page: number) => void
-  page: number
+export interface GoToScope extends ListScope {
   pages: number[]
   pagesCount: number
 }

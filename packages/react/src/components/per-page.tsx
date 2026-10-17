@@ -7,10 +7,8 @@ type ListPerPageProps = PerPageComponentOptions & {
 }
 
 export const ListPerPage = memo(({ children, options = [10, 25, 50, 100] }: ListPerPageProps) => {
-  const { listState } = useListContext()
-  const { rows, pagination, setPerPage, loader, error } = listState
-  const { perPage } = pagination
-  const { initialLoading } = loader
+  const context = useListContext()
+  const { rows, setPerPage, error, perPage, isInitialLoading } = context
 
   const serializedOptions = useMemo(() => {
     return options.map((item) => {
@@ -33,14 +31,13 @@ export const ListPerPage = memo(({ children, options = [10, 25, 50, 100] }: List
 
   const scope = useMemo(
     (): PerPageScope => ({
-      perPage,
-      setPerPage,
+      context,
       options: serializedOptions,
     }),
-    [perPage, setPerPage, serializedOptions],
+    [context, serializedOptions],
   )
 
-  if (initialLoading) return null
+  if (isInitialLoading) return null
 
   if (!rows || rows.length === 0) {
     return null

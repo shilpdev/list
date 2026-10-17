@@ -2,8 +2,8 @@
   <div v-if="showContent" class="vue-list__go-to">
     <slot v-bind="scope">
       <select
-        :value="scope.page"
-        @change="scope.setPage(Number(($event.target as HTMLSelectElement).value))"
+        :value="scope.context.page"
+        @change="scope.context.setPage(Number(($event.target as HTMLSelectElement).value))"
       >
         <option v-for="pageNum in scope.pages" :key="`page-${pageNum}`" :value="pageNum">
           Page {{ pageNum }}
@@ -22,24 +22,20 @@ defineOptions({
   name: 'ListGoTo',
 })
 
-const { listState } = useListContext()
+const context = useListContext()
 
 const showContent = computed(() => {
-  const state = listState
-  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
+  return !context.isInitialLoading && context.rows.length > 0 && !context.error
 })
 
 const scope = computed((): GoToScope => {
-  const state = listState
-  const { page, perPage } = state.pagination
-  const pagesCount = Math.ceil(state.count / perPage)
+  const pagesCount = Math.ceil(context.count / context.perPage)
   const pages = Array.from({ length: pagesCount }, (_, index) => index + 1)
 
   return {
-    page,
+    context,
     pages,
     pagesCount,
-    setPage: state.setPage,
   }
 })
 </script>

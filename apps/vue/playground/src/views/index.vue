@@ -34,23 +34,23 @@
             </ListSearch>
           </div>
 
-          <ListColumns v-slot="{ columns, updateColumn, columnSettings }">
+          <ListColumns v-slot="{ context: { columns, updateColumn, columnSettings } }">
             <div class="flex flex-wrap items-center gap-2">
               <label
                 v-for="column in columns"
                 :key="column.name"
                 class="flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition"
                 :class="
-                  (columnSettings?.[column.name]?.visible ?? true)
+                  (columnSettings[column.name]?.visible ?? true)
                     ? 'border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-50'
                     : 'border-slate-200 bg-slate-100 text-slate-400 line-through opacity-70'
                 "
               >
                 <input
                   type="checkbox"
-                  :checked="columnSettings?.[column.name]?.visible ?? true"
+                  :checked="columnSettings[column.name]?.visible ?? true"
                   @change="
-                    updateColumn?.(
+                    updateColumn(
                       column.name,
                       'visible',
                       ($event.target as HTMLInputElement).checked,
@@ -153,12 +153,12 @@
                 We couldn't find any matching records. Try adjusting your search or filters.
               </p>
 
-              <ListRefresh v-slot="{ refresh, isLoading }">
+              <ListRefresh v-slot="{ context: { refresh, isLoading } }">
                 <button
                   type="button"
                   class="flex items-center gap-2 rounded border border-primary-600 bg-primary-500 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-600 hover:shadow disabled:cursor-not-allowed disabled:opacity-50"
                   :disabled="isLoading"
-                  @click="refresh"
+                  @click="refresh()"
                 >
                   <UIcon name="i-mdi-refresh" class="h-5 w-5" />
                   Refresh
@@ -167,26 +167,26 @@
             </div>
           </ListEmpty>
 
-          <ListError v-slot="{ error }">
+          <ListError v-slot="{ context: { error } }">
             <div class="flex flex-col items-center justify-center px-4 py-16">
               <div class="mb-4 rounded-full bg-red-100 p-6">
                 <UIcon name="i-mdi-alert-circle-outline" class="h-12 w-12 text-red-500" />
               </div>
               <h3 class="mb-2 text-xl font-medium text-slate-800">Something went wrong</h3>
               <p class="mb-4 max-w-md text-center text-slate-500">
-                {{ error.message || 'An unexpected error occurred while fetching data.' }}
+                {{ error?.message || 'An unexpected error occurred while fetching data.' }}
               </p>
               <div class="mb-6 w-full max-w-md rounded-md bg-slate-50 p-4">
                 <p class="wrap-break-word font-mono text-sm text-slate-600">
-                  {{ error.name }}: {{ error.message }}
+                  {{ error?.name }}: {{ error?.message }}
                 </p>
               </div>
-              <ListRefresh v-slot="{ refresh, isLoading }">
+              <ListRefresh v-slot="{ context: { refresh, isLoading } }">
                 <button
                   type="button"
                   class="flex items-center gap-2 rounded border border-primary-600 bg-primary-500 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-600 hover:shadow disabled:cursor-not-allowed disabled:opacity-50"
                   :disabled="isLoading"
-                  @click="refresh"
+                  @click="refresh()"
                 >
                   <UIcon name="i-mdi-refresh" class="h-5 w-5" />
                   Try Again
@@ -195,12 +195,13 @@
             </div>
           </ListError>
 
-          <ListRows v-slot="{ rows, sortBy, sortOrder, setSort }">
+          <ListRows v-slot="{ rows, context: { sortBy, sortOrder, setSortBy, setSortOrder } }">
             <SkillRowsTable
               :rows="rows as SerializedListRow<Skill>[]"
               :sort-by="sortBy"
               :sort-order="sortOrder"
-              :set-sort="setSort"
+              :set-sort-by="setSortBy"
+              :set-sort-order="setSortOrder"
             />
           </ListRows>
 
@@ -209,7 +210,7 @@
           >
             <div class="flex w-full flex-wrap items-center gap-6">
               <div class="flex items-center gap-2">
-                <ListSummary v-slot="{ count, from, to }">
+                <ListSummary v-slot="{ context: { count }, from, to }">
                   <span class="font-medium text-slate-700">
                     {{ from }} - {{ to }} of {{ count }} Results
                   </span>
@@ -218,7 +219,7 @@
 
               <div class="flex items-center gap-2">
                 <span class="text-slate-500">Page Size:</span>
-                <ListPerPage v-slot="{ perPage, setPerPage, options }">
+                <ListPerPage v-slot="{ context: { perPage, setPerPage }, options }">
                   <div class="relative">
                     <select
                       :value="String(perPage)"
@@ -240,7 +241,7 @@
                 </ListPerPage>
               </div>
 
-              <ListGoTo v-slot="{ setPage, page, pagesCount }">
+              <ListGoTo v-slot="{ context: { setPage, page }, pagesCount }">
                 <div class="flex items-center gap-2">
                   <span class="text-slate-500">Go to:</span>
                   <input
@@ -257,7 +258,7 @@
             </div>
 
             <ListPagination
-              v-slot="{ page, pagesToDisplay, hasNext, hasPrev, prev, next, first, last, setPage }"
+              v-slot="{ context: { page, setPage }, pagesToDisplay, hasNext, hasPrev, prev, next, first, last }"
             >
               <div class="flex items-center gap-1">
                 <button

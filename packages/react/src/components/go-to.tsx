@@ -7,10 +7,8 @@ type ListGoToProps = {
 }
 
 export const ListGoTo = memo(({ children }: ListGoToProps) => {
-  const { listState } = useListContext()
-  const { rows, count, pagination, setPage, loader, error } = listState
-  const { page, perPage } = pagination
-  const { initialLoading } = loader
+  const context = useListContext()
+  const { rows, count, setPage, error, page, perPage, isInitialLoading } = context
 
   const { pages, pagesCount } = useMemo(() => {
     const pagesCount = Math.ceil(count / perPage)
@@ -27,15 +25,14 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
 
   const scope = useMemo(
     (): GoToScope => ({
-      setPage,
-      page,
+      context,
       pages,
       pagesCount,
     }),
-    [setPage, page, pages, pagesCount],
+    [context, pages, pagesCount],
   )
 
-  if (initialLoading) return null
+  if (isInitialLoading) return null
 
   if (!rows || rows.length === 0) {
     return null

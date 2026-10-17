@@ -7,10 +7,8 @@ type ListSummaryProps = {
 }
 
 export const ListSummary = ({ children }: ListSummaryProps) => {
-  const { listState } = useListContext()
-  const { rows, count, pagination, loader, error } = listState
-  const { page, perPage } = pagination
-  const { initialLoading } = loader
+  const context = useListContext()
+  const { rows, count, error, page, perPage, isInitialLoading } = context
 
   const summaryData = {
     from: page * perPage - perPage + 1,
@@ -19,11 +17,11 @@ export const ListSummary = ({ children }: ListSummaryProps) => {
   }
 
   const scope: SummaryScope = {
+    context,
     ...summaryData,
-    count,
   }
 
-  if (initialLoading) return null
+  if (isInitialLoading) return null
 
   if (!rows || rows.length === 0) {
     return null

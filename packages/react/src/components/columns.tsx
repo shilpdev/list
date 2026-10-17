@@ -1,62 +1,36 @@
-import { Fragment, memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { ColumnsScope, RenderColumnArgs } from '../../../../shared'
+import { Fragment, type ReactNode } from 'react'
+import type { ListScope, RenderColumnArgs } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListColumnsProps = {
-  children?: ReactNode | ((scope: ColumnsScope) => ReactNode)
+  children?: ReactNode | ((scope: ListScope) => ReactNode)
   column?: (args: RenderColumnArgs) => ReactNode
 }
 
-export const ListColumns = memo(({ children, column: columnFn }: ListColumnsProps) => {
-  const { listState } = useListContext()
-  const { columns, columnSettings, updateColumn } = listState
-
-  const handleColumnChange = useCallback(
-    (columnName: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateColumn?.(columnName, 'visible', e.target.checked)
-    },
-    [updateColumn],
-  )
-
-  const scope = useMemo(
-    (): ColumnsScope => ({
-      columns,
-      columnSettings: columnSettings ?? {},
-      updateColumn: updateColumn ?? (() => {}),
-    }),
-    [columns, columnSettings, updateColumn],
-  )
+export const ListColumns = ({ children, column: columnFn }: ListColumnsProps) => {
+  const context = useListContext()
+  const { columns, columnSettings, updateColumn } = context
 
   return (
     <div className="react-list__columns">
       {typeof children === 'function'
-        ? children(scope)
+        ? children({ context })
         : children
           ? children
-          : columns.map((column, index) => {
-              if (columnFn) {
-                return (
-                  <Fragment key={`column-${index}`}>
-                    {columnFn({
-                      column,
-                      updateColumn: updateColumn ?? (() => {}),
-                      columnSettings: columnSettings ?? {},
-                    })}
-                  </Fragment>
-                )
-              }
-
-              return (
+          : columns.map((column, index) =>
+              columnFn ? (
+                <Fragment key={`column-${index}`}>{columnFn({ column, context })}</Fragment>
+              ) : (
                 <label key={`column-${index}`}>
                   <span>{column.label}</span>
                   <input
                     type="checkbox"
-                    checked={columnSettings?.[column.name]?.visible ?? true}
-                    onChange={handleColumnChange(column.name)}
+                    checked={columnSettings[column.name]?.visible ?? true}
+                    onChange={(e) => updateColumn(column.name, 'visible', e.target.checked)}
                   />
                 </label>
-              )
-            })}
+              ),
+            )}
     </div>
   )
-})
+}

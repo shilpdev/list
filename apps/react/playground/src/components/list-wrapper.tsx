@@ -13,8 +13,8 @@ import ShilpList, {
   useListContext,
 } from '@shilp.dev/react-list'
 import type {
-  ErrorScope,
   GoToScope,
+  ListScope,
   PaginationScope,
   PerPageScope,
   SearchScope,
@@ -29,20 +29,20 @@ import type { Skill, SkillFilters } from '../types/skill'
 import requestHandler from '../api/request-handler'
 import { getStateFromSearchParams, stateManager } from './react-list-config'
 
-function nextSortOrder(current: SortOrder): 'asc' | 'desc' | '' {
+function nextSortOrder(current: SortOrder): SortOrder {
   if (current === '') return 'asc'
   if (current === 'asc') return 'desc'
   return ''
 }
 
 function PatchRowButton({ id }: { id: Skill['id'] }) {
-  const { listState } = useListContext<Skill>()
+  const listContext = useListContext<Skill>()
 
   return (
     <button
       type="button"
       onClick={() =>
-        listState.updateRowById(
+        listContext.updateRowById(
           {
             name: `Patched ${new Date().toLocaleTimeString()}`,
             date_updated: new Date().toISOString(),
@@ -60,15 +60,17 @@ function PatchRowButton({ id }: { id: Skill['id'] }) {
 function SkillRowsTable({
   rows,
   sortOrder,
-  setSort,
+  setSortBy,
+  setSortOrder,
 }: {
   rows: SerializedListRow<Skill>[]
   sortOrder: SortOrder
-  setSort: (sort: { by: string; order: 'asc' | 'desc' }) => void
+  setSortBy: (sortBy: string) => void
+  setSortOrder: (sortOrder: SortOrder) => void
 }) {
-  const { listState } = useListContext<Skill>()
-  const columnSettings = listState.columnSettings
-  const isVisible = (name: string) => columnSettings?.[name]?.visible ?? true
+  const listContext = useListContext<Skill>()
+  const columnSettings = listContext.columnSettings
+  const isVisible = (name: string) => columnSettings[name]?.visible ?? true
 
   return (
     <div className="relative max-h-[70vh] w-full overflow-y-auto rounded-md border border-slate-200">
@@ -85,9 +87,7 @@ function SkillRowsTable({
         <thead>
           <tr>
             {isVisible('id') && (
-              <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-                ID
-              </th>
+              <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">ID</th>
             )}
             {isVisible('name') && (
               <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
@@ -97,10 +97,8 @@ function SkillRowsTable({
                     type="button"
                     onClick={() => {
                       const sorting = nextSortOrder(sortOrder)
-                      setSort({
-                        by: 'name',
-                        order: sorting as 'asc' | 'desc',
-                      })
+                      setSortBy('name')
+                      setSortOrder(sorting)
                     }}
                   >
                     <Icon
@@ -130,10 +128,8 @@ function SkillRowsTable({
                     type="button"
                     onClick={() => {
                       const sorting = nextSortOrder(sortOrder)
-                      setSort({
-                        by: 'date_updated',
-                        order: sorting as 'asc' | 'desc',
-                      })
+                      setSortBy('date_updated')
+                      setSortOrder(sorting)
                     }}
                   >
                     <Icon
@@ -150,28 +146,20 @@ function SkillRowsTable({
                 </span>
               </th>
             )}
-            <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
-              Action
-            </th>
+            <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">Action</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
             <tr key={row.id}>
               {isVisible('id') && (
-                <td className="border border-slate-200 bg-white px-2 py-2">
-                  {row.id}
-                </td>
+                <td className="border border-slate-200 bg-white px-2 py-2">{row.id}</td>
               )}
               {isVisible('name') && (
-                <td className="border border-slate-200 bg-white px-2 py-2">
-                  {row.name}
-                </td>
+                <td className="border border-slate-200 bg-white px-2 py-2">{row.name}</td>
               )}
               {isVisible('status') && (
-                <td className="border border-slate-200 bg-white px-2 py-2">
-                  {row.status}
-                </td>
+                <td className="border border-slate-200 bg-white px-2 py-2">{row.status}</td>
               )}
               {isVisible('date_updated') && (
                 <td className="border border-slate-200 bg-white px-2 py-2">
@@ -189,7 +177,6 @@ function SkillRowsTable({
   )
 }
 
-
 const ListWrapper = () => {
   const [filters, setFilters] = useState<SkillFilters>(
     () => getStateFromSearchParams()?.filters ?? {},
@@ -197,7 +184,9 @@ const ListWrapper = () => {
 
   return (
     <div className="w-full max-w-350 rounded-xl bg-white p-8 text-slate-800 shadow-lg">
-      <h2 className="mb-6 text-3xl font-bold text-slate-700">Shilp List Playground (React + TypeScript)</h2>
+      <h2 className="mb-6 text-3xl font-bold text-slate-700">
+        Shilp List Playground (React + TypeScript)
+      </h2>
 
       <ShilpList
         endpoint="skills"
@@ -239,13 +228,13 @@ const ListWrapper = () => {
               Columns:
             </span>
             <ListColumns>
-              {({ columns, updateColumn, columnSettings }) => (
+              {({ context: { columns, updateColumn, columnSettings } }) => (
                 <div className="flex flex-wrap items-center gap-2">
                   {columns.map((column) => {
                     const columnName = typeof column === 'string' ? column : column.name
                     const columnLabel =
                       typeof column === 'string' ? column : column.label || column.name
-                    const isVisible = columnSettings?.[columnName]?.visible ?? true
+                    const isVisible = columnSettings[columnName]?.visible ?? true
 
                     return (
                       <label
@@ -259,7 +248,7 @@ const ListWrapper = () => {
                         <input
                           type="checkbox"
                           checked={isVisible}
-                          onChange={(e) => updateColumn?.(columnName, 'visible', e.target.checked)}
+                          onChange={(e) => updateColumn(columnName, 'visible', e.target.checked)}
                           className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                         />
                         <span>{columnLabel}</span>
@@ -375,18 +364,18 @@ const ListWrapper = () => {
           </ListEmpty>
 
           <ListError>
-            {({ error }: ErrorScope) => (
+            {({ context: { error } }: ListScope) => (
               <div className="flex flex-col items-center justify-center px-4 py-16">
                 <div className="mb-4 rounded-full bg-red-100 p-6">
                   <Icon icon="mdi:alert-circle-outline" className="h-12 w-12 text-red-500" />
                 </div>
                 <h3 className="mb-2 text-xl font-medium text-slate-800">Something went wrong</h3>
                 <p className="mb-4 max-w-md text-center text-slate-500">
-                  {error.message || 'An unexpected error occurred while fetching data.'}
+                  {error?.message || 'An unexpected error occurred while fetching data.'}
                 </p>
                 <div className="mb-6 w-full max-w-md rounded-md bg-slate-50 p-4">
                   <p className="wrap-break-word font-mono text-sm text-slate-600">
-                    {error.name}: {error.message}
+                    {error?.name}: {error?.message}
                   </p>
                 </div>
                 <button
@@ -400,14 +389,13 @@ const ListWrapper = () => {
             )}
           </ListError>
 
-
-
           <ListRows>
-            {({ rows, sortOrder, setSort }) => (
+            {({ rows, context: { sortOrder, setSortBy, setSortOrder } }) => (
               <SkillRowsTable
                 rows={rows as SerializedListRow<Skill>[]}
                 sortOrder={sortOrder}
-                setSort={setSort}
+                setSortBy={setSortBy}
+                setSortOrder={setSortOrder}
               />
             )}
           </ListRows>
@@ -416,7 +404,7 @@ const ListWrapper = () => {
             <div className="flex w-full flex-wrap items-center gap-6">
               <div className="flex items-center gap-2">
                 <ListSummary>
-                  {({ count, from, to }: SummaryScope) => (
+                  {({ context: { count }, from, to }: SummaryScope) => (
                     <span className="font-medium text-slate-700">
                       {from} - {to} of {count} Results
                     </span>
@@ -427,7 +415,7 @@ const ListWrapper = () => {
               <div className="flex items-center gap-2">
                 <span className="text-slate-500">Page Size:</span>
                 <ListPerPage>
-                  {({ perPage, setPerPage, options }: PerPageScope) => (
+                  {({ context: { perPage, setPerPage }, options }: PerPageScope) => (
                     <div className="relative">
                       <select
                         value={String(perPage)}
@@ -449,7 +437,7 @@ const ListWrapper = () => {
               </div>
 
               <ListGoTo>
-                {({ setPage, page, pagesCount }: GoToScope) => (
+                {({ context: { setPage, page }, pagesCount }: GoToScope) => (
                   <div className="flex items-center gap-2">
                     <span className="text-slate-500">Go to:</span>
                     <input
@@ -468,7 +456,7 @@ const ListWrapper = () => {
 
             <ListPagination>
               {({
-                page,
+                context: { page, setPage },
                 pagesToDisplay,
                 hasNext,
                 hasPrev,
@@ -476,7 +464,6 @@ const ListWrapper = () => {
                 next,
                 first,
                 last,
-                setPage,
               }: PaginationScope) => (
                 <div className="flex items-center gap-1">
                   <button

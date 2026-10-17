@@ -1,9 +1,9 @@
 <template>
-  <div v-if="listState.error && !listState.loader.isLoading" class="vue-list__error">
-    <slot :error="listState.error">
+  <div v-if="context.error && !context.isLoading" class="vue-list__error">
+    <slot :context="context">
       <div>
         <h3>Error occurred</h3>
-        <pre>{{ listState.error.name }}: {{ listState.error.message }}</pre>
+        <pre>{{ context.error.name }}: {{ context.error.message }}</pre>
       </div>
     </slot>
   </div>
@@ -16,5 +16,5 @@ defineOptions({
   name: 'ListError',
 })
 
-const { listState } = useListContext()
+const context = useListContext()
 </script>

@@ -24,11 +24,11 @@ const props = withDefaults(defineProps<SearchComponentOptions>(), {
   debounceTime: 500,
 })
 
-const { listState } = useListContext()
-const localSearch = ref(listState.search)
+const context = useListContext()
+const localSearch = ref(context.search)
 
 watch(
-  () => listState.search,
+  () => context.search,
   (value) => {
     if (value !== localSearch.value) {
       localSearch.value = value
@@ -46,7 +46,7 @@ function handleInput(value: string) {
   }
 
   debounceTimer = setTimeout(() => {
-    listState.setSearch(value)
+    context.setSearch(value)
   }, props.debounceTime)
 }
 
@@ -58,6 +58,7 @@ onUnmounted(() => {
 
 const scope = computed(
   (): SearchScope => ({
+    context,
     search: localSearch.value,
     setSearch: handleInput,
   }),

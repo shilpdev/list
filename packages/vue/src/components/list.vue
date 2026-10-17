@@ -1,19 +1,18 @@
 <template>
   <div class="vue-list">
-    <slot v-bind="listState" />
+    <slot v-bind="context" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, provide, ref, watch } from 'vue'
+import { computed, onMounted, provide, reactive, ref, toRefs, watch } from 'vue'
 import type {
   ColumnSettings,
+  Context,
   Filters,
-  ListContext,
   ListResponse,
-  ListState,
-  SavedListState,
   SortOrder,
+  State,
 } from '../../../../shared'
 import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
 import { deepEqual, hasActiveFilters } from '../list-utils'
@@ -57,46 +56,9 @@ const localPerPage = ref<number>(props.perPage)
 const localSortBy = ref<string>(props.sortBy)
 const localSortOrder = ref<SortOrder>(props.sortOrder)
 const localSearch = ref<string>(props.search ?? '')
-const columnSettings = ref<ColumnSettings>()
+const columnSettings = ref<ColumnSettings>({})
 
 const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
-
-const buildContext = (): ListContext => ({
-  endpoint: props.endpoint,
-  version: props.version,
-  meta: props.meta,
-  search: localSearch.value,
-  page: localPage.value,
-  perPage: localPerPage.value,
-  sortBy: localSortBy.value,
-  sortOrder: localSortOrder.value,
-  filters: filters.value ?? {},
-  columnSettings: columnSettings.value ?? {},
-})
-
-function getSavedState(): SavedListState {
-  try {
-    return props.stateManager?.get?.(buildContext()) ?? {}
-  } catch (err) {
-    console.error(err)
-    return {}
-  }
-}
-
-const savedState = getSavedState()
-
-if (isLoadMore.value) {
-  localPage.value = 1
-} else if (savedState.page != null) {
-  localPage.value = savedState.page
-}
-
-if (savedState.perPage != null) localPerPage.value = savedState.perPage
-if (savedState.sortBy != null) localSortBy.value = savedState.sortBy
-if (savedState.sortOrder != null) localSortOrder.value = savedState.sortOrder
-if (savedState.search != null) localSearch.value = savedState.search
-if (savedState.columnSettings != null) columnSettings.value = savedState.columnSettings
-if (savedState.filters != null) filters.value = savedState.filters
 
 const rows = ref<unknown[]>([])
 const selection = ref<unknown[]>([])
@@ -104,80 +66,82 @@ const error = ref<Error | null>(null)
 const response = ref<ListResponse | null>(null)
 const count = ref(props.count ?? 0)
 const isLoading = ref(true)
-const initializingState = ref(true)
+const isInitialLoading = ref(true)
+const isRefresh = ref(false)
 let requestId = 0
 
 const isEmpty = computed(() => rows.value.length === 0)
+const hasMore = computed(() => localPage.value * localPerPage.value < count.value)
 
 function setRows(res: ListResponse) {
-  emit('response', res)
-
-  if (isLoadMore.value) {
-    if (localPage.value === 1) {
-      rows.value = res.rows
-    } else {
-      rows.value = rows.value.concat(res.rows)
-    }
-    emit('afterLoadMore', res)
-    props.afterLoadMore?.(res)
+  if (isLoadMore.value && localPage.value > 1) {
+    rows.value = rows.value.concat(res.rows)
   } else {
     rows.value = res.rows
-    emit('afterPageChange', res)
-    props.afterPageChange?.(res)
   }
-
   count.value = res.count
 }
 
-function updateStateManager() {
-  props.stateManager?.set?.(buildContext())
+function notify(res: ListResponse) {
+  emit('response', res)
+
+  if (isLoadMore.value) {
+    emit('afterLoadMore', res)
+    props.afterLoadMore?.(res)
+  } else {
+    emit('afterPageChange', res)
+    props.afterPageChange?.(res)
+  }
 }
 
-function getData(addContext: Partial<ListContext> = {}) {
+function updateStateManager() {
+  props.stateManager?.set?.(snapshot())
+}
+
+function getData(refreshing = false) {
   error.value = null
   isLoading.value = true
+  isRefresh.value = refreshing
   const currentRequestId = ++requestId
 
   props
-    .requestHandler({
-      ...buildContext(),
-      isRefresh: false,
-      ...addContext,
-    })
+    .requestHandler(snapshot())
     .then((res) => {
       if (currentRequestId !== requestId) return
       response.value = res
-      updateStateManager()
       selection.value = []
       setRows(res)
-      initializingState.value = false
+      isInitialLoading.value = false
+      isLoading.value = false
+      isRefresh.value = false
+      updateStateManager()
+      notify(res)
     })
     .catch((err: unknown) => {
       if (currentRequestId !== requestId) return
       error.value = toError(err)
       rows.value = []
       count.value = 0
-      initializingState.value = false
+      isInitialLoading.value = false
       // The list UI already surfaces the error via `error`.
       // Re-throwing here creates unhandled promise rejections.
     })
     .finally(() => {
       if (currentRequestId === requestId) {
         isLoading.value = false
+        isRefresh.value = false
       }
     })
 }
 
-function setPage(value: number | string, addContext?: Partial<ListContext>) {
-  let nextPage: number | string = value
-  if (value === 0) {
-    nextPage = ''
-  }
-  if (nextPage === '') {
-    return
-  }
-  localPage.value = Number(nextPage)
-  getData(addContext)
+function fetchPage(value: number, refreshing = false) {
+  if (!value) return
+  localPage.value = value
+  getData(refreshing)
+}
+
+function setPage(value: number) {
+  fetchPage(value)
 }
 
 function setSearch(value: string) {
@@ -186,9 +150,15 @@ function setSearch(value: string) {
   setPage(1)
 }
 
-function setSort({ by, order }: { by: string; order: 'asc' | 'desc' }) {
-  localSortBy.value = by
-  localSortOrder.value = order
+function setSortBy(value: string) {
+  if (value === localSortBy.value) return
+  localSortBy.value = value
+  setPage(1)
+}
+
+function setSortOrder(value: SortOrder) {
+  if (value === localSortOrder.value) return
+  localSortOrder.value = value
   setPage(1)
 }
 
@@ -209,12 +179,12 @@ function clearFilters() {
   emit('filtersChange', nextFilters)
 }
 
-function refresh(addContext: Partial<ListContext> = { isRefresh: true }) {
+function refresh() {
   if (isLoadMore.value) {
     rows.value = []
-    setPage(1, addContext)
+    fetchPage(1, true)
   } else {
-    getData(addContext)
+    getData(true)
   }
 }
 
@@ -224,8 +194,7 @@ function setPerPage(value: number) {
 }
 
 function loadMore() {
-  const hasMore = localPage.value * localPerPage.value < count.value
-  if (hasMore && !isLoading.value) {
+  if (hasMore.value && !isLoading.value) {
     localPage.value++
     getData()
   }
@@ -252,7 +221,7 @@ function updateRowById(row: Partial<unknown>, id: string | number) {
 }
 
 function updateColumn(name: string, prop: string, value: boolean | unknown) {
-  const current = columnSettings.value ?? {}
+  const current = columnSettings.value
   columnSettings.value = {
     ...current,
     [name]: {
@@ -263,52 +232,79 @@ function updateColumn(name: string, prop: string, value: boolean | unknown) {
   updateStateManager()
 }
 
-const listState = computed(
-  (): ListState => ({
-    rows: rows.value,
-    response: response.value,
-    error: error.value,
-    count: count.value,
-    selection: selection.value,
-    pagination: {
-      page: localPage.value,
-      perPage: localPerPage.value,
-      hasMore: rows.value.length < count.value,
-    },
-    loader: {
-      isLoading: isLoading.value,
-      initialLoading: initializingState.value,
-    },
-    sortBy: localSortBy.value || null,
-    sortOrder: localSortOrder.value,
-    search: localSearch.value,
-    filters: filters.value ?? {},
-    columns:
+const state = reactive({
+  endpoint: computed(() => props.endpoint),
+  version: computed(() => props.version),
+  meta: computed(() => props.meta),
+  rows,
+  response,
+  error,
+  count,
+  selection,
+  page: localPage,
+  perPage: localPerPage,
+  hasMore,
+  isLoading,
+  isInitialLoading,
+  isRefresh,
+  sortBy: localSortBy,
+  sortOrder: localSortOrder,
+  search: localSearch,
+  filters: computed(() => filters.value ?? {}),
+  columns: computed(
+    () =>
       props.columns ??
       Object.keys((rows.value[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
-    columnSettings: columnSettings.value,
-    isEmpty: isEmpty.value,
-    hasActiveFilters: hasActiveFilters(filters.value ?? {}, defaultFilters.value),
-    isInitializing: initializingState.value,
-    idKey: props.idKey,
-    setPage,
-    setPerPage,
-    setSearch,
-    setSort,
-    setFilters,
-    clearFilters,
-    loadMore,
-    refresh,
-    setSelection,
-    updateRowById,
-    updateColumn,
-  }),
-)
+  ),
+  columnSettings,
+  isEmpty,
+  hasActiveFilters: computed(() => hasActiveFilters(filters.value ?? {}, defaultFilters.value)),
+  idKey: computed(() => props.idKey),
+}) as State
 
-provide(LIST_CONTEXT_KEY, { listState })
+const context = reactive({
+  ...toRefs(state),
+  setPage,
+  setPerPage,
+  setSearch,
+  setSortBy,
+  setSortOrder,
+  setFilters,
+  clearFilters,
+  loadMore,
+  refresh,
+  setSelection,
+  updateRowById,
+  updateColumn,
+}) as Context
+
+provide(LIST_CONTEXT_KEY, context)
+
+/** Copy of the current state, handed to `requestHandler` and `stateManager`. */
+const snapshot = (): State => ({ ...state })
+
+let saved: Partial<State> = {}
+try {
+  saved = props.stateManager?.get?.(snapshot()) ?? {}
+} catch (err) {
+  console.error(err)
+}
+
+if (isLoadMore.value) {
+  localPage.value = 1
+} else if (saved.page != null) {
+  localPage.value = saved.page
+}
+
+if (saved.perPage != null) localPerPage.value = saved.perPage
+if (saved.sortBy != null) localSortBy.value = saved.sortBy
+if (saved.sortOrder != null) localSortOrder.value = saved.sortOrder
+if (saved.search != null) localSearch.value = saved.search
+if (saved.columnSettings != null) columnSettings.value = saved.columnSettings
+if (saved.filters != null) filters.value = saved.filters
 
 watch(filters, (newValue, oldValue) => {
-  if (initializingState.value) return
+  if (isInitialLoading.value) return
   if (deepEqual(newValue, oldValue)) return
   setPage(1)
 })
@@ -324,7 +320,7 @@ watch(
       props.endpoint,
     ] as const,
   (next, prev) => {
-    if (initializingState.value || !prev) return
+    if (isInitialLoading.value || !prev) return
 
     const [page, perPage, search, sortBy, sortOrder, endpoint] = next
     const [prevPage, prevPerPage, prevSearch, prevSortBy, prevSortOrder, prevEndpoint] = prev
@@ -360,7 +356,7 @@ watch(selection, (newValue, oldValue) => {
 })
 
 onMounted(() => {
-  props.stateManager?.init?.(buildContext())
+  props.stateManager?.init?.(snapshot())
   setPage(localPage.value)
 })
 
@@ -373,7 +369,8 @@ defineExpose({
   selection,
   setPage,
   setPerPage,
-  setSort,
+  setSortBy,
+  setSortOrder,
   setSearch,
   setSelection,
   refresh,

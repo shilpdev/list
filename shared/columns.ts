@@ -1,3 +1,5 @@
+import type { ListScope } from './common'
+
 /** A single column definition. */
 export interface Column {
   name: string
@@ -25,15 +27,6 @@ export type UpdateColumnFn = (
 ) => void
 
 /** Arguments passed to a custom column renderer. */
-export interface RenderColumnArgs {
+export interface RenderColumnArgs extends ListScope {
   column: Column
-  updateColumn: UpdateColumnFn
-  columnSettings: ColumnSettings
-}
-
-/** Scope for the columns slot. */
-export interface ColumnsScope {
-  columns: Columns
-  columnSettings: ColumnSettings
-  updateColumn: UpdateColumnFn
 }

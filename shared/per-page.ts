@@ -1,3 +1,5 @@
+import type { ListScope } from './common'
+
 /** Single option in the per-page selector. */
 export interface PerPageOption {
   value: number
@@ -10,8 +12,6 @@ export interface PerPageComponentOptions {
 }
 
 /** Scope for per-page slot. */
-export interface PerPageScope {
-  perPage: number
-  setPerPage: (perPage: number) => void
+export interface PerPageScope extends ListScope {
   options: PerPageOption[]
 }

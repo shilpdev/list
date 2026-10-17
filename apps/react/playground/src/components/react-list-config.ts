@@ -1,9 +1,8 @@
 import type {
   Filters,
-  SavedListState,
   SortOrder,
   StateManager,
-  ListContext,
+  State,
 } from '@shilp.dev/react-list';
 
 
@@ -50,11 +49,11 @@ function parseNumber(raw: string | null): number | undefined {
   return Number.isFinite(value) ? value : undefined;
 }
 
-export function getStateFromSearchParams(): SavedListState | null {
+export function getStateFromSearchParams(): Partial<State> | null {
   if (typeof window === 'undefined') return null;
 
   const params = new URLSearchParams(window.location.search);
-  const state: SavedListState = {};
+  const state: Partial<State> = {};
 
   const page = parseNumber(params.get('page'));
   if (page != null) state.page = page;
@@ -136,7 +135,7 @@ function setStateInSearchParams(state: {
 }
 
 export const stateManager: StateManager = {
-  init(context: ListContext) {
+  init(context: State) {
     const { endpoint, version } = context;
     const allKeys = `react-list--${endpoint}--`;
     const latestKey = stateManagerKey(endpoint, version);
@@ -146,7 +145,7 @@ export const stateManager: StateManager = {
     staleKeys.forEach((key) => localStorage.removeItem(key));
   },
 
-  set(context: ListContext) {
+  set(context: State) {
     const {
       endpoint,
       version,
@@ -181,14 +180,14 @@ export const stateManager: StateManager = {
     });
   },
 
-  get(context: ListContext): SavedListState | null {
+  get(context: State): Partial<State> | null {
     const { endpoint, version } = context;
     const key = stateManagerKey(endpoint, version);
     const urlState = getStateFromSearchParams();
 
     try {
       const saved = localStorage.getItem(key);
-      const parsed = saved ? (JSON.parse(saved) as SavedListState) : null;
+      const parsed = saved ? (JSON.parse(saved) as Partial<State>) : null;
 
       if (urlState == null && parsed == null) return null;
 

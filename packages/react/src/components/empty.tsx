@@ -6,11 +6,9 @@ type ListEmptyProps = {
 }
 
 export const ListEmpty = ({ children }: ListEmptyProps) => {
-  const { listState } = useListContext()
-  const { rows, loader, error } = listState
-  const { isLoading, initialLoading } = loader
+  const { rows, error, isLoading, isInitialLoading } = useListContext()
 
-  if (rows?.length > 0 || initialLoading || isLoading || error) {
+  if (rows?.length > 0 || isInitialLoading || isLoading || error) {
     return null
   }
 

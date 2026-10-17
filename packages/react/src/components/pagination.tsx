@@ -27,18 +27,15 @@ export const ListPagination = memo(
     renderNext,
     renderLast,
   }: ListPaginationProps) => {
-    const { listState } = useListContext()
-    const { rows, count, pagination, setPage, loader, error } = listState
-    const { page, perPage } = pagination
-    const { initialLoading } = loader
+    const context = useListContext()
+    const { rows, count, setPage, error, page, perPage, isInitialLoading, hasMore } = context
 
     const paginationState = useMemo(() => {
       const pagesCount = Math.ceil(count / perPage)
       const halfWay = Math.floor(pageLinks / 2)
-      const hasNext = page * perPage < count
       const hasPrev = page !== 1
-      return { pagesCount, halfWay, hasNext, hasPrev }
-    }, [count, perPage, page, pageLinks])
+      return { pagesCount, halfWay, hasNext: hasMore, hasPrev }
+    }, [count, perPage, page, pageLinks, hasMore])
 
     const pagesToDisplay = useMemo(() => {
       const { pagesCount, halfWay } = paginationState
@@ -59,24 +56,21 @@ export const ListPagination = memo(
         next: () => setPage(page + 1),
         first: () => setPage(1),
         last: () => setPage(paginationState.pagesCount),
-        setPage: (newPage: number) => setPage(newPage),
       }),
       [setPage, page, paginationState.pagesCount],
     )
 
     const scope = useMemo(
       (): PaginationScope => ({
-        page,
-        perPage,
-        count,
+        context,
         ...paginationState,
         pagesToDisplay,
         ...navigation,
       }),
-      [page, perPage, count, paginationState, pagesToDisplay, navigation],
+      [context, paginationState, pagesToDisplay, navigation],
     )
 
-    if (initialLoading) return null
+    if (isInitialLoading) return null
 
     if (!rows || rows.length === 0) {
       return null
@@ -123,11 +117,7 @@ export const ListPagination = memo(
               ) : isActive ? (
                 <span key={`page-${pageNum}`}>{pageNum}</span>
               ) : (
-                <button
-                  key={`page-${pageNum}`}
-                  type="button"
-                  onClick={() => navigation.setPage(pageNum)}
-                >
+                <button key={`page-${pageNum}`} type="button" onClick={() => setPage(pageNum)}>
                   {pageNum}
                 </button>
               )

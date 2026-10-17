@@ -5,7 +5,7 @@
         Showing <span>{{ scope.visibleCount }}</span> rows (
         <span>{{ scope.from }} - {{ scope.to }}</span
         >) out of
-        <span>{{ scope.count }}</span>
+        <span>{{ scope.context.count }}</span>
       </span>
     </slot>
   </div>
@@ -20,24 +20,22 @@ defineOptions({
   name: 'ListSummary',
 })
 
-const { listState } = useListContext()
+const context = useListContext()
 
 const showSummary = computed(() => {
-  const state = listState
-  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
+  return !context.isInitialLoading && context.rows.length > 0 && !context.error
 })
 
 const scope = computed((): SummaryScope => {
-  const state = listState
-  const { page, perPage } = state.pagination
+  const { page, perPage } = context
   const from = page * perPage - perPage + 1
-  const to = Math.min(page * perPage, state.count)
+  const to = Math.min(page * perPage, context.count)
 
   return {
+    context,
     from,
     to,
-    visibleCount: state.rows.length,
-    count: state.count,
+    visibleCount: context.rows.length,
   }
 })
 </script>

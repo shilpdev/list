@@ -7,8 +7,8 @@ type ListSearchProps = SearchComponentOptions & {
 }
 
 export const ListSearch = memo(({ children, debounceTime = 500 }: ListSearchProps) => {
-  const { listState } = useListContext()
-  const { search, setSearch } = listState
+  const context = useListContext()
+  const { search, setSearch } = context
   const [localSearch, setLocalSearch] = useState(search ?? '')
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -39,6 +39,7 @@ export const ListSearch = memo(({ children, debounceTime = 500 }: ListSearchProp
   }, [])
 
   const scope: SearchScope = {
+    context,
     search: localSearch,
     setSearch: handleChange,
   }

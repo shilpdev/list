@@ -44,18 +44,18 @@
         <p class="vue-list-demo__message">No skills found.</p>
       </ListEmpty>
 
-      <ListError v-slot="{ error }">
+      <ListError v-slot="{ context: { error } }">
         <div class="vue-list-demo__error">
-          <p>{{ error.message }}</p>
-          <ListRefresh v-slot="{ refresh, isLoading }">
-            <button type="button" class="vue-list-demo__button" :disabled="isLoading" @click="refresh">
+          <p>{{ error?.message }}</p>
+          <ListRefresh v-slot="{ context: { refresh, isLoading } }">
+            <button type="button" class="vue-list-demo__button" :disabled="isLoading" @click="refresh()">
               Try again
             </button>
           </ListRefresh>
         </div>
       </ListError>
 
-      <ListRows v-slot="{ rows, sortBy, sortOrder, setSort }">
+      <ListRows v-slot="{ rows, context: { sortBy, sortOrder, setSortBy, setSortOrder } }">
         <div class="vue-list-demo__table-wrap">
           <ListLoader>
             <p class="vue-list-demo__overlay">Updating...</p>
@@ -66,7 +66,7 @@
               <tr>
                 <th>ID</th>
                 <th>
-                  <button type="button" class="vue-list-demo__sort" @click="toggleSort(sortBy, sortOrder, setSort, 'name')">
+                  <button type="button" class="vue-list-demo__sort" @click="toggleSort({ sortBy, sortOrder, setSortBy, setSortOrder }, 'name')">
                     Name
                   </button>
                 </th>
@@ -75,7 +75,7 @@
                   <button
                     type="button"
                     class="vue-list-demo__sort"
-                    @click="toggleSort(sortBy, sortOrder, setSort, 'date_updated')"
+                    @click="toggleSort({ sortBy, sortOrder, setSortBy, setSortOrder }, 'date_updated')"
                   >
                     Updated
                   </button>
@@ -95,11 +95,11 @@
       </ListRows>
 
       <div class="vue-list-demo__footer">
-        <ListSummary v-slot="{ count: total, from, to }">
+        <ListSummary v-slot="{ context: { count: total }, from, to }">
           <span>{{ from }} - {{ to }} of {{ total }}</span>
         </ListSummary>
 
-        <ListPerPage :options="perPageOptions" v-slot="{ perPage: currentPerPage, setPerPage, options }">
+        <ListPerPage :options="perPageOptions" v-slot="{ context: { perPage: currentPerPage, setPerPage }, options }">
           <label class="vue-list-demo__filter">
             Per page
             <select
@@ -116,7 +116,7 @@
 
         <ListPagination
           v-if="paginationMode === 'pagination'"
-          v-slot="{ page: currentPage, pagesToDisplay, hasNext, hasPrev, prev, next, setPage }"
+          v-slot="{ context: { page: currentPage, setPage }, pagesToDisplay, hasNext, hasPrev, prev, next }"
         >
           <div class="vue-list-demo__pagination">
             <button type="button" class="vue-list-demo__button" :disabled="!hasPrev" @click="prev">
@@ -138,14 +138,14 @@
           </div>
         </ListPagination>
 
-        <ListLoadMore v-else v-slot="{ loadMore, hasMoreRows, isLoading }">
+        <ListLoadMore v-else v-slot="{ context: { loadMore, hasMore, isLoading } }">
           <button
             type="button"
             class="vue-list-demo__button"
-            :disabled="!hasMoreRows || isLoading"
+            :disabled="!hasMore || isLoading"
             @click="loadMore"
           >
-            {{ hasMoreRows ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded' }}
+            {{ hasMore ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded' }}
           </button>
         </ListLoadMore>
       </div>
@@ -155,7 +155,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { SortOrder } from '@shilp.dev/vue-list'
+import type { Context } from '@shilp.dev/vue-list'
 import {
   ListEmpty,
   ListError,
@@ -240,14 +240,12 @@ function onStatusChange(value: string) {
 }
 
 function toggleSort(
-  sortBy: string | null,
-  sortOrder: SortOrder,
-  setSort: (next: { by: string; order: 'asc' | 'desc' }) => void,
+  { sortBy, sortOrder, setSortBy, setSortOrder }: Pick<Context, 'sortBy' | 'sortOrder' | 'setSortBy' | 'setSortOrder'>,
   by: string,
 ) {
   const currentOrder = sortBy === by ? sortOrder : ''
-  const order: 'asc' | 'desc' = currentOrder === 'asc' ? 'desc' : 'asc'
-  setSort({ by, order })
+  setSortBy(by)
+  setSortOrder(currentOrder === 'asc' ? 'desc' : 'asc')
 }
 </script>
 

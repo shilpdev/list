@@ -1,34 +1,23 @@
 import { type ReactNode } from 'react'
-import type { RefreshScope } from '../../../../shared'
+import type { ListScope } from '../../../../shared'
 import { useListContext } from '../context/list-context'
 
 type ListRefreshProps = {
-  children?: ReactNode | ((scope: RefreshScope) => ReactNode)
+  children?: ReactNode | ((scope: ListScope) => ReactNode)
 }
 
 export const ListRefresh = ({ children }: ListRefreshProps) => {
-  const { listState } = useListContext()
-  const { loader, refresh } = listState
-  const { isLoading, initialLoading } = loader
+  const context = useListContext()
 
-  const handleRefresh = () => {
-    refresh({ isRefresh: true })
-  }
-
-  const scope: RefreshScope = {
-    isLoading,
-    refresh: handleRefresh,
-  }
-
-  if (initialLoading) return null
+  if (context.isInitialLoading) return null
 
   return (
     <div className="react-list__refresh">
       {typeof children === 'function'
-        ? children(scope)
+        ? children({ context })
         : children || (
-            <button type="button" onClick={handleRefresh} disabled={isLoading}>
-              {isLoading ? 'Loading...' : 'Refresh'}
+            <button type="button" onClick={() => context.refresh()} disabled={context.isLoading}>
+              {context.isLoading ? 'Loading...' : 'Refresh'}
             </button>
           )}
     </div>

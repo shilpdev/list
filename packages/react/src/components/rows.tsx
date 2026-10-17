@@ -9,10 +9,8 @@ type ListRowsProps = {
 }
 
 function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
-  const { listState } = useListContext()
-  const { rows = [], loader, error, setSort, sortBy, sortOrder, pagination, idKey } = listState
-  const { initialLoading, isLoading } = loader
-  const { page, perPage } = pagination
+  const context = useListContext()
+  const { rows = [], error, idKey, page, perPage, isInitialLoading } = context
 
   const serializedRows = useMemo(
     () =>
@@ -25,16 +23,13 @@ function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
 
   const scope = useMemo(
     (): RowsScope => ({
+      context,
       rows: serializedRows,
-      isLoading,
-      setSort,
-      sortBy,
-      sortOrder,
     }),
-    [serializedRows, isLoading, setSort, sortBy, sortOrder],
+    [context, serializedRows],
   )
 
-  if (initialLoading) return null
+  if (isInitialLoading) return null
 
   if (!rows || rows.length === 0) {
     return null

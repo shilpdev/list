@@ -1,4 +1,4 @@
-import type { SortOrder } from './common'
+import type { ListScope } from './common'
 
 /** Row enriched with a display index (used by the rows scope). */
 export type SerializedListRow<T> = T & {
@@ -6,12 +6,8 @@ export type SerializedListRow<T> = T & {
 }
 
 /** Scope for the rows slot. */
-export interface RowsScope<T = unknown> {
+export interface RowsScope<T = unknown> extends ListScope<T> {
   rows: SerializedListRow<T>[]
-  isLoading: boolean
-  setSort: (sort: { by: string; order: 'asc' | 'desc' }) => void
-  sortBy: string | null
-  sortOrder: SortOrder
 }
 
 /** Arguments passed to a custom row renderer. */

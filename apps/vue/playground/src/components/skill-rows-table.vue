@@ -81,13 +81,14 @@ import type { Skill } from '@/types/skill'
 
 const props = defineProps<{
   rows: SerializedListRow<Skill>[]
-  sortBy: string | null
+  sortBy: string
   sortOrder: SortOrder
-  setSort: (next: { by: string; order: 'asc' | 'desc' }) => void
+  setSortBy: (sortBy: string) => void
+  setSortOrder: (sortOrder: SortOrder) => void
 }>()
 
-const { listState } = useListContext<Skill>()
-const columnSettings = computed(() => listState.columnSettings)
+const listContext = useListContext<Skill>()
+const columnSettings = computed(() => listContext.columnSettings)
 
 function isVisible(name: string) {
   return columnSettings.value?.[name]?.visible ?? true
@@ -95,8 +96,9 @@ function isVisible(name: string) {
 
 function toggleSort(by: string) {
   const currentOrder = props.sortBy === by ? props.sortOrder : ''
-  const sorting: 'asc' | 'desc' = currentOrder === 'asc' ? 'desc' : 'asc'
-  props.setSort({ by, order: sorting })
+  const sorting: SortOrder = currentOrder === 'asc' ? 'desc' : 'asc'
+  props.setSortBy(by)
+  props.setSortOrder(sorting)
 }
 
 function sortIconName(by: string) {

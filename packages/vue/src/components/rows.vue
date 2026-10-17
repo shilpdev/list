@@ -1,10 +1,10 @@
 <template>
   <div
-    v-if="!listState.loader.initialLoading && !listState.error && !listState.isEmpty"
+    v-if="!context.isInitialLoading && !context.error && !context.isEmpty"
     class="vue-list__rows"
   >
     <slot v-bind="scope">
-      <div v-for="(row, index) in scope.rows" :key="getRowId(row, listState.idKey) ?? index">
+      <div v-for="(row, index) in scope.rows" :key="getRowId(row, context.idKey) ?? index">
         <slot name="row" :row="row" :index="index">
           <pre>{{ JSON.stringify(row, null, 2) }}</pre>
         </slot>
@@ -23,21 +23,17 @@ defineOptions({
   name: 'ListRows',
 })
 
-const { listState } = useListContext()
+const context = useListContext()
 
 const scope = computed((): RowsScope => {
-  const state = listState
-  const { page, perPage } = state.pagination
+  const { page, perPage } = context
 
   return {
-    rows: state.rows.map((row, index) => ({
+    context,
+    rows: context.rows.map((row, index) => ({
       ...(row as object),
       _index: (page - 1) * perPage + index + 1,
     })),
-    isLoading: state.loader.isLoading,
-    setSort: state.setSort,
-    sortBy: state.sortBy,
-    sortOrder: state.sortOrder,
   }
 })
 </script>

@@ -1,28 +1,19 @@
 <template>
-  <div v-if="!listState.loader.initialLoading" class="vue-list__refresh">
-    <slot v-bind="scope">
-      <button type="button" :disabled="scope.isLoading" @click="scope.refresh">
-        {{ scope.isLoading ? 'Loading...' : 'Refresh' }}
+  <div v-if="!context.isInitialLoading" class="vue-list__refresh">
+    <slot :context="context">
+      <button type="button" :disabled="context.isLoading" @click="context.refresh()">
+        {{ context.isLoading ? 'Loading...' : 'Refresh' }}
       </button>
     </slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { RefreshScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListRefresh',
 })
 
-const { listState } = useListContext()
-
-const scope = computed(
-  (): RefreshScope => ({
-    isLoading: listState.loader.isLoading,
-    refresh: () => listState.refresh({ isRefresh: true }),
-  }),
-)
+const context = useListContext()
 </script>

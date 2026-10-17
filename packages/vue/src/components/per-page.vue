@@ -2,8 +2,8 @@
   <div v-if="showContent" class="vue-list__per-page">
     <slot v-bind="scope">
       <select
-        :value="scope.perPage"
-        @change="scope.setPerPage(Number(($event.target as HTMLSelectElement).value))"
+        :value="scope.context.perPage"
+        @change="scope.context.setPerPage(Number(($event.target as HTMLSelectElement).value))"
       >
         <option
           v-for="option in scope.options"
@@ -30,11 +30,10 @@ const props = withDefaults(defineProps<PerPageComponentOptions>(), {
   options: () => [10, 25, 50, 100],
 })
 
-const { listState } = useListContext()
+const context = useListContext()
 
 const showContent = computed(() => {
-  const state = listState
-  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
+  return !context.isInitialLoading && context.rows.length > 0 && !context.error
 })
 
 const serializedOptions = computed(() => {
@@ -51,8 +50,7 @@ const serializedOptions = computed(() => {
 
 const scope = computed(
   (): PerPageScope => ({
-    perPage: listState.pagination.perPage,
-    setPerPage: listState.setPerPage,
+    context,
     options: serializedOptions.value,
   }),
 )

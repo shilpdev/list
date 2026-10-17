@@ -10,21 +10,20 @@ import {
 } from 'react'
 import type {
   ColumnSettings,
+  Context,
   Filters,
-  ListContext,
   ListHandlers,
   ListOptions,
   ListResponse,
-  ListState,
-  SavedListState,
   SortOrder,
+  State,
 } from '../../../../shared'
 import { ListContextProvider } from '../context/list-context'
 import { deepEqual, DEFAULT_ID_KEY, getRowId } from '../utils'
 import { hasActiveFilters } from './utils'
 
 type LocalInternalListState = {
-  page: number | string
+  page: number
   perPage: number
   sortBy: string
   sortOrder: SortOrder
@@ -37,9 +36,12 @@ type LocalInternalListState = {
   response: ListResponse | null
   count: number
   isLoading: boolean
-  initializingState: boolean
-  confirmedPage: number | null
+  isInitialLoading: boolean
+  isRefresh: boolean
 }
+
+const computeHasMore = (s: Pick<LocalInternalListState, 'page' | 'perPage' | 'count'>) =>
+  s.page * s.perPage < s.count
 
 /** Imperative API exposed via ref (mirrors ShilpList defineExpose). */
 export type ShilpListHandle = {
@@ -53,7 +55,8 @@ export type ShilpListHandle = {
   ListHandlers,
   | 'setPage'
   | 'setPerPage'
-  | 'setSort'
+  | 'setSortBy'
+  | 'setSortOrder'
   | 'setSearch'
   | 'setSelection'
   | 'refresh'
@@ -65,7 +68,7 @@ export type ShilpListHandle = {
 >
 
 export type ShilpListProps = ListOptions & {
-  children?: ReactNode | ((state: ListState) => ReactNode)
+  children?: ReactNode | ((context: Context) => ReactNode)
   /** React 19 ref-as-prop; use with useImperativeHandle for the imperative API. */
   ref?: Ref<ShilpListHandle>
 }
@@ -112,67 +115,72 @@ function ShilpList({
 
   const isLoadMore = paginationMode === 'loadMore'
 
-  const getContext = useCallback(
-    (currentState?: LocalInternalListState): ListContext => ({
+  const buildState = useCallback(
+    (s: LocalInternalListState): State => ({
       endpoint,
       version,
       meta,
-      search: currentState?.search ?? search,
-      page: (currentState?.page ?? page) as number,
-      perPage: currentState?.perPage ?? perPage,
-      sortBy: currentState?.sortBy ?? sortBy,
-      sortOrder: currentState?.sortOrder ?? sortOrder,
-      filters: currentState?.filters ?? filters,
-      columnSettings: currentState?.columnSettings ?? {},
+      rows: s.rows,
+      response: s.response,
+      error: s.error,
+      count: s.count,
+      selection: s.selection,
+      page: s.page,
+      perPage: s.perPage,
+      hasMore: computeHasMore(s),
+      isLoading: s.isLoading,
+      isInitialLoading: s.isInitialLoading,
+      isRefresh: s.isRefresh,
+      sortBy: s.sortBy,
+      sortOrder: s.sortOrder,
+      search: s.search,
+      filters: s.filters,
+      columns:
+        columns ??
+        Object.keys((s.rows[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
+      columnSettings: s.columnSettings,
+      isEmpty: s.rows.length === 0,
+      hasActiveFilters: hasActiveFilters(s.filters, defaultFiltersRef.current),
+      idKey,
     }),
-    [endpoint, version, meta, search, page, perPage, sortBy, sortOrder, filters],
+    [endpoint, version, meta, columns, idKey],
   )
 
-  const getSavedState = (): SavedListState => {
-    try {
-      const oldState = stateManager?.get?.(getContext())
-
-      return {
-        page: oldState?.page,
-        perPage: oldState?.perPage,
-        sortBy: oldState?.sortBy,
-        sortOrder: oldState?.sortOrder,
-        search: oldState?.search,
-        columnSettings: oldState?.columnSettings,
-        filters: oldState?.filters,
-      }
-    } catch (err) {
-      console.error(err)
-      return {}
-    }
-  }
-
   const initializeState = (): LocalInternalListState => {
-    const savedState = getSavedState()
-
-    let initialPage: number | string = page
-    if (isLoadMore) {
-      initialPage = 1
-    } else if (savedState.page != null) {
-      initialPage = savedState.page
-    }
-
-    return {
-      page: initialPage,
-      perPage: savedState.perPage != null ? savedState.perPage : perPage,
-      sortBy: savedState.sortBy != null ? savedState.sortBy : sortBy,
-      sortOrder: savedState.sortOrder != null ? savedState.sortOrder : sortOrder,
-      search: savedState.search != null ? savedState.search : search,
-      filters: savedState.filters != null ? savedState.filters : filters,
-      columnSettings: (savedState.columnSettings ?? {}) as ColumnSettings,
+    const base: LocalInternalListState = {
+      page,
+      perPage,
+      sortBy,
+      sortOrder,
+      search,
+      filters,
+      columnSettings: {},
       rows: [],
       selection: [],
       error: null,
       response: null,
       count: initialCount,
       isLoading: true,
-      initializingState: true,
-      confirmedPage: null,
+      isInitialLoading: true,
+      isRefresh: false,
+    }
+
+    let saved: Partial<State> = {}
+    try {
+      saved = stateManager?.get?.(buildState(base)) ?? {}
+    } catch (err) {
+      console.error(err)
+    }
+
+    return {
+      ...base,
+      page: isLoadMore ? 1 : (saved.page ?? base.page),
+      perPage: saved.perPage ?? base.perPage,
+      sortBy: saved.sortBy ?? base.sortBy,
+      sortOrder: saved.sortOrder ?? base.sortOrder,
+      search: saved.search ?? base.search,
+      filters: saved.filters ?? base.filters,
+      columnSettings: saved.columnSettings ?? base.columnSettings,
     }
   }
 
@@ -183,48 +191,43 @@ function ShilpList({
 
   const updateStateManager = useCallback(
     (stateToSave: LocalInternalListState) => {
-      stateManager?.set?.(getContext(stateToSave))
+      stateManager?.set?.(buildState(stateToSave))
     },
-    [stateManager, getContext],
+    [stateManager, buildState],
   )
 
   // Memoised because it is a dependency of `applyState` and `handlers`.
   const fetchData = useCallback(
-    async (
-      addContext: Partial<ListContext> = {},
-      newState: LocalInternalListState | null = null,
-    ) => {
+    async (isRefresh = false, newState: LocalInternalListState | null = null) => {
       const currentRequestId = ++requestIdRef.current
-      setState((prev) => ({ ...prev, error: null, isLoading: true }))
+      setState((prev) => ({ ...prev, error: null, isLoading: true, isRefresh }))
 
       try {
         const currentState = newState ?? stateRef.current
         const previousRows = currentState.rows
-        const res = await requestHandler({
-          ...getContext(currentState),
-          isRefresh: false,
-          ...addContext,
-        })
+        const res = await requestHandler(
+          buildState({ ...currentState, error: null, isLoading: true, isRefresh }),
+        )
 
         if (currentRequestId !== requestIdRef.current) return
 
         const newRows =
-          isLoadMore && (currentState.page as number) > 1
-            ? [...previousRows, ...res.rows]
-            : res.rows
+          isLoadMore && currentState.page > 1 ? [...previousRows, ...res.rows] : res.rows
 
-        setState((prev) => ({
-          ...prev,
+        const loaded = {
           response: res,
           selection: [],
           rows: newRows,
           count: res.count,
           error: null,
-          initializingState: false,
+          isInitialLoading: false,
           isLoading: false,
-        }))
+          isRefresh: false,
+        }
 
-        updateStateManager(currentState)
+        setState((prev) => ({ ...prev, ...loaded }))
+
+        updateStateManager({ ...stateRef.current, ...loaded })
 
         onResponse?.(res)
         if (isLoadMore) {
@@ -239,15 +242,16 @@ function ShilpList({
           error: toError(err),
           rows: [],
           count: 0,
-          initializingState: false,
+          isInitialLoading: false,
           isLoading: false,
+          isRefresh: false,
         }))
         // The list UI already surfaces the error via `state.error`.
         // Re-throwing here creates unhandled promise rejections.
       }
     },
     [
-      getContext,
+      buildState,
       isLoadMore,
       requestHandler,
       onResponse,
@@ -258,25 +262,22 @@ function ShilpList({
   )
 
   const applyState = useCallback(
-    (patch: Partial<LocalInternalListState>, addContext: Partial<ListContext> = {}) => {
+    (patch: Partial<LocalInternalListState>, isRefresh = false) => {
       const nextState = { ...stateRef.current, ...patch }
+      stateRef.current = nextState
       setState(nextState)
-      fetchData(addContext, nextState)
+      fetchData(isRefresh, nextState)
     },
     [fetchData],
   )
 
+  const hasMore = computeHasMore(state)
+
   const handlers = useMemo(
     () => ({
-      setPage: (value: number | string, addContext?: Partial<ListContext>) => {
-        const coerced = value === 0 ? '' : value
-        if (coerced === '' || coerced === null || coerced === undefined) {
-          return
-        }
-        const newPage = Number(coerced)
-        if (!newPage) return
-
-        applyState({ page: newPage }, addContext)
+      setPage: (value: number) => {
+        if (!value) return
+        applyState({ page: value })
       },
 
       setPerPage: (value: number) => applyState({ perPage: value, page: 1 }),
@@ -286,14 +287,19 @@ function ShilpList({
         applyState({ search: value, page: 1 })
       },
 
-      setSort: ({ by, order }: { by: string; order: 'asc' | 'desc' }) =>
-        applyState({ sortBy: by, sortOrder: order, page: 1 }),
+      setSortBy: (value: string) => {
+        if (value === stateRef.current.sortBy) return
+        applyState({ sortBy: value, page: 1 })
+      },
+
+      setSortOrder: (value: SortOrder) => {
+        if (value === stateRef.current.sortOrder) return
+        applyState({ sortOrder: value, page: 1 })
+      },
 
       loadMore: () => {
-        const { page } = stateRef.current
-        const hasMore = (page as number) * stateRef.current.perPage < stateRef.current.count
         if (hasMore && !stateRef.current.isLoading) {
-          applyState({ page: (page as number) + 1 })
+          applyState({ page: stateRef.current.page + 1 })
         }
       },
 
@@ -310,11 +316,11 @@ function ShilpList({
         onFiltersChange?.(nextFilters)
       },
 
-      refresh: (addContext: Partial<ListContext> = { isRefresh: true }) => {
+      refresh: () => {
         if (isLoadMore) {
-          applyState({ page: 1, rows: [] }, addContext)
+          applyState({ page: 1, rows: [] }, true)
         } else {
-          fetchData(addContext)
+          fetchData(true)
         }
       },
 
@@ -344,71 +350,24 @@ function ShilpList({
           ...current,
           columnSettings: {
             ...current.columnSettings,
-            [columnName]: { ...current.columnSettings?.[columnName], [settingKey]: value },
+            [columnName]: { ...current.columnSettings[columnName], [settingKey]: value },
           },
         }
 
+        stateRef.current = newState
         setState(newState)
         updateStateManager(newState)
       },
 
       setSelection: (selection: unknown[]) => setState((prev) => ({ ...prev, selection })),
     }),
-    [applyState, fetchData, isLoadMore, onFiltersChange, updateStateManager, idKey],
+    [applyState, fetchData, hasMore, isLoadMore, onFiltersChange, updateStateManager, idKey],
   )
 
-  const memoizedState = useMemo(
-    (): ListState => ({
-      rows: state.rows,
-      response: state.response,
-      error: state.error,
-      count: state.count,
-      selection: state.selection,
-      pagination: {
-        page: state.page as number,
-        perPage: state.perPage,
-        hasMore: state.rows.length < state.count,
-      },
-      loader: {
-        isLoading: state.isLoading,
-        initialLoading: state.initializingState,
-      },
-      sortBy: state.sortBy || null,
-      sortOrder: state.sortOrder,
-      hasActiveFilters: hasActiveFilters(state.filters, defaultFiltersRef.current),
-      search: state.search,
-      filters: state.filters,
-      columns:
-        columns ??
-        Object.keys((state.rows[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
-      columnSettings: state.columnSettings,
-      isEmpty: state.rows.length === 0,
-      isInitializing: state.initializingState,
-      idKey,
-      ...handlers,
-    }),
-    [
-      state.rows,
-      state.response,
-      state.error,
-      state.count,
-      state.selection,
-      state.page,
-      state.perPage,
-      state.isLoading,
-      state.initializingState,
-      state.sortBy,
-      state.sortOrder,
-      state.search,
-      state.filters,
-      state.columnSettings,
-      handlers,
-      columns,
-      idKey,
-    ],
+  const context = useMemo(
+    (): Context => ({ ...buildState(state), ...handlers }),
+    [buildState, state, handlers],
   )
-
-  const contextValue = useMemo(() => ({ listState: memoizedState }), [memoizedState])
 
   useImperativeHandle(
     ref,
@@ -433,7 +392,8 @@ function ShilpList({
       },
       setPage: handlers.setPage,
       setPerPage: handlers.setPerPage,
-      setSort: handlers.setSort,
+      setSortBy: handlers.setSortBy,
+      setSortOrder: handlers.setSortOrder,
       setSearch: handlers.setSearch,
       setSelection: handlers.setSelection,
       refresh: handlers.refresh,
@@ -447,14 +407,14 @@ function ShilpList({
   )
 
   useEffect(() => {
-    if (!state.initializingState || initRef.current) return
+    if (!state.isInitialLoading || initRef.current) return
 
     initRef.current = true
-    stateManager?.init?.(getContext(state))
+    stateManager?.init?.(buildState(state))
     if (state.filters && !deepEqual(state.filters, filters)) {
       onFiltersChange?.(state.filters)
     }
-    handlers.setPage(state.page as number)
+    handlers.setPage(state.page)
   }, [])
 
   useEffect(() => {
@@ -521,9 +481,9 @@ function ShilpList({
   }, [state.selection, onRowSelect])
 
   return (
-    <ListContextProvider value={contextValue}>
+    <ListContextProvider value={context}>
       <div className="react-list">
-        {typeof children === 'function' ? children(memoizedState) : children}
+        {typeof children === 'function' ? children(context) : children}
       </div>
     </ListContextProvider>
   )

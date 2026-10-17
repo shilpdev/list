@@ -86,10 +86,10 @@ export function SkillList() {
         <p>No skills found.</p>
       </ListEmpty>
 
-      <ListError>{({ error }) => <p>{error.message}</p>}</ListError>
+      <ListError>{({ context }) => <p>{context.error?.message}</p>}</ListError>
 
       <ListRows>
-        {({ rows, sortBy, sortOrder, setSort }) => (
+        {({ rows, context: { sortBy, sortOrder, setSortBy, setSortOrder } }) => (
           <div>
             <ListLoader>
               <p>Updating...</p>
@@ -101,11 +101,10 @@ export function SkillList() {
                     <button
                       type="button"
                       onClick={() =>
-                        setSort({
-                          by: 'name',
-                          order:
-                            sortBy === 'name' && sortOrder === 'asc' ? 'desc' : 'asc',
-                        })
+                        {
+                          setSortBy('name')
+                          setSortOrder(sortBy === 'name' && sortOrder === 'asc' ? 'desc' : 'asc')
+                        }
                       }
                     >
                       Name
@@ -128,7 +127,7 @@ export function SkillList() {
       </ListRows>
 
       <ListSummary>
-        {({ from, to, count }) => (
+        {({ from, to, context: { count } }) => (
           <span>
             {from} - {to} of {count}
           </span>
@@ -136,7 +135,7 @@ export function SkillList() {
       </ListSummary>
 
       <ListPagination>
-        {({ page, pagesToDisplay, hasNext, hasPrev, prev, next, setPage }) => (
+        {({ context: { page, setPage }, pagesToDisplay, hasNext, hasPrev, prev, next }) => (
           <div>
             <button type="button" disabled={!hasPrev} onClick={prev}>
               Prev
@@ -163,9 +162,9 @@ export function SkillList() {
 <ShilpList endpoint="skills" paginationMode="loadMore" requestHandler={requestHandler}>
   <ListRows>{({ rows }) => /* ... */ null}</ListRows>
   <ListLoadMore>
-    {({ loadMore, hasMoreRows, isLoading }) => (
-      <button type="button" disabled={!hasMoreRows || isLoading} onClick={loadMore}>
-        {hasMoreRows ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded'}
+    {({ context: { loadMore, hasMore, isLoading } }) => (
+      <button type="button" disabled={!hasMore || isLoading} onClick={loadMore}>
+        {hasMore ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded'}
       </button>
     )}
   </ListLoadMore>
@@ -178,11 +177,11 @@ export function SkillList() {
 import { ListRows, useListContext } from '@shilp.dev/react-list'
 
 function SkillRow({ row }: { row: Skill }) {
-  const { listState } = useListContext<Skill>()
+  const context = useListContext<Skill>()
 
   async function onRename(name: string) {
     const saved = await api.updateSkill(row.id, { name })
-    listState.updateRowById(saved, row.id)
+    context.updateRowById(saved, row.id)
   }
 
   return (

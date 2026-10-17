@@ -11,9 +11,9 @@
 
       <slot name="pages" v-bind="scope">
         <template v-for="item in scope.pagesToDisplay" :key="item">
-          <slot name="page" v-bind="scope" :page="item" :isActive="item === scope.page">
-            <span v-if="item === scope.page">{{ item }}</span>
-            <button v-else type="button" @click="scope.setPage(item)">
+          <slot name="page" v-bind="scope" :page="item" :isActive="item === scope.context.page">
+            <span v-if="item === scope.context.page">{{ item }}</span>
+            <button v-else type="button" @click="scope.context.setPage(item)">
               {{ item }}
             </button>
           </slot>
@@ -44,20 +44,17 @@ const props = withDefaults(defineProps<PaginationComponentOptions>(), {
   pageLinks: 5,
 })
 
-const { listState } = useListContext()
+const context = useListContext()
 
 const showContent = computed(() => {
-  const state = listState
-  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
+  return !context.isInitialLoading && context.rows.length > 0 && !context.error
 })
 
 const scope = computed((): PaginationScope => {
-  const state = listState
-  const { page, perPage } = state.pagination
-  const total = state.count
+  const { page, perPage } = context
+  const total = context.count
   const pagesCount = Math.ceil(total / perPage)
   const halfWay = Math.floor(props.pageLinks / 2)
-  const hasNext = page * perPage < total
   const hasPrev = page !== 1
   const pageCount = Math.min(props.pageLinks, pagesCount)
   const pages = Array.from({ length: pageCount })
@@ -72,19 +69,16 @@ const scope = computed((): PaginationScope => {
   }
 
   return {
-    page,
-    perPage,
-    count: total,
+    context,
     pagesCount,
     halfWay,
-    hasNext,
+    hasNext: context.hasMore,
     hasPrev,
     pagesToDisplay,
-    prev: () => state.setPage(page - 1),
-    next: () => state.setPage(page + 1),
-    first: () => state.setPage(1),
-    last: () => state.setPage(pagesCount),
-    setPage: (nextPage: number) => state.setPage(nextPage),
+    prev: () => context.setPage(page - 1),
+    next: () => context.setPage(page + 1),
+    first: () => context.setPage(1),
+    last: () => context.setPage(pagesCount),
   }
 })
 </script>

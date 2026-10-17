@@ -22,14 +22,14 @@ Treat the code and `shared/` types as the source of truth for the current API; u
 ## Layout
 
 - `packages/react`, `packages/vue` — the published libraries (built with Vite lib mode, output to `dist/`).
-- `shared/` — framework-agnostic TypeScript **types only** (`ListOptions`, `ListContext`, `ListResponse`, `ListInstanceContext`, etc.). Not a workspace package: both libraries import it by relative path (`../../../../shared`) and Vite's `dts` plugin inlines it (`rollupTypes: true`) into the emitted `.d.ts`. When changing the list API, update `shared/` first, then keep both React and Vue implementations in sync.
+- `shared/` — framework-agnostic TypeScript **types only** (`ListOptions`, `ListResponse`, etc.). Not a workspace package: both libraries import it by relative path (`../../../../shared`) and Vite's `dts` plugin inlines it (`rollupTypes: true`) into the emitted `.d.ts`. When changing the list API, update `shared/` first, then keep both React and Vue implementations in sync.
 - `apps/{react,vue}/playground` — Vite apps for manual testing against the packages.
 - `apps/{react,vue}/story` — Storybook apps; their stories double as the test suite (Vitest + Playwright browser via `@storybook/addon-vitest`). There are no unit tests inside `packages/`.
 - `.cursor/skills/react-list/` — usage documentation for the public API (props, slots, `requestHandler` contract).
 
 ## Architecture
 
-A root component (`ShilpList` in `packages/react/src/components/list.tsx`, `list.vue` in Vue) owns all state, calls the user-supplied `requestHandler(ctx)` (must return `{ rows, count, meta? }`), and exposes state/actions through a context (`useListContext` in React, `use-list-context` composable in Vue). Slot components (`ListRows`, `ListPagination`, `ListSearch`, `ListLoadMore`, `ListEmpty`, `ListError`, loaders, etc.) read that context and throw if used outside the root. The component files mirror each other 1:1 between `packages/react/src/components/*.tsx` and `packages/vue/src/components/*.vue`.
+A root component (`ShilpList` in `packages/react/src/components/list.tsx`, `list.vue` in Vue) owns all state, calls the user-supplied `requestHandler(state)` (must return `{ rows, count, meta? }`), and exposes state/actions through a context (`useListContext` in React, `use-list-context` composable in Vue). Slot components (`ListRows`, `ListPagination`, `ListSearch`, `ListLoadMore`, `ListEmpty`, `ListError`, loaders, etc.) read that context and throw if used outside the root. Every slot scope has a `context` key (the `Context`: state plus actions); `requestHandler` and `stateManager` get only the `State` (data, no methods); a component adds extra keys only for values it computes (for example `pagesToDisplay`). The component files mirror each other 1:1 between `packages/react/src/components/*.tsx` and `packages/vue/src/components/*.vue`.
 
 ## Commands
 
