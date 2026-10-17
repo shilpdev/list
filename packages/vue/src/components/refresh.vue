@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!context.isInitialLoading" class="vue-list__refresh">
+  <div v-if="!context.isInitialLoading" class="shilp-list__refresh">
     <slot :context="context">
       <button type="button" :disabled="context.isLoading" @click="context.refresh()">
         {{ context.isLoading ? 'Loading...' : 'Refresh' }}

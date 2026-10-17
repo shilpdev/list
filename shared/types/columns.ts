@@ -20,13 +20,13 @@ export type ColumnSettings = Record<
 >
 
 /** Updates a single column setting value. */
-export type UpdateColumnFn = (
+export type UpdateColumn = (
   columnName: string,
   settingKey: string,
-  value: boolean | unknown
+  value: boolean | unknown,
 ) => void
 
 /** Arguments passed to a custom column renderer. */
-export interface RenderColumnArgs extends ListScope {
+export interface ColumnScope extends ListScope {
   column: Column
 }

@@ -4,10 +4,10 @@
 
 ```tsx
 import { useState } from 'react'
-import ShilpList, {
+import List, {
   ListEmpty,
   ListError,
-  ListInitialLoader,
+  ListLoaderInitial,
   ListLoader,
   ListPagination,
   ListRows,
@@ -48,7 +48,7 @@ export function SkillList() {
   const [filters, setFilters] = useState<Record<string, string | undefined>>({})
 
   return (
-    <ShilpList
+    <List
       endpoint="skills"
       perPage={10}
       requestHandler={requestHandler}
@@ -78,9 +78,9 @@ export function SkillList() {
         <option value="published">Published</option>
       </select>
 
-      <ListInitialLoader>
+      <ListLoaderInitial>
         <p>Loading...</p>
-      </ListInitialLoader>
+      </ListLoaderInitial>
 
       <ListEmpty>
         <p>No skills found.</p>
@@ -89,7 +89,7 @@ export function SkillList() {
       <ListError>{({ context }) => <p>{context.error?.message}</p>}</ListError>
 
       <ListRows>
-        {({ rows, context: { sortBy, sortOrder, setSortBy, setSortOrder } }) => (
+        {({ context: { rows, sortBy, sortOrder, setSortBy, setSortOrder } }) => (
           <div>
             <ListLoader>
               <p>Updating...</p>
@@ -151,7 +151,7 @@ export function SkillList() {
           </div>
         )}
       </ListPagination>
-    </ShilpList>
+    </List>
   )
 }
 ```
@@ -159,8 +159,8 @@ export function SkillList() {
 ## Load more
 
 ```tsx
-<ShilpList endpoint="skills" paginationMode="loadMore" requestHandler={requestHandler}>
-  <ListRows>{({ rows }) => /* ... */ null}</ListRows>
+<List endpoint="skills" paginationMode="loadMore" requestHandler={requestHandler}>
+  <ListRows>{({ context: { rows } }) => /* ... */ null}</ListRows>
   <ListLoadMore>
     {({ context: { loadMore, hasMore, isLoading } }) => (
       <button type="button" disabled={!hasMore || isLoading} onClick={loadMore}>
@@ -168,7 +168,7 @@ export function SkillList() {
       </button>
     )}
   </ListLoadMore>
-</ShilpList>
+</List>
 ```
 
 ## Patch one row
@@ -210,7 +210,7 @@ const stateManager = {
   },
 }
 
-<ShilpList endpoint="skills" requestHandler={requestHandler} stateManager={stateManager}>
+<List endpoint="skills" requestHandler={requestHandler} stateManager={stateManager}>
   {/* ... */}
-</ShilpList>
+</List>
 ```

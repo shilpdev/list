@@ -1,7 +1,7 @@
 import type { ListScope } from './common'
 
-/** Options for the pagination component. */
-export interface PaginationComponentOptions {
+/** Props for the pagination component. */
+export interface PaginationProps {
   pageLinks?: number
 }
 
@@ -19,7 +19,7 @@ export interface PaginationScope extends ListScope {
 }
 
 /** Arguments passed to a custom page button renderer. */
-export interface RenderPageArgs extends PaginationScope {
+export interface PaginationItemScope extends PaginationScope {
   page: number
   isActive: boolean
 }

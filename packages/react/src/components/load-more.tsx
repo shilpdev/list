@@ -13,19 +13,21 @@ export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
     return null
   }
 
-  return (
-    <div className="react-list__load-more">
-      {typeof children === 'function' ? (
-        children({ context })
-      ) : children ? (
-        children
-      ) : context.hasMore ? (
-        <button type="button" onClick={context.loadMore}>
-          Load More
-        </button>
-      ) : (
-        <p>— That&apos;s all —</p>
-      )}
-    </div>
-  )
+  let content: ReactNode
+
+  if (typeof children === 'function') {
+    content = children({ context })
+  } else if (children) {
+    content = children
+  } else if (context.hasMore) {
+    content = (
+      <button type="button" onClick={context.loadMore}>
+        Load More
+      </button>
+    )
+  } else {
+    content = <p>— That&apos;s all —</p>
+  }
+
+  return <div className="shilp-list__load-more">{content}</div>
 }

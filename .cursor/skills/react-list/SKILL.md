@@ -1,10 +1,10 @@
 ---
 name: react-list
 description: >-
-  Implements and integrates @shilp.dev/react-list (ShilpList, ListRows,
+  Implements and integrates @shilp.dev/react-list (List, ListRows,
   ListPagination, requestHandler, updateRowById). Use when building React
   lists, tables, pagination, search, load-more, or when the user mentions
-  @shilp.dev/react-list or ShilpList.
+  @shilp.dev/react-list or List.
 ---
 
 # @shilp.dev/react-list
@@ -17,7 +17,7 @@ Peers: `react` and `react-dom` `^19`. Do not import `@shilp.dev/vue-list`.
 
 ## Rules
 
-1. Wrap all list slots in `<ShilpList>`. Slots use `useListContext()` and throw outside it.
+1. Wrap all list slots in `<List>`. Slots use `useListContext()` and throw outside it.
 2. Always pass `requestHandler`. Missing it throws.
 3. Return `{ rows, count, meta? }` from `requestHandler`. Map your API into that shape.
 4. Drive extra filters from parent state via `filters` and `onFiltersChange` (pass the state setter). `onFiltersChange` also runs when `stateManager` restores filters. Do not call `setFilters` from a local form unless that form lives inside the list tree.
@@ -27,10 +27,10 @@ Peers: `react` and `react-dom` `^19`. Do not import `@shilp.dev/vue-list`.
 ## Setup
 
 ```tsx
-import ShilpList, {
+import List, {
   ListEmpty,
   ListError,
-  ListInitialLoader,
+  ListLoaderInitial,
   ListLoader,
   ListPagination,
   ListRows,
@@ -39,7 +39,7 @@ import ShilpList, {
 import type { RequestHandler } from '@shilp.dev/react-list'
 ```
 
-`requestHandler` receives a snapshot of `State` (data only, no methods) and must return `Promise<ListResponse<T>>`:
+`requestHandler` receives a snapshot of `State` (data only, no methods) and must return `Promise<RequestHandlerResponse<T>>`:
 
 ```ts
 const requestHandler: RequestHandler<Row> = async (state) => {
@@ -49,53 +49,53 @@ const requestHandler: RequestHandler<Row> = async (state) => {
 }
 ```
 
-## ShilpList props
+## List props
 
 Required: `endpoint`, `requestHandler`. A later `endpoint` change refetches from page 1.
 
-| Prop                                               | Default        | Notes                                           |
-| -------------------------------------------------- | -------------- | ----------------------------------------------- |
-| `page`                                             | `1`            | Refetches when changed after mount              |
-| `perPage`                                          | `25`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
-| `sortBy`                                           | `''`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
-| `sortOrder`                                        | `'desc'`       | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
-| `search`                                           | `''`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
-| `filters`                                          | `{}`           | Parent-controlled query filters. Pair with `onFiltersChange`. |
-| `paginationMode`                                   | `'pagination'` | `'loadMore'` appends pages                      |
-| `version`                                          | `1`            | Passed to handler / state manager               |
-| `meta`                                             | `{}`           | Passed through to handler                       |
-| `columns`                                          |                | Column definitions (`string[]` or `{ name }[]`) |
-| `count`                                            | `0`            | Initial count before first fetch                |
-| `stateManager`                                     |                | Optional `{ init, get, set }` persistence       |
-| `onResponse` / `afterPageChange` / `afterLoadMore` / `onFiltersChange` | | Lifecycle hooks. `onFiltersChange` also fires when `stateManager` restores filters. |
+| Prop                                                                   | Default        | Notes                                                                               |
+| ---------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------- |
+| `page`                                                                 | `1`            | Refetches when changed after mount                                                  |
+| `perPage`                                                              | `25`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes.    |
+| `sortBy`                                                               | `''`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes.    |
+| `sortOrder`                                                            | `'desc'`       | Refetches when changed after mount. Resets to page 1 unless `page` also changes.    |
+| `search`                                                               | `''`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes.    |
+| `filters`                                                              | `{}`           | Parent-controlled query filters. Pair with `onFiltersChange`.                       |
+| `paginationMode`                                                       | `'pagination'` | `'loadMore'` appends pages                                                          |
+| `version`                                                              | `1`            | Passed to handler / state manager                                                   |
+| `meta`                                                                 | `{}`           | Passed through to handler                                                           |
+| `columns`                                                              |                | Column definitions (`string[]` or `{ name }[]`)                                     |
+| `count`                                                                | `0`            | Initial count before first fetch                                                    |
+| `stateManager`                                                         |                | Optional `{ init, get, set }` persistence                                           |
+| `beforePageChange` / `afterPageChange` / `beforeLoadMore` / `afterLoadMore` / `onResponse` / `onError` / `onRowSelect` / `onFiltersChange` |                | Hooks, with the same names in both packages (Vue emits them, so its listeners are `@on-response`, `@before-page-change`, ...). `before*` get the `State` of the request, `after*` and `onResponse` the response, `onError` the error. `onFiltersChange` also fires when `stateManager` restores filters. `onRowSelect` fires only when the selection changes. |
 
 Children: `ReactNode` or `(context: Context<T>) => ReactNode`.
 
 ## Slots
 
-All slots must be descendants of `ShilpList`. Most hide themselves during initial load, empty, or error.
+All slots must be descendants of `List`. Most hide themselves during initial load, empty, or error.
 
-| Component           | When it renders                              | Children scope                                                                 |
-| ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------ |
-| `ListInitialLoader` | First fetch                                  | `{ context }` or node                                                            |
-| `ListLoader`        | Any load (`position`: `overlay` \| `inline`) | `{ context }` or node                                                            |
-| `ListError`         | `error` and not loading                      | `{ context }` or node (`context.error` is `Error \| null`)                         |
-| `ListEmpty`         | No rows, not loading, no error               | node                                                                           |
-| `ListRows`          | Has rows, not initial, no error              | `{ context, rows }` or `row`                                                     |
-| `ListSearch`        | Always                                       | `{ context, search, setSearch }` (debounced, default 500ms)                      |
+| Component           | When it renders                              | Children scope                                                                       |
+| ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `ListLoaderInitial` | First fetch                                  | `{ context }` or node                                                                |
+| `ListLoader`        | Any load (`position`: `overlay` \| `inline`) | `{ context }` or node                                                                |
+| `ListError`         | `error` and not loading                      | `{ context }` or node (`context.error` is `Error \| null`)                           |
+| `ListEmpty`         | No rows, not loading, no error               | node                                                                                 |
+| `ListRows`          | Has rows, not initial, no error              | `{ context }` or `row`                                                         |
+| `ListSearch`        | Always                                       | `{ context, search, setSearch }` (debounced, default 500ms)                          |
 | `ListPagination`    | Has rows                                     | `{ context, pagesCount, pagesToDisplay, hasNext, hasPrev, prev, next, first, last }` |
-| `ListLoadMore`      | Has rows                                     | `{ context }` (`context.hasMore`, `context.loadMore`, `context.isLoading`)             |
-| `ListPerPage`       | Has rows                                     | `{ context, options }`                                                           |
-| `ListSummary`       | Has rows                                     | `{ context, from, to, visibleCount }`                                            |
-| `ListRefresh`       | Always                                       | `{ context }` (call `context.refresh()`)     |
-| `ListGoTo`          | Has rows                                     | `{ context, pages, pagesCount }`                                                 |
-| `ListColumns`       | Always                                       | `{ context }` (`context.columns`, `context.columnSettings`, `context.updateColumn`)    |
+| `ListLoadMore`      | Has rows                                     | `{ context }` (`context.hasMore`, `context.loadMore`, `context.isLoading`)           |
+| `ListPerPage`       | Has rows                                     | `{ context, options }`                                                               |
+| `ListSummary`       | Has rows                                     | `{ context, from, to, visibleCount }`                                                |
+| `ListRefresh`       | Always                                       | `{ context }` (call `context.refresh()`)                                             |
+| `ListGoTo`          | Has rows                                     | `{ context, pages, pagesCount }`                                                     |
+| `ListColumns`       | Always                                       | `{ context }` (`context.columns`, `context.columnSettings`, `context.updateColumn`)  |
 
 Every scope has `context` (the state plus every action). Other keys are values the component computes. Read shared values such as `page`, `perPage`, `count` and `isLoading` from `state`.
 
 `ListRows`:
 
-- `children={({ context, rows }) => ...}` — `rows` includes `_index` (1-based across pages).
+- `children={({ context }) => ...}` — `context.rows` entries include `_index` (1-based across pages).
 - `row={({ row, index }) => ...}` — wraps each row; key is `row.id`.
 - Prefer `children` for tables (one `<table>`). Use `row` for card/row lists.
 

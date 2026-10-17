@@ -16,7 +16,7 @@ export function ListContextProvider<T>({
 export function useListContext<T>(): Context<T> {
   const context = useContext(ListContext)
   if (!context) {
-    throw new Error('useListContext must be used within a ShilpList')
+    throw new Error('useListContext must be used within a List')
   }
   return context as Context<T>
 }

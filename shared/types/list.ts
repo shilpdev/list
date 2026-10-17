@@ -1,18 +1,11 @@
-import type {
-  Filters,
-  ListResponse,
-  Meta,
-  PaginationMode,
-  RequestHandler,
-  SortOrder,
-  StateManager,
-} from './common'
+import type { Meta, PaginationMode, RequestHandler, SortOrder, StateManager } from './common'
 import type { Columns } from './columns'
 
 /**
- * Root list configuration shared by React and Vue implementations.
+ * Props both packages accept. `filters` and the callbacks are framework specific, so they live in
+ * `ListPropsReact` and `ListPropsVue` (Vue takes `filters` as a model and uses emits).
  */
-export interface ListOptions<T = unknown> {
+export interface ListProps<T = unknown> {
   /** Unique identifier for the data source (API route or key). */
   endpoint: string
   idKey?: string
@@ -22,7 +15,6 @@ export interface ListOptions<T = unknown> {
   sortOrder?: SortOrder
   count?: number
   search?: string
-  filters?: Filters
   columns?: Columns
   version?: number | string
   paginationMode?: PaginationMode
@@ -32,9 +24,4 @@ export interface ListOptions<T = unknown> {
   requestHandler: RequestHandler<T>
   /** Optional persistence layer for list UI state. */
   stateManager?: StateManager
-  onResponse?: (response: ListResponse<T>) => void
-  afterPageChange?: (response: ListResponse<T>) => void
-  afterLoadMore?: (response: ListResponse<T>) => void
-  onRowSelect?: (selection: T[], previous: T[]) => void
-  onFiltersChange?: (filters: Filters) => void
 }

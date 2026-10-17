@@ -1,4 +1,4 @@
-import type { ColumnSettings, Columns, UpdateColumnFn } from './columns'
+import type { ColumnSettings, Columns, UpdateColumn } from './columns'
 
 /** Types shared across the list root and its components that do not belong to a single component. */
 
@@ -15,7 +15,7 @@ export type Filters = Record<string, unknown>
 export type Meta = Record<string, unknown>
 
 /** Standard shape returned by `requestHandler`. */
-export interface ListResponse<T = unknown> {
+export interface RequestHandlerResponse<T = unknown> {
   rows: T[]
   count: number
   meta?: Meta
@@ -25,7 +25,7 @@ export interface ListResponse<T = unknown> {
  * Fetches list data. Receives a snapshot of the list state for the request being made
  * (for example `page` is the page being requested and `isRefresh` marks a refresh).
  */
-export type RequestHandler<T = unknown> = (state: State) => Promise<ListResponse<T>>
+export type RequestHandler<T = unknown> = (state: State) => Promise<RequestHandlerResponse<T>>
 
 /** Optional persistence layer for list UI state. Each method receives a snapshot of the list state. */
 export interface StateManager {
@@ -36,7 +36,7 @@ export interface StateManager {
 }
 
 /** Actions exposed on the list context for pagination, search, filters, and selection. */
-export interface ListHandlers<T = unknown> {
+export interface Actions<T = unknown> {
   setPage: (page: number) => void
   setPerPage: (perPage: number) => void
   setSearch: (search: string) => void
@@ -48,7 +48,7 @@ export interface ListHandlers<T = unknown> {
   refresh: () => void
   setSelection: (selection: T[]) => void
   updateRowById: (row: Partial<T>, id: string | number) => void
-  updateColumn: UpdateColumnFn
+  updateColumn: UpdateColumn
 }
 
 /** Reactive list data without any methods. This is what `requestHandler` and `stateManager` receive. */
@@ -56,8 +56,9 @@ export interface State<T = unknown> {
   endpoint: string
   version: number | string
   meta: Meta
+  /** Each row also carries a 1-based `_index` across pages. */
   rows: T[]
-  response: ListResponse<T> | null
+  response: RequestHandlerResponse<T> | null
   error: Error | null
   count: number
   selection: T[]
@@ -80,7 +81,7 @@ export interface State<T = unknown> {
 }
 
 /** The state plus every action. Provided to child components and passed to slots and render functions. */
-export interface Context<T = unknown> extends State<T>, ListHandlers<T> {}
+export interface Context<T = unknown> extends State<T>, Actions<T> {}
 
 /** Slot scope for components that only use the list context. Computed scopes extend it. */
 export interface ListScope<T = unknown> {

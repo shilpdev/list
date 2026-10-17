@@ -13,9 +13,15 @@ export const ListLoader = ({ children }: ListLoaderProps) => {
     return null
   }
 
-  return (
-    <div className="react-list__loader">
-      {typeof children === 'function' ? children({ context }) : children || <p>Loading...</p>}
-    </div>
-  )
+  let content: ReactNode
+
+  if (typeof children === 'function') {
+    content = children({ context })
+  } else if (children) {
+    content = children
+  } else {
+    content = <p>Loading...</p>
+  }
+
+  return <div className="shilp-list__loader">{content}</div>
 }

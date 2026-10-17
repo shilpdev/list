@@ -1,5 +1,5 @@
 <template>
-  <div v-if="context.isInitialLoading" class="vue-list__initial-loader">
+  <div v-if="context.isInitialLoading" class="shilp-list__initial-loader">
     <slot :context="context">
       <p>Initial Loading...</p>
     </slot>
@@ -10,7 +10,7 @@
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
-  name: 'ListInitialLoader',
+  name: 'ListLoaderInitial',
 })
 
 const context = useListContext()

@@ -17,19 +17,19 @@ From the 7Span docs (https://7span.com/open-source/vue-list/ and https://7span.c
 - **State persistence:** page, items per page, and filters can be saved to localStorage or synced with an API (`stateManager` option).
 - Created by 7Span (Harsh Kansagara is the primary creator).
 
-Treat the code and `shared/` types as the source of truth for the current API; use the docs only for intent.
+Treat the code and the `shared/` types as the source of truth for the current API; use the docs only for intent.
 
 ## Layout
 
 - `packages/react`, `packages/vue` — the published libraries (built with Vite lib mode, output to `dist/`).
-- `shared/` — framework-agnostic TypeScript **types only** (`ListOptions`, `ListResponse`, etc.). Not a workspace package: both libraries import it by relative path (`../../../../shared`) and Vite's `dts` plugin inlines it (`rollupTypes: true`) into the emitted `.d.ts`. When changing the list API, update `shared/` first, then keep both React and Vue implementations in sync.
+- `shared/` — code both libraries use. `shared/types/` holds the TypeScript types (`ListProps`, `RequestHandlerResponse`, etc.) `shared/constants.ts` holds every default (`DEFAULT_PER_PAGE`, `DEFAULT_PAGE_LINKS`, ...), and `shared/utils.ts` holds the framework-agnostic logic (equality, row indexing, pagination maths, query-change detection, ...). Not a workspace package: both libraries import types from `shared`, and logic and defaults from `shared/utils` and `shared/constants`, by relative path (keep them separate so utils are not re-exported as public API); `shared/` resolves npm packages from the repo root, so a package it imports (such as `fast-deep-equal`) must be a root dependency. Vite bundles the utils into each library and its `dts` plugin inlines the types (`rollupTypes: true`) into the emitted `.d.ts`. When changing the list API, update `shared/` first, then keep both React and Vue implementations in sync. Put logic that is the same in both frameworks in `shared/utils.ts`, not in each package.
 - `apps/{react,vue}/playground` — Vite apps for manual testing against the packages.
 - `apps/{react,vue}/story` — Storybook apps; their stories double as the test suite (Vitest + Playwright browser via `@storybook/addon-vitest`). There are no unit tests inside `packages/`.
 - `.cursor/skills/react-list/` — usage documentation for the public API (props, slots, `requestHandler` contract).
 
 ## Architecture
 
-A root component (`ShilpList` in `packages/react/src/components/list.tsx`, `list.vue` in Vue) owns all state, calls the user-supplied `requestHandler(state)` (must return `{ rows, count, meta? }`), and exposes state/actions through a context (`useListContext` in React, `use-list-context` composable in Vue). Slot components (`ListRows`, `ListPagination`, `ListSearch`, `ListLoadMore`, `ListEmpty`, `ListError`, loaders, etc.) read that context and throw if used outside the root. Every slot scope has a `context` key (the `Context`: state plus actions); `requestHandler` and `stateManager` get only the `State` (data, no methods); a component adds extra keys only for values it computes (for example `pagesToDisplay`). The component files mirror each other 1:1 between `packages/react/src/components/*.tsx` and `packages/vue/src/components/*.vue`.
+A root component (`List` in `packages/react/src/components/list.tsx`, `list.vue` in Vue) owns all state, calls the user-supplied `requestHandler(state)` (must return `{ rows, count, meta? }`), and exposes state/actions through a context (`useListContext` in React, `use-list-context` composable in Vue). Slot components (`ListRows`, `ListPagination`, `ListSearch`, `ListLoadMore`, `ListEmpty`, `ListError`, loaders, etc.) read that context and throw if used outside the root. Every slot scope has a `context` key (the `Context`: state plus actions); `requestHandler` and `stateManager` get only the `State` (data, no methods); a component adds extra keys only for values it computes (for example `pagesToDisplay`). The component files mirror each other 1:1 between `packages/react/src/components/*.tsx` and `packages/vue/src/components/*.vue`.
 
 ## Commands
 

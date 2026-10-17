@@ -9,17 +9,23 @@ type ListRefreshProps = {
 export const ListRefresh = ({ children }: ListRefreshProps) => {
   const context = useListContext()
 
-  if (context.isInitialLoading) return null
+  if (context.isInitialLoading) {
+    return null
+  }
 
-  return (
-    <div className="react-list__refresh">
-      {typeof children === 'function'
-        ? children({ context })
-        : children || (
-            <button type="button" onClick={() => context.refresh()} disabled={context.isLoading}>
-              {context.isLoading ? 'Loading...' : 'Refresh'}
-            </button>
-          )}
-    </div>
-  )
+  let content: ReactNode
+
+  if (typeof children === 'function') {
+    content = children({ context })
+  } else if (children) {
+    content = children
+  } else {
+    content = (
+      <button type="button" onClick={() => context.refresh()} disabled={context.isLoading}>
+        {context.isLoading ? 'Loading...' : 'Refresh'}
+      </button>
+    )
+  }
+
+  return <div className="shilp-list__refresh">{content}</div>
 }

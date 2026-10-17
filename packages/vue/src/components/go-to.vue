@@ -1,5 +1,5 @@
 <template>
-  <div v-if="showContent" class="vue-list__go-to">
+  <div v-if="showContent" class="shilp-list__go-to">
     <slot v-bind="scope">
       <select
         :value="scope.context.page"
@@ -15,6 +15,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { getPagesCount } from '../../../../shared/utils'
 import type { GoToScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
@@ -29,8 +30,10 @@ const showContent = computed(() => {
 })
 
 const scope = computed((): GoToScope => {
-  const pagesCount = Math.ceil(context.count / context.perPage)
-  const pages = Array.from({ length: pagesCount }, (_, index) => index + 1)
+  const pagesCount = getPagesCount(context.count, context.perPage)
+  const pages = Array.from({ length: pagesCount }, (_, index) => {
+    return index + 1
+  })
 
   return {
     context,

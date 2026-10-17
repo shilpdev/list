@@ -1,13 +1,5 @@
-import type { Filters, ListOptions, ListResponse } from '../../../shared'
+import type { ListProps } from '../../../shared'
 
-/** Props for the ShilpList root component. */
-export type ShilpListProps<T = unknown> = ListOptions<T>
-
-/** Emits for the ShilpList root component. */
-export interface ShilpListEmits<T = unknown> {
-  response: [response: ListResponse<T>]
-  afterPageChange: [response: ListResponse<T>]
-  afterLoadMore: [response: ListResponse<T>]
-  rowSelect: [selection: T[], previous: T[]]
-  filtersChange: [filters: Filters]
-}
+// Vue adds no props of its own: `filters` is a v-model and the callbacks are emits (`Events`).
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ListPropsVue<T = unknown> extends ListProps<T> {}

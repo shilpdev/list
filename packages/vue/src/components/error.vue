@@ -1,5 +1,5 @@
 <template>
-  <div v-if="context.error && !context.isLoading" class="vue-list__error">
+  <div v-if="context.error && !context.isLoading" class="shilp-list__error">
     <slot :context="context">
       <div>
         <h3>Error occurred</h3>

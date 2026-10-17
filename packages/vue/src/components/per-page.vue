@@ -1,5 +1,5 @@
 <template>
-  <div v-if="showContent" class="vue-list__per-page">
+  <div v-if="showContent" class="shilp-list__per-page">
     <slot v-bind="scope">
       <select
         :value="scope.context.perPage"
@@ -10,7 +10,7 @@
           :key="`option-${option.value}`"
           :value="option.value"
         >
-          {{ option.label }} items per page
+          {{ getPerPageMessage(option) }}
         </option>
       </select>
     </slot>
@@ -19,15 +19,19 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { PerPageComponentOptions, PerPageScope } from '../../../../shared'
+import { DEFAULT_PER_PAGE_OPTIONS } from '../../../../shared/constants'
+import { getPerPageMessage, normalizePerPageOptions } from '../../../../shared/utils'
+import type { PerPageProps, PerPageScope } from '../../../../shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListPerPage',
 })
 
-const props = withDefaults(defineProps<PerPageComponentOptions>(), {
-  options: () => [10, 25, 50, 100],
+const props = withDefaults(defineProps<PerPageProps>(), {
+  options: () => {
+    return DEFAULT_PER_PAGE_OPTIONS
+  },
 })
 
 const context = useListContext()
@@ -37,21 +41,13 @@ const showContent = computed(() => {
 })
 
 const serializedOptions = computed(() => {
-  return (props.options ?? []).map((item) => {
-    if (typeof item !== 'object') {
-      return {
-        value: item,
-        label: item,
-      }
-    }
-    return item
-  })
+  return normalizePerPageOptions(props.options ?? [])
 })
 
-const scope = computed(
-  (): PerPageScope => ({
+const scope = computed((): PerPageScope => {
+  return {
     context,
     options: serializedOptions.value,
-  }),
-)
+  }
+})
 </script>

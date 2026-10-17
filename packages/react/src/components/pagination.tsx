@@ -1,17 +1,15 @@
 import { Fragment, memo, useMemo, type ReactNode } from 'react'
-import type {
-  PaginationComponentOptions,
-  PaginationScope,
-  RenderPageArgs,
-} from '../../../../shared'
+import type { PaginationProps, PaginationScope, PaginationItemScope } from '../../../../shared'
+import { getPagination } from '../../../../shared/utils'
+import { DEFAULT_PAGE_LINKS } from '../../../../shared/constants'
 import { useListContext } from '../context/list-context'
 
-type ListPaginationProps = PaginationComponentOptions & {
+type ListPaginationProps = PaginationProps & {
   children?: ReactNode | ((scope: PaginationScope) => ReactNode)
   renderFirst?: (scope: PaginationScope) => ReactNode
   renderPrev?: (scope: PaginationScope) => ReactNode
   renderPages?: (scope: PaginationScope) => ReactNode
-  renderPage?: (scope: RenderPageArgs) => ReactNode
+  renderPage?: (scope: PaginationItemScope) => ReactNode
   renderNext?: (scope: PaginationScope) => ReactNode
   renderLast?: (scope: PaginationScope) => ReactNode
 }
@@ -19,7 +17,7 @@ type ListPaginationProps = PaginationComponentOptions & {
 export const ListPagination = memo(
   ({
     children,
-    pageLinks = 5,
+    pageLinks = DEFAULT_PAGE_LINKS,
     renderFirst,
     renderPrev,
     renderPages,
@@ -30,114 +28,111 @@ export const ListPagination = memo(
     const context = useListContext()
     const { rows, count, setPage, error, page, perPage, isInitialLoading, hasMore } = context
 
-    const paginationState = useMemo(() => {
-      const pagesCount = Math.ceil(count / perPage)
-      const halfWay = Math.floor(pageLinks / 2)
-      const hasPrev = page !== 1
-      return { pagesCount, halfWay, hasNext: hasMore, hasPrev }
-    }, [count, perPage, page, pageLinks, hasMore])
+    const pagination = useMemo(() => {
+      return { ...getPagination(page, perPage, count, pageLinks), hasNext: hasMore }
+    }, [page, perPage, count, pageLinks, hasMore])
+    const { pagesToDisplay } = pagination
 
-    const pagesToDisplay = useMemo(() => {
-      const { pagesCount, halfWay } = paginationState
-      const pages = Array.from({ length: Math.min(pageLinks, pagesCount) })
-
-      if (page <= halfWay) {
-        return pages.map((_, index) => index + 1)
-      } else if (pagesCount - page < halfWay) {
-        return pages.map((_, index) => pagesCount - index).reverse()
-      } else {
-        return pages.map((_, index) => page - halfWay + index)
-      }
-    }, [page, pageLinks, paginationState])
-
-    const navigation = useMemo(
-      () => ({
+    const navigation = useMemo(() => {
+      return {
         prev: () => setPage(page - 1),
         next: () => setPage(page + 1),
         first: () => setPage(1),
-        last: () => setPage(paginationState.pagesCount),
-      }),
-      [setPage, page, paginationState.pagesCount],
-    )
+        last: () => setPage(pagination.pagesCount),
+      }
+    }, [setPage, page, pagination.pagesCount])
 
-    const scope = useMemo(
-      (): PaginationScope => ({
-        context,
-        ...paginationState,
-        pagesToDisplay,
-        ...navigation,
-      }),
-      [context, paginationState, pagesToDisplay, navigation],
-    )
+    const scope = useMemo((): PaginationScope => {
+      return { context, ...pagination, ...navigation }
+    }, [context, pagination, navigation])
 
-    if (isInitialLoading) return null
-
-    if (!rows || rows.length === 0) {
-      return null
-    }
-
-    if (error) {
+    if (isInitialLoading || rows.length === 0 || error) {
       return null
     }
 
     if (typeof children === 'function') {
-      return <div className="react-list__pagination">{children(scope)}</div>
+      return <div className="shilp-list__pagination">{children(scope)}</div>
     }
 
     if (children) {
-      return <div className="react-list__pagination">{children}</div>
+      return <div className="shilp-list__pagination">{children}</div>
+    }
+
+    let first: ReactNode
+    if (renderFirst) {
+      first = renderFirst(scope)
+    } else {
+      first = (
+        <button type="button" disabled={!pagination.hasPrev} onClick={navigation.first}>
+          First
+        </button>
+      )
+    }
+
+    let prev: ReactNode
+    if (renderPrev) {
+      prev = renderPrev(scope)
+    } else {
+      prev = (
+        <button type="button" disabled={!pagination.hasPrev} onClick={navigation.prev}>
+          Prev
+        </button>
+      )
+    }
+
+    let pages: ReactNode
+    if (renderPages) {
+      pages = renderPages(scope)
+    } else {
+      pages = pagesToDisplay.map((pageNum) => {
+        const isActive = pageNum === page
+
+        if (renderPage) {
+          const pageScope: PaginationItemScope = { ...scope, page: pageNum, isActive }
+          return <Fragment key={`page-${pageNum}`}>{renderPage(pageScope)}</Fragment>
+        }
+
+        if (isActive) {
+          return <span key={`page-${pageNum}`}>{pageNum}</span>
+        }
+
+        return (
+          <button key={`page-${pageNum}`} type="button" onClick={() => setPage(pageNum)}>
+            {pageNum}
+          </button>
+        )
+      })
+    }
+
+    let next: ReactNode
+    if (renderNext) {
+      next = renderNext(scope)
+    } else {
+      next = (
+        <button type="button" disabled={!pagination.hasNext} onClick={navigation.next}>
+          Next
+        </button>
+      )
+    }
+
+    let last: ReactNode
+    if (renderLast) {
+      last = renderLast(scope)
+    } else {
+      last = (
+        <button type="button" disabled={!pagination.hasNext} onClick={navigation.last}>
+          Last
+        </button>
+      )
     }
 
     return (
-      <div className="react-list__pagination">
-        {renderFirst ? (
-          renderFirst(scope)
-        ) : (
-          <button type="button" disabled={!paginationState.hasPrev} onClick={navigation.first}>
-            First
-          </button>
-        )}
-
-        {renderPrev ? (
-          renderPrev(scope)
-        ) : (
-          <button type="button" disabled={!paginationState.hasPrev} onClick={navigation.prev}>
-            Prev
-          </button>
-        )}
-
-        {renderPages
-          ? renderPages(scope)
-          : pagesToDisplay.map((pageNum) => {
-              const isActive = pageNum === page
-              const pageScope: RenderPageArgs = { ...scope, page: pageNum, isActive }
-
-              return renderPage ? (
-                <Fragment key={`page-${pageNum}`}>{renderPage(pageScope)}</Fragment>
-              ) : isActive ? (
-                <span key={`page-${pageNum}`}>{pageNum}</span>
-              ) : (
-                <button key={`page-${pageNum}`} type="button" onClick={() => setPage(pageNum)}>
-                  {pageNum}
-                </button>
-              )
-            })}
-
-        {renderNext ? (
-          renderNext(scope)
-        ) : (
-          <button type="button" disabled={!paginationState.hasNext} onClick={navigation.next}>
-            Next
-          </button>
-        )}
-
-        {renderLast ? (
-          renderLast(scope)
-        ) : (
-          <button type="button" disabled={!paginationState.hasNext} onClick={navigation.last}>
-            Last
-          </button>
-        )}
+      <div className="shilp-list__pagination">
+        {first}
+        {prev}
+        {pages}
+        {next}
+        {last}
       </div>
     )
   },

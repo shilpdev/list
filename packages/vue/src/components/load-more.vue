@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!context.isEmpty && !context.error" class="vue-list__load-more">
+  <div v-if="!context.isEmpty && !context.error" class="shilp-list__load-more">
     <slot :context="context">
       <button v-if="context.hasMore" type="button" @click="context.loadMore()">
         Load More

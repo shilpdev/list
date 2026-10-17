@@ -1,4 +1,4 @@
-import type { ListResponse, RequestHandler } from '@shilp.dev/react-list'
+import type { RequestHandlerResponse, RequestHandler } from '@shilp.dev/react-list'
 import type { Skill } from '../types/skill'
 
 const EVEREST_ITEMS_BASE_URL = 'https://everest.7span.in/items'
@@ -8,7 +8,7 @@ export interface CreateRequestHandlerOptions {
   forceEmpty?: boolean
 }
 
-interface EverestListResponse {
+interface EverestResponse {
   data?: Skill[]
   meta?: {
     total_count?: number
@@ -27,7 +27,7 @@ export function createRequestHandler(
     sortBy,
     sortOrder,
     filters,
-  }): Promise<ListResponse<Skill>> => {
+  }): Promise<RequestHandlerResponse<Skill>> => {
     if (options.shouldFail) {
       throw new Error('Failed to load list data.')
     }
@@ -74,9 +74,7 @@ export function createRequestHandler(
     params.append('meta', '*')
 
     const queryString = params.toString()
-    const url = `${EVEREST_ITEMS_BASE_URL}/${endpoint}${
-      queryString ? `?${queryString}` : ''
-    }`
+    const url = `${EVEREST_ITEMS_BASE_URL}/${endpoint}${queryString ? `?${queryString}` : ''}`
 
     const response = await fetch(url)
 
@@ -84,7 +82,7 @@ export function createRequestHandler(
       throw new Error(`API request failed with status ${response.status}`)
     }
 
-    const data = (await response.json()) as EverestListResponse
+    const data = (await response.json()) as EverestResponse
 
     return {
       rows: data.data ?? [],

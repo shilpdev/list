@@ -14,18 +14,22 @@ export const ListError = ({ children }: ListErrorProps) => {
     return null
   }
 
-  return (
-    <div className="react-list__error">
-      {typeof children === 'function'
-        ? children({ context })
-        : children || (
-            <div>
-              <h3>Error occurred</h3>
-              <pre>
-                {error.name}: {error.message}
-              </pre>
-            </div>
-          )}
-    </div>
-  )
+  let content: ReactNode
+
+  if (typeof children === 'function') {
+    content = children({ context })
+  } else if (children) {
+    content = children
+  } else {
+    content = (
+      <div>
+        <h3>Error occurred</h3>
+        <pre>
+          {error.name}: {error.message}
+        </pre>
+      </div>
+    )
+  }
+
+  return <div className="shilp-list__error">{content}</div>
 }

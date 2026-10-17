@@ -76,11 +76,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ListLoader, useListContext } from '@shilp.dev/vue-list'
-import type { SerializedListRow, SortOrder } from '@shilp.dev/vue-list'
+import type { SortOrder } from '@shilp.dev/vue-list'
 import type { Skill } from '@/types/skill'
 
 const props = defineProps<{
-  rows: SerializedListRow<Skill>[]
+  rows: Skill[]
   sortBy: string
   sortOrder: SortOrder
   setSortBy: (sortBy: string) => void
@@ -102,8 +102,14 @@ function toggleSort(by: string) {
 }
 
 function sortIconName(by: string) {
-  if (props.sortBy !== by || props.sortOrder === '') return 'i-mdi-sort'
-  if (props.sortOrder === 'asc') return 'i-mdi-sort-ascending'
+  if (props.sortBy !== by || props.sortOrder === '') {
+    return 'i-mdi-sort'
+  }
+
+  if (props.sortOrder === 'asc') {
+    return 'i-mdi-sort-ascending'
+  }
+
   return 'i-mdi-sort-descending'
 }
 

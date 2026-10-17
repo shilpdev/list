@@ -1,0 +1,20 @@
+import type { Filters, RequestHandlerResponse, State } from './common'
+
+/**
+ * Every event the list fires, under the same name in both packages: React takes them as props
+ * (`EventProps`), Vue emits them.
+ */
+export interface Events<T = unknown> {
+  beforePageChange: [state: State]
+  afterPageChange: [response: RequestHandlerResponse<T>]
+  beforeLoadMore: [state: State]
+  afterLoadMore: [response: RequestHandlerResponse<T>]
+  onResponse: [response: RequestHandlerResponse<T>]
+  onError: [error: Error]
+  onRowSelect: [selection: T[], previous: T[]]
+  onFiltersChange: [filters: Filters]
+}
+
+export type EventProps<T = unknown> = {
+  [K in keyof Events<T>]?: (...args: Events<T>[K]) => void
+}

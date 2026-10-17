@@ -1,5 +1,5 @@
 <template>
-  <div v-if="showEmpty" class="vue-list__empty">
+  <div v-if="showEmpty" class="shilp-list__empty">
     <slot>
       <p>No data found!</p>
     </slot>

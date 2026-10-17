@@ -6,8 +6,8 @@ export interface PerPageOption {
   label: string | number
 }
 
-/** Options for the per-page selector component. */
-export interface PerPageComponentOptions {
+/** Props for the per-page selector component. */
+export interface PerPageProps {
   options?: Array<number | PerPageOption>
 }
 

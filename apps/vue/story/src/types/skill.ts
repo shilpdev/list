@@ -14,6 +14,9 @@ export interface SkillFilters extends Filters {
 }
 
 export function formatSkillDate(value: string | null | undefined): string {
-  if (!value) return '—'
+  if (!value) {
+    return '—'
+  }
+
   return new Date(value).toLocaleString()
 }

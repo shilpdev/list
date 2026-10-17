@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
-import ShilpList, {
+import List, {
   ListEmpty,
   ListError,
-  ListInitialLoader,
+  ListLoaderInitial,
   ListRows,
   ListLoadMore,
   ListLoader,
@@ -87,7 +87,7 @@ function ReactListDemoInner({
 
   return (
     <div className="react-list-demo">
-      <ShilpList
+      <List
         endpoint={endpoint}
         page={page}
         perPage={perPage}
@@ -123,9 +123,9 @@ function ReactListDemoInner({
           </label>
         </div>
 
-        <ListInitialLoader>
+        <ListLoaderInitial>
           <p className="react-list-demo__message">Loading initial data...</p>
-        </ListInitialLoader>
+        </ListLoaderInitial>
 
         <ListEmpty>
           <p className="react-list-demo__message">No skills found.</p>
@@ -152,7 +152,7 @@ function ReactListDemoInner({
         </ListError>
 
         <ListRows>
-          {({ rows, context: { sortBy, sortOrder, setSortBy, setSortOrder } }) => (
+          {({ context: { rows, sortBy, sortOrder, setSortBy, setSortOrder } }) => (
             <div className="react-list-demo__table-wrap">
               <ListLoader>
                 <p className="react-list-demo__overlay">Updating...</p>
@@ -287,7 +287,7 @@ function ReactListDemoInner({
             </ListLoadMore>
           )}
         </div>
-      </ShilpList>
+      </List>
     </div>
   )
 }

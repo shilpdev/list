@@ -12,5 +12,5 @@ export const ListEmpty = ({ children }: ListEmptyProps) => {
     return null
   }
 
-  return <div className="react-list__empty">{children || <p>No data found!</p>}</div>
+  return <div className="shilp-list__empty">{children || <p>No data found!</p>}</div>
 }

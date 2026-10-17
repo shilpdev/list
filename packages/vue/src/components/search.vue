@@ -1,5 +1,5 @@
 <template>
-  <div class="vue-list__search">
+  <div class="shilp-list__search">
     <slot v-bind="scope">
       <input
         type="text"
@@ -13,22 +13,25 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import type { SearchComponentOptions, SearchScope } from '../../../../shared'
+import type { SearchProps, SearchScope } from '../../../../shared'
+import { DEFAULT_DEBOUNCE_TIME } from '../../../../shared/constants'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListSearch',
 })
 
-const props = withDefaults(defineProps<SearchComponentOptions>(), {
-  debounceTime: 500,
+const props = withDefaults(defineProps<SearchProps>(), {
+  debounceTime: DEFAULT_DEBOUNCE_TIME,
 })
 
 const context = useListContext()
 const localSearch = ref(context.search)
 
 watch(
-  () => context.search,
+  () => {
+    return context.search
+  },
   (value) => {
     if (value !== localSearch.value) {
       localSearch.value = value
@@ -56,11 +59,11 @@ onUnmounted(() => {
   }
 })
 
-const scope = computed(
-  (): SearchScope => ({
+const scope = computed((): SearchScope => {
+  return {
     context,
     search: localSearch.value,
     setSearch: handleInput,
-  }),
-)
+  }
+})
 </script>

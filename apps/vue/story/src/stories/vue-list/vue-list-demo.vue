@@ -1,6 +1,6 @@
 <template>
   <div class="vue-list-demo">
-    <ShilpList
+    <List
       :key="listKey"
       :endpoint="endpoint"
       :page="page"
@@ -36,9 +36,9 @@
         </label>
       </div>
 
-      <ListInitialLoader>
+      <ListLoaderInitial>
         <p class="vue-list-demo__message">Loading initial data...</p>
-      </ListInitialLoader>
+      </ListLoaderInitial>
 
       <ListEmpty>
         <p class="vue-list-demo__message">No skills found.</p>
@@ -55,7 +55,7 @@
         </div>
       </ListError>
 
-      <ListRows v-slot="{ rows, context: { sortBy, sortOrder, setSortBy, setSortOrder } }">
+      <ListRows v-slot="{ context: { rows, sortBy, sortOrder, setSortBy, setSortOrder } }">
         <div class="vue-list-demo__table-wrap">
           <ListLoader>
             <p class="vue-list-demo__overlay">Updating...</p>
@@ -149,7 +149,7 @@
           </button>
         </ListLoadMore>
       </div>
-    </ShilpList>
+    </List>
   </div>
 </template>
 
@@ -159,7 +159,7 @@ import type { Context } from '@shilp.dev/vue-list'
 import {
   ListEmpty,
   ListError,
-  ListInitialLoader,
+  ListLoaderInitial,
   ListRows,
   ListLoadMore,
   ListLoader,
@@ -168,7 +168,7 @@ import {
   ListRefresh,
   ListSearch,
   ListSummary,
-  ShilpList,
+  List,
 } from '@shilp.dev/vue-list'
 import {
   createRequestHandler,

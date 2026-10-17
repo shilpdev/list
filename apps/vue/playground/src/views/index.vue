@@ -3,7 +3,7 @@
     <div class="w-full max-w-350 rounded-xl bg-white p-8 text-slate-800 shadow-lg">
       <h2 class="mb-6 text-3xl font-bold text-slate-700">Shilp List Playground (Vue + TypeScript)</h2>
 
-      <ShilpList
+      <List
         endpoint="skills"
         search=""
         :page="1"
@@ -115,7 +115,7 @@
         </div>
 
         <div class="my-6">
-          <ListInitialLoader>
+          <ListLoaderInitial>
             <div class="w-full overflow-hidden rounded-md border border-slate-200 bg-white">
               <div class="flex w-full">
                 <div
@@ -132,7 +132,7 @@
                 />
               </div>
             </div>
-          </ListInitialLoader>
+          </ListLoaderInitial>
 
           <ListEmpty>
             <div
@@ -195,9 +195,9 @@
             </div>
           </ListError>
 
-          <ListRows v-slot="{ rows, context: { sortBy, sortOrder, setSortBy, setSortOrder } }">
+          <ListRows v-slot="{ context: { rows, sortBy, sortOrder, setSortBy, setSortOrder } }">
             <SkillRowsTable
-              :rows="rows as SerializedListRow<Skill>[]"
+              :rows="rows as Skill[]"
               :sort-by="sortBy"
               :sort-order="sortOrder"
               :set-sort-by="setSortBy"
@@ -321,7 +321,7 @@
             </ListPagination>
           </div>
         </div>
-      </ShilpList>
+      </List>
     </div>
   </div>
 </template>
@@ -329,11 +329,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import {
-  ShilpList,
+  List,
   ListEmpty,
   ListError,
   ListGoTo,
-  ListInitialLoader,
+  ListLoaderInitial,
   ListRows,
   ListPagination,
   ListPerPage,
@@ -342,7 +342,6 @@ import {
   ListSummary,
   ListColumns,
 } from '@shilp.dev/vue-list'
-import type { SerializedListRow } from '@shilp.dev/vue-list'
 import type { Skill, SkillFilters } from '@/types/skill'
 import requestHandler from '@/api/request-handler'
 import { getStateFromSearchParams, stateManager } from '@/api/vue-list-config'

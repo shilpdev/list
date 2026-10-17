@@ -1,5 +1,5 @@
 <template>
-  <div class="vue-list__columns">
+  <div class="shilp-list__columns">
     <slot :context="context">
       <template v-for="(column, index) in context.columns" :key="`column-${index}`">
         <slot name="column" :column="column" :context="context">

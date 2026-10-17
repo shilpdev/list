@@ -1,9 +1,9 @@
-import ShilpList, {
+import List, {
   ListColumns,
   ListEmpty,
   ListError,
   ListGoTo,
-  ListInitialLoader,
+  ListLoaderInitial,
   ListLoader,
   ListPagination,
   ListPerPage,
@@ -18,7 +18,6 @@ import type {
   PaginationScope,
   PerPageScope,
   SearchScope,
-  SerializedListRow,
   SortOrder,
   SummaryScope,
 } from '@shilp.dev/react-list'
@@ -30,8 +29,14 @@ import requestHandler from '../api/request-handler'
 import { getStateFromSearchParams, stateManager } from './react-list-config'
 
 function nextSortOrder(current: SortOrder): SortOrder {
-  if (current === '') return 'asc'
-  if (current === 'asc') return 'desc'
+  if (current === '') {
+    return 'asc'
+  }
+
+  if (current === 'asc') {
+    return 'desc'
+  }
+
   return ''
 }
 
@@ -63,7 +68,7 @@ function SkillRowsTable({
   setSortBy,
   setSortOrder,
 }: {
-  rows: SerializedListRow<Skill>[]
+  rows: Skill[]
   sortOrder: SortOrder
   setSortBy: (sortBy: string) => void
   setSortOrder: (sortOrder: SortOrder) => void
@@ -188,7 +193,7 @@ const ListWrapper = () => {
         Shilp List Playground (React + TypeScript)
       </h2>
 
-      <ShilpList
+      <List
         endpoint="skills"
         search=""
         page={1}
@@ -313,7 +318,7 @@ const ListWrapper = () => {
         </div>
 
         <div className="my-6">
-          <ListInitialLoader>
+          <ListLoaderInitial>
             <div className="w-full overflow-hidden rounded-md border border-slate-200 bg-white">
               <div className="w-full">
                 <div className="flex w-full">
@@ -336,7 +341,7 @@ const ListWrapper = () => {
                 ))}
               </div>
             </div>
-          </ListInitialLoader>
+          </ListLoaderInitial>
 
           <ListEmpty>
             <div className="flex flex-col items-center justify-center rounded-lg border border-slate-100 bg-white px-4 py-16">
@@ -390,9 +395,9 @@ const ListWrapper = () => {
           </ListError>
 
           <ListRows>
-            {({ rows, context: { sortOrder, setSortBy, setSortOrder } }) => (
+            {({ context: { rows, sortOrder, setSortBy, setSortOrder } }) => (
               <SkillRowsTable
-                rows={rows as SerializedListRow<Skill>[]}
+                rows={rows as Skill[]}
                 sortOrder={sortOrder}
                 setSortBy={setSortBy}
                 setSortOrder={setSortOrder}
@@ -531,7 +536,7 @@ const ListWrapper = () => {
             </ListPagination>
           </div>
         </div>
-      </ShilpList>
+      </List>
     </div>
   )
 }
