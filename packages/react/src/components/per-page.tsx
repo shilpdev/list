@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { PerPageProps, PerPageScope } from '../../../../shared'
-import { getPerPageMessage, normalizePerPageOptions } from '../../../../shared/utils'
-import { DEFAULT_PER_PAGE_OPTIONS } from '../../../../shared/constants'
+import type { PerPageProps, PerPageScope } from '@shared'
+import { getPerPageMessage, normalizePerPageOptions } from '@shared/utils'
+import { DEFAULT_PER_PAGE_OPTIONS } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListPerPageProps = PerPageProps & {

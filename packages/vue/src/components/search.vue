@@ -13,8 +13,8 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import type { SearchProps, SearchScope } from '../../../../shared'
-import { DEFAULT_DEBOUNCE_TIME } from '../../../../shared/constants'
+import type { SearchProps, SearchScope } from '@shared'
+import { DEFAULT_DEBOUNCE_TIME } from '@shared/constants'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

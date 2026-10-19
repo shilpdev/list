@@ -1,5 +1,4 @@
 import equal from 'fast-deep-equal'
-import { DEFAULT_ID_KEY } from './constants'
 import type {
   ColumnSettings,
   Columns,
@@ -28,23 +27,6 @@ export const hasActiveFilters = (current: Filters = {}, initial: Filters = {}): 
   }
 
   return !equal(current, initial)
-}
-
-export const getRowId = (
-  row: unknown,
-  idKey: string = DEFAULT_ID_KEY,
-): string | number | undefined => {
-  if (row == null || typeof row !== 'object') {
-    return undefined
-  }
-
-  const value = (row as Record<string, unknown>)[idKey]
-
-  if (typeof value === 'string' || typeof value === 'number') {
-    return value
-  }
-
-  return undefined
 }
 
 export const computeHasMore = (page: number, perPage: number, count: number): boolean => {
@@ -83,7 +65,9 @@ export const patchRowById = <T>(
   let matched = false
 
   const next = rows.map((row) => {
-    if (getRowId(row, idKey) !== id) {
+    const rowId = (row as Record<string, unknown> | null)?.[idKey]
+
+    if (rowId !== id) {
       return row
     }
 

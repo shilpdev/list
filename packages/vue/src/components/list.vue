@@ -15,7 +15,7 @@ import type {
   RequestHandlerResponse,
   SortOrder,
   State,
-} from '../../../../shared'
+} from '@shared'
 import {
   computeHasMore,
   hasSelectionChanged,
@@ -28,7 +28,7 @@ import {
   rowNotFoundMessage,
   setColumnSetting,
   toError,
-} from '../../../../shared/utils'
+} from '@shared/utils'
 import {
   DEFAULT_COUNT,
   DEFAULT_FILTERS,
@@ -41,7 +41,7 @@ import {
   DEFAULT_SORT_BY,
   DEFAULT_SORT_ORDER,
   DEFAULT_VERSION,
-} from '../../../../shared/constants'
+} from '@shared/constants'
 import type { ListPropsVue } from '../types'
 
 defineOptions({
@@ -114,6 +114,13 @@ function updateStateManager() {
   props.stateManager?.set?.(snapshot())
 }
 
+// Lifecycle 3 to 5, one request. Only the latest request counts (`requestId`).
+// 3. Request: state shows isLoading (and isRefresh), `beforePageChange` / `beforeLoadMore` get the
+//    State being requested, then `requestHandler` runs.
+// 4. Response: rows are replaced (page mode) or appended (load-more) with their `_index`, selection
+//    resets, `stateManager.set` runs, then `onResponse` and `afterPageChange` / `afterLoadMore` emit.
+// 5. Error: error is set, rows and count are cleared and `onError` emits. `stateManager.set` and the
+//    after events do not run.
 function getData(refreshing = false) {
   error.value = null
   isLoading.value = true
@@ -171,6 +178,10 @@ function getData(refreshing = false) {
     })
 }
 
+// Lifecycle 6, actions called by the consumer. setPerPage, setSearch, setSortBy, setSortOrder,
+// setFilters and clearFilters go back to page 1 and refetch (filters through the watcher below).
+// refresh refetches the current page (load-more: from page 1). loadMore fetches the next page.
+// updateRowById, updateColumn and setSelection change state without a request.
 function fetchPage(value: number, refreshing = false) {
   if (!value) {
     return
@@ -334,6 +345,9 @@ const snapshot = (): State => {
   return { ...state }
 }
 
+// Lifecycle 1, setup: state starts from the props and defaults. `stateManager.get` runs before any
+// state exists and may restore page, perPage, sort, search, filters and columnSettings. A load-more
+// list always starts on page 1. Nothing is fetched yet.
 let saved: Partial<State> = {}
 
 try {
@@ -372,6 +386,8 @@ if (restored.filters != null) {
   filters.value = restored.filters
 }
 
+// Lifecycle 7, props changing after mount: `filters` and the query props (page, perPage, search,
+// sortBy, sortOrder, endpoint) refetch, except before the first response has arrived.
 watch(filters, (newValue, oldValue) => {
   if (isInitialLoading.value) {
     return
@@ -426,6 +442,7 @@ watch(
   },
 )
 
+// `onRowSelect` emits when the selection really changes, including the reset after a response.
 watch(selection, (newValue, oldValue) => {
   const previous = oldValue ?? []
 
@@ -434,6 +451,8 @@ watch(selection, (newValue, oldValue) => {
   }
 })
 
+// Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the restored filters differ from
+// the prop, then the first request.
 onMounted(() => {
   props.stateManager?.init?.(snapshot())
 

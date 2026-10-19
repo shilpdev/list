@@ -1,7 +1,7 @@
 import { Fragment, memo, useMemo, type ReactNode } from 'react'
-import type { PaginationProps, PaginationScope, PaginationItemScope } from '../../../../shared'
-import { getPagination } from '../../../../shared/utils'
-import { DEFAULT_PAGE_LINKS } from '../../../../shared/constants'
+import type { PaginationProps, PaginationScope, PaginationItemScope } from '@shared'
+import { getPagination } from '@shared/utils'
+import { DEFAULT_PAGE_LINKS } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListPaginationProps = PaginationProps & {

@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import type { ListScope } from '../../../../shared'
+import type { ListScope } from '@shared'
 import { useListContext } from '../context/list-context'
 
 type ListLoaderInitialProps = {

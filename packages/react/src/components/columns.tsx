@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from 'react'
-import type { ListScope, ColumnScope } from '../../../../shared'
+import type { ListScope, ColumnScope } from '@shared'
 import { useListContext } from '../context/list-context'
 
 type ListColumnsProps = {

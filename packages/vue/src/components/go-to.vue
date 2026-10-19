@@ -15,8 +15,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { getPagesCount } from '../../../../shared/utils'
-import type { GoToScope } from '../../../../shared'
+import { getPagesCount } from '@shared/utils'
+import type { GoToScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

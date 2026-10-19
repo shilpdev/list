@@ -1,3 +1,4 @@
+import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import dts from "vite-plugin-dts";
@@ -10,6 +11,11 @@ export default defineConfig({
       rollupTypes: true,
     }),
   ],
+  resolve: {
+    alias: {
+      "@shared": fileURLToPath(new URL("../../shared", import.meta.url)),
+    },
+  },
   build: {
     rollupOptions: {
       external: ["react", "react-dom", "react/jsx-runtime"],

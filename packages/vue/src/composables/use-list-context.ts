@@ -1,5 +1,5 @@
 import { inject } from 'vue'
-import type { Context } from '../../../../shared'
+import type { Context } from '@shared'
 
 export function useListContext<T>(): Context<T> {
   const context = inject<Context | undefined>('shilp-list-context', undefined)

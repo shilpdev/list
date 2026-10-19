@@ -4,7 +4,7 @@
     class="shilp-list__rows"
   >
     <slot :context="context">
-      <div v-for="(row, index) in context.rows" :key="getRowId(row, context.idKey) ?? index">
+      <div v-for="(row, index) in context.rows" :key="getKey(row)">
         <slot name="row" :row="row" :index="index">
           <pre>{{ JSON.stringify(row, null, 2) }}</pre>
         </slot>
@@ -15,11 +15,14 @@
 
 <script setup lang="ts">
 import { useListContext } from '../composables/use-list-context'
-import { getRowId } from '../../../../shared/utils'
 
 defineOptions({
   name: 'ListRows',
 })
 
 const context = useListContext()
+
+function getKey(row: unknown): number {
+  return (row as { _index: number })._index
+}
 </script>

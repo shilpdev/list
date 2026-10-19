@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { SearchProps, SearchScope } from '../../../../shared'
-import { DEFAULT_DEBOUNCE_TIME } from '../../../../shared/constants'
+import type { SearchProps, SearchScope } from '@shared'
+import { DEFAULT_DEBOUNCE_TIME } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListSearchProps = SearchProps & {

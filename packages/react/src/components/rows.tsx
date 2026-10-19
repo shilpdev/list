@@ -1,7 +1,6 @@
 import { memo, type ReactNode } from 'react'
-import type { ListScope, RowScope } from '../../../../shared'
+import type { ListScope, RowScope } from '@shared'
 import { useListContext } from '../context/list-context'
-import { getRowId } from '../../../../shared/utils'
 
 type ListRowsProps = {
   children?: ReactNode | ((scope: ListScope) => ReactNode)
@@ -10,7 +9,7 @@ type ListRowsProps = {
 
 function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
   const context = useListContext()
-  const { rows, error, idKey, isInitialLoading } = context
+  const { rows, error, isInitialLoading } = context
 
   if (isInitialLoading || rows.length === 0 || error) {
     return null
@@ -32,7 +31,7 @@ function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
         rowContent = <pre>{JSON.stringify(row, null, 2)}</pre>
       }
 
-      return <div key={getRowId(row, idKey) ?? index}>{rowContent}</div>
+      return <div key={(row as { _index: number })._index}>{rowContent}</div>
     })
   }
 

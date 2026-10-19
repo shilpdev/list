@@ -3,6 +3,9 @@ import type { Filters, RequestHandlerResponse, State } from './common'
 /**
  * Every event the list fires, under the same name in both packages: React takes them as props
  * (`EventProps`), Vue emits them.
+ *
+ * One successful request fires before* -> onResponse -> after*. A failed request fires before* ->
+ * onError. `onRowSelect` fires only when the selection changes. See LIFECYCLE.md.
  */
 export interface Events<T = unknown> {
   beforePageChange: [state: State]

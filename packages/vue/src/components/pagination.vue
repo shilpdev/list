@@ -33,9 +33,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { DEFAULT_PAGE_LINKS } from '../../../../shared/constants'
-import { getPagination } from '../../../../shared/utils'
-import type { PaginationProps, PaginationScope, PaginationItemScope } from '../../../../shared'
+import { DEFAULT_PAGE_LINKS } from '@shared/constants'
+import { getPagination } from '@shared/utils'
+import type { PaginationProps, PaginationScope, PaginationItemScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

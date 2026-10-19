@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
-import type { SummaryScope } from '../../../../shared'
-import { getSummaryMessage, getSummaryRange } from '../../../../shared/utils'
+import type { SummaryScope } from '@shared'
+import { getSummaryMessage, getSummaryRange } from '@shared/utils'
 import { useListContext } from '../context/list-context'
 
 type ListSummaryProps = {

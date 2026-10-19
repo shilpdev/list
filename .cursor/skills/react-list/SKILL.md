@@ -66,6 +66,7 @@ Required: `endpoint`, `requestHandler`. A later `endpoint` change refetches from
 | `meta`                                                                 | `{}`           | Passed through to handler                                                           |
 | `columns`                                                              |                | Column definitions (`string[]` or `{ name }[]`)                                     |
 | `count`                                                                | `0`            | Initial count before first fetch                                                    |
+| `idKey`                                                                | `'id'`         | Row field `updateRowById` matches on (not used for keys)                            |
 | `stateManager`                                                         |                | Optional `{ init, get, set }` persistence                                           |
 | `beforePageChange` / `afterPageChange` / `beforeLoadMore` / `afterLoadMore` / `onResponse` / `onError` / `onRowSelect` / `onFiltersChange` |                | Hooks, with the same names in both packages (Vue emits them, so its listeners are `@on-response`, `@before-page-change`, ...). `before*` get the `State` of the request, `after*` and `onResponse` the response, `onError` the error. `onFiltersChange` also fires when `stateManager` restores filters. `onRowSelect` fires only when the selection changes. |
 
@@ -96,7 +97,7 @@ Every scope has `context` (the state plus every action). Other keys are values t
 `ListRows`:
 
 - `children={({ context }) => ...}` — `context.rows` entries include `_index` (1-based across pages).
-- `row={({ row, index }) => ...}` — wraps each row; key is `row.id`.
+- `row={({ row, index }) => ...}` — wraps each row; the wrapper's key is `row._index`.
 - Prefer `children` for tables (one `<table>`). Use `row` for card/row lists.
 
 `ListSearch` `setSearch` in the scope is already debounced (`debounceTime`, default 500).
@@ -125,7 +126,7 @@ context.updateRowById(savedRow, savedRow.id)
 context.refresh()
 ```
 
-`updateRowById` shallow-merges by `row.id`. It does not refetch, change `count`, or update `selection`.
+`updateRowById` shallow-merges into the row whose `idKey` field (default `id`) equals the id you pass. It does not refetch, change `count`, or update `selection`.
 
 ## Do not
 

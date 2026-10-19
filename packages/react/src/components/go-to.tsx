@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { GoToScope } from '../../../../shared'
-import { getPagesCount } from '../../../../shared/utils'
+import type { GoToScope } from '@shared'
+import { getPagesCount } from '@shared/utils'
 import { useListContext } from '../context/list-context'
 
 type ListGoToProps = {

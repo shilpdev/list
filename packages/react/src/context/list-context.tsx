@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react'
-import type { Context } from '../../../../shared'
+import type { Context } from '@shared'
 
 const ListContext = createContext<Context<unknown> | null>(null)
 

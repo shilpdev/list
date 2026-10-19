@@ -19,9 +19,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { DEFAULT_PER_PAGE_OPTIONS } from '../../../../shared/constants'
-import { getPerPageMessage, normalizePerPageOptions } from '../../../../shared/utils'
-import type { PerPageProps, PerPageScope } from '../../../../shared'
+import { DEFAULT_PER_PAGE_OPTIONS } from '@shared/constants'
+import { getPerPageMessage, normalizePerPageOptions } from '@shared/utils'
+import type { PerPageProps, PerPageScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
