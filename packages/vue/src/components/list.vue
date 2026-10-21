@@ -29,7 +29,6 @@ import {
 import {
   computeHasMore,
   getColumns,
-  getQueryChange,
   getRestoredState,
   hasActiveFilters,
   hasSelectionChanged,
@@ -69,7 +68,7 @@ const filters = defineModel<Filters>('filters', {
   },
 })
 
-const defaultFilters = ref<Filters>({ ...(filters.value ?? {}) })
+const defaultFilters = ref<Filters>({ ...filters.value })
 
 const isLoadMore = computed(() => {
   return props.paginationMode === 'loadMore'
@@ -79,7 +78,7 @@ const localPage = ref<number>(props.page)
 const localPerPage = ref<number>(props.perPage)
 const localSortBy = ref<string>(props.sortBy)
 const localSortOrder = ref<SortOrder>(props.sortOrder)
-const localSearch = ref<string>(props.search ?? DEFAULT_SEARCH)
+const localSearch = ref<string>(props.search)
 const columnSettings = ref<ColumnSettings>({})
 
 const rows = ref<unknown[]>([])
@@ -114,16 +113,15 @@ function updateStateManager() {
 }
 
 // Lifecycle 3 to 5, one request. Only the latest request counts (`requestId`).
-// 3. Request: state shows isLoading (and isRefresh), `beforePageChange` / `beforeLoadMore` get the
+// 3. Request: state shows isLoading (and isRefresh, set by `refresh`), `beforePageChange` / `beforeLoadMore` get the
 //    State being requested, then `requestHandler` runs.
 // 4. Response: rows are replaced (page mode) or appended (load-more) with their `_index`, selection
 //    resets, `stateManager.set` runs, then `onResponse` and `afterPageChange` / `afterLoadMore` emit.
 // 5. Error: error is set, rows and count are cleared and `onError` emits. `stateManager.set` and the
 //    after events do not run.
-function getData(refreshing = false) {
+function getData() {
   error.value = null
   isLoading.value = true
-  isRefresh.value = refreshing
   const currentRequestId = ++requestId
 
   const requestState = snapshot()
@@ -144,9 +142,6 @@ function getData(refreshing = false) {
       response.value = res
       selection.value = []
       setRows(res)
-      isInitialLoading.value = false
-      isLoading.value = false
-      isRefresh.value = false
       updateStateManager()
       emit('onResponse', res)
 
@@ -164,41 +159,36 @@ function getData(refreshing = false) {
       error.value = toError(err)
       rows.value = []
       count.value = 0
-      isInitialLoading.value = false
       emit('onError', error.value)
       // The list UI already surfaces the error via `error`.
       // Re-throwing here creates unhandled promise rejections.
     })
     .finally(() => {
-      if (currentRequestId === requestId) {
-        isLoading.value = false
-        isRefresh.value = false
+      if (currentRequestId !== requestId) {
+        return
       }
+      isLoading.value = false
+      isRefresh.value = false
+      isInitialLoading.value = false
     })
 }
 
-// Lifecycle 6, actions called by the consumer. setPerPage, setSearch, setSortBy, setSortOrder,
-// setFilters and clearFilters go back to page 1 and refetch (filters through the watcher below).
-// refresh refetches the current page (load-more: from page 1). loadMore fetches the next page.
-// updateRowById, updateColumn and setSelection change state without a request.
-function fetchPage(value: number, refreshing = false) {
+// Lifecycle 6, actions called by the consumer. They only change local state; the watcher below
+// starts the request. setPerPage, setSearch, setSortBy and setSortOrder go back to page 1, and
+// setFilters and clearFilters do the same through the `filters` watcher. refresh refetches the
+// current page (load-more: from page 1). loadMore fetches the next page. updateRowById,
+// updateColumn and setSelection change state without a request.
+function setPage(value: number) {
   if (!value) {
     return
   }
-
   localPage.value = value
-  getData(refreshing)
-}
-
-function setPage(value: number) {
-  fetchPage(value)
 }
 
 function setSearch(value: string) {
   if (value === localSearch.value) {
     return
   }
-
   localSearch.value = value
   setPage(1)
 }
@@ -207,7 +197,6 @@ function setSortBy(value: string) {
   if (value === localSortBy.value) {
     return
   }
-
   localSortBy.value = value
   setPage(1)
 }
@@ -216,8 +205,15 @@ function setSortOrder(value: SortOrder) {
   if (value === localSortOrder.value) {
     return
   }
-
   localSortOrder.value = value
+  setPage(1)
+}
+
+function setPerPage(value: number) {
+  if (value === localPerPage.value) {
+    return
+  }
+  localPerPage.value = value
   setPage(1)
 }
 
@@ -246,23 +242,19 @@ function clearFilters() {
 }
 
 function refresh() {
+  isRefresh.value = true
+
   if (isLoadMore.value) {
     rows.value = []
-    fetchPage(1, true)
+    setPage(1)
   } else {
-    getData(true)
+    getData()
   }
-}
-
-function setPerPage(value: number) {
-  localPerPage.value = value
-  setPage(1)
 }
 
 function loadMore() {
   if (hasMore.value && !isLoading.value) {
     localPage.value++
-    getData()
   }
 }
 
@@ -283,42 +275,32 @@ function updateColumn(name: string, prop: string, value: boolean | unknown) {
 }
 
 const state = reactive({
-  endpoint: computed(() => {
-    return props.endpoint
-  }),
-  version: computed(() => {
-    return props.version
-  }),
-  meta: computed(() => {
-    return props.meta
-  }),
+  endpoint: props.endpoint,
+  version: props.version,
+  meta: props.meta,
+  idKey: props.idKey,
+  page: localPage,
+  perPage: localPerPage,
+  sortBy: localSortBy,
+  sortOrder: localSortOrder,
+  search: localSearch,
   rows,
   response,
   error,
   count,
   selection,
-  page: localPage,
-  perPage: localPerPage,
   hasMore,
   isLoading,
   isInitialLoading,
   isRefresh,
-  sortBy: localSortBy,
-  sortOrder: localSortOrder,
-  search: localSearch,
-  filters: computed(() => {
-    return filters.value ?? {}
-  }),
-  columns: computed(() => {
-    return getColumns(props.columns, rows.value)
-  }),
+  filters: filters.value,
   columnSettings,
   isEmpty,
   hasActiveFilters: computed(() => {
     return hasActiveFilters(filters.value, defaultFilters.value)
   }),
-  idKey: computed(() => {
-    return props.idKey
+  columns: computed(() => {
+    return getColumns(props.columns, rows.value)
   }),
 }) as State
 
@@ -385,8 +367,22 @@ if (restored.filters != null) {
   filters.value = restored.filters
 }
 
-// Lifecycle 7, props changing after mount: `filters` and the query props (page, perPage, search,
-// sortBy, sortOrder, endpoint) refetch, except before the first response has arrived.
+// Every request after the first starts here. One flush covers several changes, so `setSearch` from
+// page 3 (search and page both change) makes a single request.
+// Do not narrow this to `localPage` only: perPage, search and sort changes also set the page to 1,
+// but on page 1 that is not a change, so a `localPage` watcher would not fire and no request would
+// start. If it is ever narrowed, the setters, `refresh` and the `filters` watcher need a helper that
+// fetches directly when the page is already 1.
+// Keep the watchers below the restore block (Lifecycle 1): they only react to changes made after
+// they are created, so the restored values do not start a request. Moved above it, the restore
+// would fire an extra request on top of the one from `onMounted`.
+watch([localPage, localPerPage, localSearch, localSortBy, localSortOrder], () => {
+  getData()
+})
+
+// Lifecycle 7, props changing after mount: only `filters` refetches, except before the first response
+// has arrived. The query props (page, perPage, search, sortBy, sortOrder, endpoint) are read once;
+// change them through the context actions. On page 1 the page watcher would not fire, so fetch here.
 watch(filters, (newValue, oldValue) => {
   if (isInitialLoading.value) {
     return
@@ -396,50 +392,12 @@ watch(filters, (newValue, oldValue) => {
     return
   }
 
-  setPage(1)
+  if (localPage.value === 1) {
+    getData()
+  } else {
+    setPage(1)
+  }
 })
-
-watch(
-  () => {
-    return {
-      page: props.page,
-      perPage: props.perPage,
-      search: props.search ?? DEFAULT_SEARCH,
-      sortBy: props.sortBy,
-      sortOrder: props.sortOrder,
-      endpoint: props.endpoint,
-    }
-  },
-  (next, prev) => {
-    if (isInitialLoading.value) {
-      return
-    }
-
-    const patch = getQueryChange(prev, next)
-
-    if (!patch) {
-      return
-    }
-
-    if (patch.perPage != null) {
-      localPerPage.value = patch.perPage
-    }
-
-    if (patch.search != null) {
-      localSearch.value = patch.search
-    }
-
-    if (patch.sortBy != null) {
-      localSortBy.value = patch.sortBy
-    }
-
-    if (patch.sortOrder != null) {
-      localSortOrder.value = patch.sortOrder
-    }
-
-    setPage(patch.page ?? 1)
-  },
-)
 
 // `onRowSelect` emits when the selection really changes, including the reset after a response.
 watch(selection, (newValue, oldValue) => {
@@ -459,7 +417,7 @@ onMounted(() => {
     emit('onFiltersChange', restored.filters)
   }
 
-  setPage(localPage.value)
+  getData()
 })
 
 // Lifecycle 8, unmount: invalidate the request in flight so its late response or error does not

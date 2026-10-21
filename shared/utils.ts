@@ -133,61 +133,6 @@ export const getRestoredState = (saved: Partial<State> | null | undefined, isLoa
   }
 }
 
-interface Query {
-  page: number
-  perPage: number
-  search: string
-  sortBy: string
-  sortOrder: SortOrder
-  endpoint: string
-}
-
-/**
- * What to apply when the query props change after mount, or `null` when nothing changed.
- * Any change other than `page` goes back to page 1.
- */
-export const getQueryChange = (
-  prev: Query,
-  next: Query,
-): Partial<Omit<Query, 'endpoint'>> | null => {
-  const patch: Partial<Omit<Query, 'endpoint'>> = {}
-  let isQueryChanged = next.endpoint !== prev.endpoint
-
-  if (next.perPage !== prev.perPage) {
-    patch.perPage = next.perPage
-    isQueryChanged = true
-  }
-
-  if (next.search !== prev.search) {
-    patch.search = next.search
-    isQueryChanged = true
-  }
-
-  if (next.sortBy !== prev.sortBy) {
-    patch.sortBy = next.sortBy
-    isQueryChanged = true
-  }
-
-  if (next.sortOrder !== prev.sortOrder) {
-    patch.sortOrder = next.sortOrder
-    isQueryChanged = true
-  }
-
-  const isPageChanged = next.page !== prev.page
-
-  if (isPageChanged) {
-    patch.page = next.page
-  } else if (isQueryChanged) {
-    patch.page = 1
-  }
-
-  if (isPageChanged || isQueryChanged) {
-    return patch
-  }
-
-  return null
-}
-
 export const getPagesCount = (count: number, perPage: number): number => {
   return Math.ceil(count / perPage)
 }

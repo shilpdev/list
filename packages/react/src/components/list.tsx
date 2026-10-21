@@ -23,7 +23,6 @@ import {
 import {
   computeHasMore,
   getColumns,
-  getQueryChange,
   getRestoredState,
   hasActiveFilters,
   hasSelectionChanged,
@@ -227,9 +226,10 @@ function List({
     })
   }
 
-  // Lifecycle 7, props changing after mount: `filters` and the query props (page, perPage, search,
-  // sortBy, sortOrder, endpoint) refetch, except before the first response has arrived. Applied while
-  // rendering, so React renders again at once instead of committing the old values first.
+  // Lifecycle 7, props changing after mount: only `filters` refetches, except before the first
+  // response has arrived. The query props (page, perPage, search, sortBy, sortOrder, endpoint) are
+  // read once; change them through the context actions. Applied while rendering, so React renders
+  // again at once instead of committing the old values first.
   const [prevFiltersProp, _setPrevFiltersProp] = useState<Filters>(filtersProp)
 
   if (!equal(filtersProp, prevFiltersProp)) {
@@ -239,42 +239,6 @@ function List({
     if (!isInitialLoading && !equal(filtersProp, filters)) {
       _setFilters(filtersProp)
       _setPage(1)
-      startRequest()
-    }
-  }
-
-  const query = {
-    page: pageProp,
-    perPage: perPageProp,
-    search: searchProp,
-    sortBy: sortByProp,
-    sortOrder: sortOrderProp,
-    endpoint,
-  }
-  const [prevQuery, _setPrevQuery] = useState(query)
-  const queryChange = getQueryChange(prevQuery, query)
-
-  if (queryChange) {
-    _setPrevQuery(query)
-
-    if (!isInitialLoading) {
-      if (queryChange.perPage != null) {
-        _setPerPage(queryChange.perPage)
-      }
-
-      if (queryChange.search != null) {
-        _setSearch(queryChange.search)
-      }
-
-      if (queryChange.sortBy != null) {
-        _setSortBy(queryChange.sortBy)
-      }
-
-      if (queryChange.sortOrder != null) {
-        _setSortOrder(queryChange.sortOrder)
-      }
-
-      _setPage(queryChange.page ?? 1)
       startRequest()
     }
   }

@@ -72,7 +72,7 @@ In this order:
 ### 6. Actions (called by the consumer)
 | Action | Effect |
 |---|---|
-| `setPage(page)` | Fetches that page. Ignores `0` and `NaN`. |
+| `setPage(page)` | Fetches that page. Ignores `0` and `NaN`. Vue does nothing if it is already the current page (see `PARITY.md`). |
 | `setPerPage`, `setSearch`, `setSortBy`, `setSortOrder` | Go back to page 1 and refetch. `setSearch`, `setSortBy` and `setSortOrder` do nothing if the value is unchanged. |
 | `setFilters`, `clearFilters` | Fire `onFiltersChange`, then go back to page 1 and refetch. Nothing happens if the filters are equal. Before the first response, the filters are stored without a refetch. |
 | `loadMore` | Fetches the next page, only when `hasMore` and not loading. |
@@ -82,11 +82,10 @@ In this order:
 | `updateColumn` | Changes one column setting and calls `stateManager.set`. No request. |
 
 ### 7. Props changing after mount
-- A change to `filters`, or to `page`, `perPage`, `search`, `sortBy`, `sortOrder` or `endpoint`, refetches.
-- Any change other than `page` goes back to page 1. If `page` changes in the same update, that page is used.
-- Changes that arrive **before the first response** are ignored.
+- A change to `filters` refetches and goes back to page 1. Changes that arrive **before the first response** are ignored.
+- `page`, `perPage`, `search`, `sortBy`, `sortOrder` and `endpoint` are initial values, read once at setup. To change them later use the actions (`setPage`, `setPerPage`, `setSearch`, `setSortBy`, `setSortOrder`) or `refresh`.
 - React ignores a `filters` prop that equals the filters already applied, so a parent echoing `onFiltersChange` does not refetch twice.
-- React applies these changes while rendering, so the old values are never committed and the request runs after a single render.
+- React applies a `filters` change while rendering, so the old values are never committed and the request runs after a single render.
 
 ### 8. Unmount
 - The request in flight is dropped, as if a newer request had started: no state update, no `stateManager.set` and no hooks.

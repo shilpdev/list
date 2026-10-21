@@ -51,15 +51,15 @@ const requestHandler: RequestHandler<Row> = async (state) => {
 
 ## List props
 
-Required: `endpoint`, `requestHandler`. A later `endpoint` change refetches from page 1.
+Required: `endpoint`, `requestHandler`. `endpoint` is read once at setup; to load another endpoint call `refresh()` or remount with a `key`.
 
 | Prop                                                                   | Default        | Notes                                                                               |
 | ---------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------- |
-| `page`                                                                 | `1`            | Refetches when changed after mount                                                  |
-| `perPage`                                                              | `25`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes.    |
-| `sortBy`                                                               | `''`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes.    |
-| `sortOrder`                                                            | `'desc'`       | Refetches when changed after mount. Resets to page 1 unless `page` also changes.    |
-| `search`                                                               | `''`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes.    |
+| `page`                                                                 | `1`            | Initial value only; change it later with `setPage`.                                 |
+| `perPage`                                                              | `25`           | Initial value only; change it later with the matching action.                       |
+| `sortBy`                                                               | `''`           | Initial value only; change it later with the matching action.                       |
+| `sortOrder`                                                            | `'desc'`       | Initial value only; change it later with the matching action.                       |
+| `search`                                                               | `''`           | Initial value only; change it later with the matching action.                       |
 | `filters`                                                              | `{}`           | Parent-controlled query filters. Pair with `onFiltersChange`.                       |
 | `paginationMode`                                                       | `'pagination'` | `'loadMore'` appends pages                                                          |
 | `version`                                                              | `1`            | Passed to handler / state manager                                                   |
