@@ -29,7 +29,7 @@ Treat the code and the `shared/` types as the source of truth for the current AP
 
 ## Architecture
 
-A root component (`List` in `packages/react/src/components/list.tsx`, `list.vue` in Vue) owns all state, calls the user-supplied `requestHandler(state)` (must return `{ rows, count, meta? }`), and exposes state/actions through a context (`useListContext` in React, `use-list-context` composable in Vue). Slot components (`ListRows`, `ListPagination`, `ListSearch`, `ListLoadMore`, `ListEmpty`, `ListError`, loaders, etc.) read that context and throw if used outside the root. Every slot scope has a `context` key (the `Context`: state plus actions); `requestHandler` and `stateManager` get only the `State` (data, no methods); a component adds extra keys only for values it computes (for example `pagesToDisplay`). The component files mirror each other 1:1 between `packages/react/src/components/*.tsx` and `packages/vue/src/components/*.vue`.
+A root component (`List` in `packages/react/src/components/list.tsx`, `list.vue` in Vue) owns all state, calls the user-supplied `requestHandler(state)` (must return `{ rows, count, meta? }`), and exposes state/actions through a context (`useListContext` in React, `use-list-context` composable in Vue). Slot components (`ListRows`, `ListPagination`, `ListSearch`, `ListLoadMore`, `ListEmpty`, `ListError`, loaders, etc.) read that context and throw if used outside the root. Every slot scope has a `context` key (the `Context`: state plus actions); `requestHandler` and `stateManager` get only the `State` (data, no methods); a component adds extra keys only for values it computes (for example `pagesToDisplay`). Both roots keep one piece of state per field: Vue uses a `ref` each, React a `useState` each. Vue actions set refs and call `getData` directly. React actions set state and bump `requestKey`, and one effect runs the request after that render, so `requestHandler` always gets the committed values. Each root builds its `State` in one place (Vue's `reactive` state, React's `state` `useMemo`) from the shared helpers (`computeHasMore`, `getColumns`, `hasActiveFilters`); React code outside a render (setup restore, `stateManager.set` after a response) reads that committed `state` through a render-phase update or an effect. The component files mirror each other 1:1 between `packages/react/src/components/*.tsx` and `packages/vue/src/components/*.vue`.
 
 ## Engineering rules
 
@@ -67,6 +67,7 @@ These rules came out of the cleanup, renaming and reuse work on this repo. They 
 ### Naming and files
 - File names are kebab-case and have no prefix. An exported component is `List` plus the PascalCase file name (`loader-initial.tsx` exports `ListLoaderInitial`).
 - Props types end in `Props`, slot scopes in `Scope`.
+- Internal state setters take a `_` prefix (`const [page, _setPage] = useState(...)`), never a `Value` suffix, so they cannot be confused with the public actions of the same name (`setPage`).
 - CSS classes use one shared prefix in every package, not a per-framework one.
 - Use the same component names in the framework-specific `name` option, exports and docs.
 - Use import aliases (such as `@shared`) for code outside the package folder. Do not write long relative paths like `../../../shared`.

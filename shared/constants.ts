@@ -6,7 +6,6 @@ export const DEFAULT_PER_PAGE = 25
 export const DEFAULT_SORT_BY = ''
 export const DEFAULT_SORT_ORDER: SortOrder = 'desc'
 export const DEFAULT_SEARCH = ''
-export const DEFAULT_COUNT = 0
 export const DEFAULT_VERSION = 1
 export const DEFAULT_PAGINATION_MODE: PaginationMode = 'pagination'
 

@@ -36,7 +36,7 @@ sequenceDiagram
 
 ### 1. Setup (first render)
 - State starts from the props and the defaults in `shared/constants.ts`.
-- `stateManager.get(state)` runs before any state exists. It may return `page`, `perPage`, `sortBy`, `sortOrder`, `search`, `filters` and `columnSettings`; other fields are ignored.
+- `stateManager.get(state)` runs once, with the State built from the props and defaults, before anything is shown or fetched. React applies what it returns while rendering, so the values before the restore are never committed. It may return `page`, `perPage`, `sortBy`, `sortOrder`, `search`, `filters` and `columnSettings`; other fields are ignored.
 - A `loadMore` list always starts on page 1, whatever was saved.
 - Nothing is fetched yet, and `isInitialLoading` is `true`.
 
@@ -48,6 +48,7 @@ sequenceDiagram
 ### 3. Request
 Every fetch goes through these steps: the first load, page, search, sort and filter changes, `loadMore` and `refresh`.
 - Only the **latest** request counts. A slower, older response is dropped and fires nothing.
+- React: an action only sets state and marks a request; the request runs in an effect after that render, so `requestHandler` gets the committed values. The action and its loading flags render once together, and the response renders once more. Two calls in the same event (for example two `loadMore()`) send one request. After the response has rendered, an effect runs `stateManager.set` with the committed State, then `onResponse` and the `after*` hook, in the order of step 4. Vue runs the request inside the action, after setting its refs.
 - State: `isLoading = true`, `error = null`, and `isRefresh = true` only for a refresh.
 - `beforePageChange(state)` in page mode or `beforeLoadMore(state)` in load-more mode. `state` is the same snapshot passed to `requestHandler`.
 - `requestHandler(state)` runs. `state` is data only (no methods); `page` is the page being requested.
@@ -73,7 +74,7 @@ In this order:
 |---|---|
 | `setPage(page)` | Fetches that page. Ignores `0` and `NaN`. |
 | `setPerPage`, `setSearch`, `setSortBy`, `setSortOrder` | Go back to page 1 and refetch. `setSearch`, `setSortBy` and `setSortOrder` do nothing if the value is unchanged. |
-| `setFilters`, `clearFilters` | Go back to page 1 and refetch, then fire `onFiltersChange`. Nothing happens if the filters are equal. Before the first response, the filters are stored without a refetch. |
+| `setFilters`, `clearFilters` | Fire `onFiltersChange`, then go back to page 1 and refetch. Nothing happens if the filters are equal. Before the first response, the filters are stored without a refetch. |
 | `loadMore` | Fetches the next page, only when `hasMore` and not loading. |
 | `refresh` | Refetches the current page with `isRefresh = true`. In load-more mode it clears the rows and starts again from page 1. |
 | `setSelection` | Changes `selection`. `onRowSelect` fires when it really changes. |
@@ -85,6 +86,11 @@ In this order:
 - Any change other than `page` goes back to page 1. If `page` changes in the same update, that page is used.
 - Changes that arrive **before the first response** are ignored.
 - React ignores a `filters` prop that equals the filters already applied, so a parent echoing `onFiltersChange` does not refetch twice.
+- React applies these changes while rendering, so the old values are never committed and the request runs after a single render.
+
+### 8. Unmount
+- The request in flight is dropped, as if a newer request had started: no state update, no `stateManager.set` and no hooks.
+- The network call itself is not cancelled; `requestHandler` gets no abort signal.
 
 ## Events at a glance
 
@@ -120,6 +126,3 @@ In this order:
 | `ListLoadMore` | rows exist and no error |
 | `ListRefresh` | not `isInitialLoading` |
 | `ListSearch`, `ListColumns` | always |
-
-## Not handled
-- An in-flight request is not cancelled when the list unmounts. A stale response is only ignored when a newer request has started.

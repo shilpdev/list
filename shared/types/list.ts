@@ -13,7 +13,6 @@ export interface ListProps<T = unknown> {
   perPage?: number
   sortBy?: string
   sortOrder?: SortOrder
-  count?: number
   search?: string
   columns?: Columns
   version?: number | string

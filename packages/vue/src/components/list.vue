@@ -5,8 +5,6 @@
 </template>
 
 <script setup lang="ts">
-import equal from 'fast-deep-equal'
-import { computed, onMounted, provide, reactive, ref, toRefs, watch } from 'vue'
 import type {
   ColumnSettings,
   Context,
@@ -17,20 +15,6 @@ import type {
   State,
 } from '@shared'
 import {
-  computeHasMore,
-  hasSelectionChanged,
-  getColumns,
-  getQueryChange,
-  getRestoredState,
-  hasActiveFilters,
-  mergeRows,
-  patchRowById,
-  rowNotFoundMessage,
-  setColumnSetting,
-  toError,
-} from '@shared/utils'
-import {
-  DEFAULT_COUNT,
   DEFAULT_FILTERS,
   DEFAULT_ID_KEY,
   DEFAULT_META,
@@ -42,6 +26,21 @@ import {
   DEFAULT_SORT_ORDER,
   DEFAULT_VERSION,
 } from '@shared/constants'
+import {
+  computeHasMore,
+  getColumns,
+  getQueryChange,
+  getRestoredState,
+  hasActiveFilters,
+  hasSelectionChanged,
+  mergeRows,
+  patchRowById,
+  rowNotFoundMessage,
+  setColumnSetting,
+  toError,
+} from '@shared/utils'
+import equal from 'fast-deep-equal'
+import { computed, onMounted, onUnmounted, provide, reactive, ref, toRefs, watch } from 'vue'
 import type { ListPropsVue } from '../types'
 
 defineOptions({
@@ -87,7 +86,7 @@ const rows = ref<unknown[]>([])
 const selection = ref<unknown[]>([])
 const error = ref<Error | null>(null)
 const response = ref<RequestHandlerResponse | null>(null)
-const count = ref(props.count ?? DEFAULT_COUNT)
+const count = ref(0)
 const isLoading = ref(true)
 const isInitialLoading = ref(true)
 const isRefresh = ref(false)
@@ -461,6 +460,12 @@ onMounted(() => {
   }
 
   setPage(localPage.value)
+})
+
+// Lifecycle 8, unmount: invalidate the request in flight so its late response or error does not
+// update state, call `stateManager.set` or emit events on a list that no longer exists.
+onUnmounted(() => {
+  requestId++
 })
 
 defineExpose(toRefs(context))
