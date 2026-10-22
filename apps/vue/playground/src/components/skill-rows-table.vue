@@ -74,7 +74,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { ListLoader, useListContext } from '@shilp.dev/vue-list'
 import type { SortOrder } from '@shilp.dev/vue-list'
 import type { Skill } from '@/types/skill'
@@ -88,10 +87,8 @@ const props = defineProps<{
 }>()
 
 const listContext = useListContext<Skill>()
-const columnSettings = computed(() => listContext.columnSettings)
-
 function isVisible(name: string) {
-  return columnSettings.value?.[name]?.visible ?? true
+  return listContext.columns.find((column) => column.name === name)?.visibility ?? true
 }
 
 function toggleSort(by: string) {

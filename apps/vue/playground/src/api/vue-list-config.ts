@@ -1,5 +1,5 @@
 import type {
-  Filters,
+  FilterState,
   SortOrder,
   StateManager,
   State,
@@ -85,15 +85,15 @@ export function getStateFromSearchParams(): Partial<State> | null {
     state.sortOrder = sortOrder
   }
 
-  const filters: Filters = {}
-  for (const [key, value] of params.entries()) {
-    if (LIST_PARAM_KEY_SET.has(key)) {
+  const filters: FilterState[] = []
+  for (const [column, value] of params.entries()) {
+    if (LIST_PARAM_KEY_SET.has(column)) {
       continue
     }
 
-    filters[key] = parseParamValue(value)
+    filters.push({ column, value: parseParamValue(value), isDirty: false })
   }
-  if (Object.keys(filters).length > 0) {
+  if (filters.length > 0) {
     state.filters = filters
   }
 
@@ -110,7 +110,7 @@ function setStateInSearchParams(state: {
   search: string
   sortBy: string
   sortOrder: SortOrder
-  filters: Filters
+  filters: FilterState[]
 }): void {
   if (typeof window === 'undefined') {
     return
@@ -141,12 +141,12 @@ function setStateInSearchParams(state: {
   }
 
   const nextFilterKeys = new Set(
-    Object.entries(state.filters)
-      .filter(([, value]) => {
+    state.filters
+      .filter(({ value }) => {
         return !isEmptyValue(value)
       })
-      .map(([key]) => {
-        return key
+      .map(({ column }) => {
+        return column
       }),
   )
 
@@ -156,12 +156,12 @@ function setStateInSearchParams(state: {
     }
   }
 
-  for (const [key, value] of Object.entries(state.filters)) {
-    if (LIST_PARAM_KEY_SET.has(key) || isEmptyValue(value)) {
+  for (const { column, value } of state.filters) {
+    if (LIST_PARAM_KEY_SET.has(column) || isEmptyValue(value)) {
       continue
     }
 
-    params.set(key, serializeParamValue(value))
+    params.set(column, serializeParamValue(value))
   }
 
   const next = `${url.pathname}${url.search}${url.hash}`
@@ -198,7 +198,7 @@ export const stateManager: StateManager = {
       sortBy,
       sortOrder,
       filters,
-      columnSettings,
+      columns,
     } = context
     const key = stateManagerKey(endpoint, version)
     localStorage.setItem(
@@ -210,7 +210,7 @@ export const stateManager: StateManager = {
         sortBy,
         sortOrder,
         filters,
-        columnSettings,
+        columns,
       }),
     )
     setStateInSearchParams({
@@ -221,6 +221,11 @@ export const stateManager: StateManager = {
       sortOrder,
       filters,
     })
+  },
+
+  clear(context: State) {
+    const { endpoint, version } = context
+    localStorage.removeItem(stateManagerKey(endpoint, version))
   },
 
   get(context: State): Partial<State> | null {

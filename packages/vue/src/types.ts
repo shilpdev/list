@@ -1,5 +1,7 @@
-import type { ListProps } from '@shared'
+import type { Filter, ListProps } from '@shared'
 
-// Vue adds no props of its own: `filters` is a v-model and the callbacks are emits (`Events`).
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ListPropsVue<T = unknown> extends ListProps<T> {}
+// The callbacks are emits (`Events`), so Vue only adds `filters`.
+export interface ListPropsVue<T = unknown> extends ListProps<T> {
+  /** Initial filters, one per column. Read once at setup; change them later with `ListFilters`. */
+  filters?: Filter[]
+}

@@ -4,11 +4,12 @@
       <h2 class="mb-6 text-3xl font-bold text-slate-700">Shilp List Playground (Vue + TypeScript)</h2>
 
       <List
+        v-slot="{ clearState }"
         endpoint="skills"
         search=""
         :page="1"
         :per-page="10"
-        v-model:filters="filters"
+        :filters="initialFilters"
         pagination-mode="pagination"
         :request-handler="requestHandler"
         :state-manager="stateManager"
@@ -34,27 +35,23 @@
             </ListSearch>
           </div>
 
-          <ListColumns v-slot="{ context: { columns, updateColumn, columnSettings } }">
-            <div class="flex flex-wrap items-center gap-2">
+          <ListColumns class="flex flex-wrap items-center gap-2">
+            <template #columns="{ context: { columns }, setColumn }">
               <label
                 v-for="column in columns"
                 :key="column.name"
                 class="flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition"
                 :class="
-                  (columnSettings[column.name]?.visible ?? true)
+                  column.visibility
                     ? 'border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-50'
                     : 'border-slate-200 bg-slate-100 text-slate-400 line-through opacity-70'
                 "
               >
                 <input
                   type="checkbox"
-                  :checked="columnSettings[column.name]?.visible ?? true"
+                  :checked="column.visibility"
                   @change="
-                    updateColumn(
-                      column.name,
-                      'visible',
-                      ($event.target as HTMLInputElement).checked,
-                    )
+                    setColumn(column.name, 'visibility', ($event.target as HTMLInputElement).checked)
                   "
                   class="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                 />
@@ -63,10 +60,11 @@
                   {{ column.label || column.name }}
                 </span>
               </label>
-            </div>
+            </template>
           </ListColumns>
 
-          <div class="flex flex-wrap items-center gap-3">
+          <ListFilters class="flex flex-wrap items-center gap-3">
+            <template #status="{ value, setValue }">
             <div class="relative flex items-center gap-2">
               <label class="whitespace-nowrap text-sm text-slate-500" for="status-filter">
                 Status:
@@ -74,8 +72,8 @@
               <select
                 id="status-filter"
                 class="appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                :value="filters.status ?? 'all'"
-                @change="onStatusChange(($event.target as HTMLSelectElement).value)"
+                :value="value ?? 'all'"
+                @change="setValue(toFilterValue(($event.target as HTMLSelectElement).value))"
               >
                 <option value="all">All Status</option>
                 <option value="draft">Draft</option>
@@ -88,7 +86,9 @@
                 <UIcon name="i-mdi-chevron-down" class="h-4 w-4" />
               </div>
             </div>
+            </template>
 
+            <template #color="{ value, setValue }">
             <div class="relative flex items-center gap-2">
               <label class="whitespace-nowrap text-sm text-slate-500" for="color-filter">
                 Color:
@@ -96,8 +96,8 @@
               <select
                 id="color-filter"
                 class="appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                :value="filters.color ?? 'all'"
-                @change="onColorChange(($event.target as HTMLSelectElement).value)"
+                :value="value ?? 'all'"
+                @change="setValue(toFilterValue(($event.target as HTMLSelectElement).value))"
               >
                 <option value="all">All Colors</option>
                 <option value="red">Red</option>
@@ -111,7 +111,17 @@
                 <UIcon name="i-mdi-chevron-down" class="h-4 w-4" />
               </div>
             </div>
-          </div>
+            </template>
+          </ListFilters>
+
+          <button
+            type="button"
+            class="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            @click="resetState(clearState)"
+          >
+            <UIcon name="i-mdi-restore" class="h-4 w-4" />
+            Reset State
+          </button>
         </div>
 
         <div class="my-6">
@@ -327,11 +337,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import {
   List,
   ListEmpty,
   ListError,
+  ListFilters,
   ListGoTo,
   ListLoaderInitial,
   ListRows,
@@ -342,7 +352,7 @@ import {
   ListSummary,
   ListColumns,
 } from '@shilp.dev/vue-list'
-import type { Skill, SkillFilters } from '@/types/skill'
+import type { Skill } from '@/types/skill'
 import requestHandler from '@/api/request-handler'
 import { getStateFromSearchParams, stateManager } from '@/api/vue-list-config'
 import SkillRowsTable from '@/components/skill-rows-table.vue'
@@ -351,19 +361,22 @@ defineOptions({
   name: 'playground-index-view',
 })
 
-const filters = ref<SkillFilters>(getStateFromSearchParams()?.filters ?? {})
+const savedFilters = getStateFromSearchParams()?.filters ?? []
+const initialFilters = ['status', 'color'].map((column) => {
+  return { column, value: savedFilters.find((filter) => filter.column === column)?.value }
+})
 
-function onStatusChange(value: string) {
-  filters.value = {
-    ...filters.value,
-    status: value === 'all' ? undefined : value,
-  }
+// Removes the saved state, then reloads without the query params so the list starts from its props.
+function resetState(clearState: () => void) {
+  clearState()
+  window.location.assign(window.location.pathname)
 }
 
-function onColorChange(value: string) {
-  filters.value = {
-    ...filters.value,
-    color: value === 'all' ? undefined : value,
+function toFilterValue(value: string) {
+  if (value === 'all') {
+    return undefined
   }
+
+  return value
 }
 </script>

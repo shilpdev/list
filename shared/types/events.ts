@@ -1,4 +1,5 @@
-import type { Filters, RequestHandlerResponse, State } from './common'
+import type { RequestHandlerResponse, State } from './common'
+import type { FilterState } from './filters'
 
 /**
  * Every event the list fires, under the same name in both packages: React takes them as props
@@ -15,7 +16,7 @@ export interface Events<T = unknown> {
   onResponse: [response: RequestHandlerResponse<T>]
   onError: [error: Error]
   onRowSelect: [selection: T[], previous: T[]]
-  onFiltersChange: [filters: Filters]
+  onFiltersChange: [filters: FilterState[]]
 }
 
 export type EventProps<T = unknown> = {

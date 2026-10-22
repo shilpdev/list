@@ -1,19 +1,15 @@
 <template>
   <div class="shilp-list__columns">
-    <slot :context="context">
-      <template v-for="(column, index) in context.columns" :key="`column-${index}`">
-        <slot name="column" :column="column" :context="context">
+    <slot name="columns" v-bind="scope">
+      <template v-for="column in context.columns" :key="column.name">
+        <slot :name="column.name" v-bind="getColumnScope(column)">
           <label>
-            <span>{{ column.label }}</span>
+            <span>{{ column.label ?? column.name }}</span>
             <input
               type="checkbox"
-              :checked="context.columnSettings[column.name]?.visible ?? true"
+              :checked="column.visibility"
               @change="
-                context.updateColumn(
-                  column.name,
-                  'visible',
-                  ($event.target as HTMLInputElement).checked,
-                )
+                context.setColumn(column.name, 'visibility', ($event.target as HTMLInputElement).checked)
               "
             />
           </label>
@@ -24,6 +20,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import type { Column, ColumnScope, ColumnsScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
@@ -31,4 +29,21 @@ defineOptions({
 })
 
 const context = useListContext()
+
+function getColumnScope(column: Column): ColumnScope {
+  return {
+    context,
+    ...column,
+    setValue: (key: string, value: unknown) => {
+      context.setColumn(column.name, key, value)
+    },
+  }
+}
+
+const scope = computed((): ColumnsScope => {
+  return {
+    context,
+    setColumn: context.setColumn,
+  }
+})
 </script>

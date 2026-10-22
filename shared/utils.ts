@@ -1,8 +1,9 @@
 import equal from 'fast-deep-equal'
+import { DEFAULT_COLUMN_VISIBILITY } from './constants'
 import type {
-  ColumnSettings,
   Columns,
-  Filters,
+  FilterState,
+  FilterValues,
   PerPageOption,
   SortOrder,
   State,
@@ -17,16 +18,40 @@ export const toError = (err: unknown): Error => {
   return new Error(String(err))
 }
 
-export const hasActiveFilters = (current: Filters = {}, initial: Filters = {}): boolean => {
-  if (Object.keys(initial).length === 0) {
-    return Object.keys(current).length > 0
-  }
+/**
+ * Returns `filters` with `values` applied; a column that is not in `filters` is added. `isDirty`
+ * compares each new value with the one in `defaults`.
+ */
+export const computeFilters = (
+  filters: FilterState[],
+  defaults: FilterState[],
+  values: FilterValues,
+): FilterState[] => {
+  const next = [...filters]
 
-  if (Object.keys(current).length === 0) {
-    return false
-  }
+  Object.entries(values).forEach(([column, value]) => {
+    const index = next.findIndex((filter) => {
+      return filter.column === column
+    })
+    const initial = defaults.find((filter) => {
+      return filter.column === column
+    })
+    const filter = { column, value, isDirty: !equal(value, initial?.value) }
 
-  return !equal(current, initial)
+    if (index === -1) {
+      next.push(filter)
+    } else {
+      next[index] = filter
+    }
+  })
+
+  return next
+}
+
+export const hasActiveFilters = (filters: FilterState[]): boolean => {
+  return filters.some((filter) => {
+    return filter.isDirty
+  })
 }
 
 export const computeHasMore = (page: number, perPage: number, count: number): boolean => {
@@ -89,29 +114,29 @@ export const rowNotFoundMessage = (idKey: string, id: string | number): string =
   )
 }
 
-/** The given columns, or one column per key of the first row. */
-export const getColumns = (columns: Columns | undefined, rows: unknown[]): Columns => {
-  if (columns) {
-    return columns
-  }
-
-  const firstRow = (rows[0] as Record<string, unknown>) || {}
-
-  return Object.keys(firstRow).map((name) => {
-    return { name }
+/** Columns with `visibility` filled in where it is missing. */
+export const createColumns = (columns: Columns): Columns => {
+  return columns.map((column) => {
+    return { ...column, visibility: column.visibility ?? DEFAULT_COLUMN_VISIBILITY }
   })
 }
 
-export const setColumnSetting = (
-  settings: ColumnSettings,
-  columnName: string,
-  settingKey: string,
+/** Returns `columns` with `key` of the column named `column` set to `value`; an unknown name changes nothing. */
+export const computeColumns = (
+  columns: Columns,
+  column: string,
+  key: string,
   value: unknown,
-): ColumnSettings => {
-  return {
-    ...settings,
-    [columnName]: { ...settings[columnName], [settingKey]: value },
-  }
+): Columns => {
+  return createColumns(
+    columns.map((item) => {
+      if (item.name === column) {
+        return { ...item, [key]: value }
+      }
+
+      return item
+    }),
+  )
 }
 
 /** Values to restore from `stateManager.get()`; a load-more list always starts on page 1. */
@@ -129,7 +154,7 @@ export const getRestoredState = (saved: Partial<State> | null | undefined, isLoa
     sortOrder: saved?.sortOrder,
     search: saved?.search,
     filters: saved?.filters,
-    columnSettings: saved?.columnSettings,
+    columns: saved?.columns,
   }
 }
 

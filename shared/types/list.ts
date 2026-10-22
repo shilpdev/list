@@ -3,7 +3,7 @@ import type { Columns } from './columns'
 
 /**
  * Props both packages accept. `filters` and the callbacks are framework specific, so they live in
- * `ListPropsReact` and `ListPropsVue` (Vue takes `filters` as a model and uses emits).
+ * `ListPropsReact` and `ListPropsVue` (Vue takes `filters` as initial values and uses emits).
  */
 export interface ListProps<T = unknown> {
   /** Unique identifier for the data source (API route or key). */
@@ -14,7 +14,7 @@ export interface ListProps<T = unknown> {
   sortBy?: string
   sortOrder?: SortOrder
   search?: string
-  columns?: Columns
+  columns: Columns
   version?: number | string
   paginationMode?: PaginationMode
   /** Passed through to `requestHandler` and `stateManager`; the list never reads it. */

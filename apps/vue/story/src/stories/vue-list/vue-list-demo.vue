@@ -9,7 +9,8 @@
       :request-handler="handler"
       :count="count"
       :sync-page-to-url="false"
-      v-model:filters="filters"
+      :filters="[{ column: 'status', value: undefined }]"
+      :columns="columns"
     >
       <div class="vue-list-demo__toolbar">
         <ListSearch v-slot="{ search, setSearch }">
@@ -22,18 +23,22 @@
           />
         </ListSearch>
 
-        <label class="vue-list-demo__filter">
-          Status
-          <select
-            class="vue-list-demo__select"
-            @change="onStatusChange(($event.target as HTMLSelectElement).value)"
-          >
-            <option value="all">All</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-        </label>
+        <ListFilters>
+          <template #status="{ setValue }">
+            <label class="vue-list-demo__filter">
+              Status
+              <select
+                class="vue-list-demo__select"
+                @change="onStatusChange(setValue, ($event.target as HTMLSelectElement).value)"
+              >
+                <option value="all">All</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="archived">Archived</option>
+              </select>
+            </label>
+          </template>
+        </ListFilters>
       </div>
 
       <ListLoaderInitial>
@@ -154,11 +159,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import type { Context } from '@shilp.dev/vue-list'
+import { computed } from 'vue'
+import type { Context, FilterScope } from '@shilp.dev/vue-list'
 import {
   ListEmpty,
   ListError,
+  ListFilters,
   ListLoaderInitial,
   ListRows,
   ListLoadMore,
@@ -204,8 +210,6 @@ const props = withDefaults(
   },
 )
 
-const filters = ref<Record<string, string | undefined>>({})
-
 const listKey = computed(() =>
   [
     props.endpoint,
@@ -228,14 +232,18 @@ const perPageOptions = computed(() => {
   return [...PER_PAGE_OPTIONS, props.perPage].sort((a, b) => a - b)
 })
 
-watch(listKey, () => {
-  filters.value = {}
-})
+const columns = [
+  { name: 'id', label: 'ID' },
+  { name: 'name', label: 'Name' },
+  { name: 'status', label: 'Status' },
+  { name: 'date_updated', label: 'Updated' },
+]
 
-function onStatusChange(value: string) {
-  filters.value = {
-    ...filters.value,
-    status: value === 'all' ? undefined : value,
+function onStatusChange(setValue: FilterScope['setValue'], value: string) {
+  if (value === 'all') {
+    setValue(undefined)
+  } else {
+    setValue(value)
   }
 }
 

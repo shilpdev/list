@@ -6,11 +6,13 @@
 
 <script setup lang="ts">
 import type {
-  ColumnSettings,
+  Columns,
   Context,
   Events,
-  Filters,
+  FilterState,
+  FilterValues,
   RequestHandlerResponse,
+  RequestTrigger,
   SortOrder,
   State,
 } from '@shared'
@@ -27,16 +29,17 @@ import {
   DEFAULT_VERSION,
 } from '@shared/constants'
 import {
+  computeColumns,
   computeHasMore,
-  getColumns,
+  createColumns,
   getRestoredState,
   hasActiveFilters,
   hasSelectionChanged,
   mergeRows,
   patchRowById,
   rowNotFoundMessage,
-  setColumnSetting,
   toError,
+  computeFilters,
 } from '@shared/utils'
 import equal from 'fast-deep-equal'
 import { computed, onMounted, onUnmounted, provide, reactive, ref, toRefs, watch } from 'vue'
@@ -56,22 +59,22 @@ const props = withDefaults(defineProps<ListPropsVue>(), {
   search: DEFAULT_SEARCH,
   version: DEFAULT_VERSION,
   paginationMode: DEFAULT_PAGINATION_MODE,
+  filters: () => {
+    return [...DEFAULT_FILTERS]
+  },
   meta: () => {
     return { ...DEFAULT_META }
   },
 })
 
 const emit = defineEmits<Events>()
-const filters = defineModel<Filters>('filters', {
-  default: () => {
-    return { ...DEFAULT_FILTERS }
-  },
-})
-
-const defaultFilters = ref<Filters>({ ...filters.value })
 
 const isLoadMore = computed(() => {
   return props.paginationMode === 'loadMore'
+})
+
+const defaultFilters = props.filters.map(({ column, value }): FilterState => {
+  return { column, value, isDirty: false }
 })
 
 const localPage = ref<number>(props.page)
@@ -79,7 +82,8 @@ const localPerPage = ref<number>(props.perPage)
 const localSortBy = ref<string>(props.sortBy)
 const localSortOrder = ref<SortOrder>(props.sortOrder)
 const localSearch = ref<string>(props.search)
-const columnSettings = ref<ColumnSettings>({})
+const localFilters = ref<FilterState[]>([...defaultFilters])
+const localColumns = ref<Columns>(createColumns(props.columns))
 
 const rows = ref<unknown[]>([])
 const selection = ref<unknown[]>([])
@@ -88,7 +92,7 @@ const response = ref<RequestHandlerResponse | null>(null)
 const count = ref(0)
 const isLoading = ref(true)
 const isInitialLoading = ref(true)
-const isRefresh = ref(false)
+const requestTrigger = ref<RequestTrigger>('mount')
 let requestId = 0
 
 const isEmpty = computed(() => {
@@ -112,8 +116,13 @@ function updateStateManager() {
   props.stateManager?.set?.(snapshot())
 }
 
+function clearState() {
+  props.stateManager?.clear?.(snapshot())
+  init()
+}
+
 // Lifecycle 3 to 5, one request. Only the latest request counts (`requestId`).
-// 3. Request: state shows isLoading (and isRefresh, set by `refresh`), `beforePageChange` / `beforeLoadMore` get the
+// 3. Request: state shows isLoading (`requestTrigger` says what started it), `beforePageChange` / `beforeLoadMore` get the
 //    State being requested, then `requestHandler` runs.
 // 4. Response: rows are replaced (page mode) or appended (load-more) with their `_index`, selection
 //    resets, `stateManager.set` runs, then `onResponse` and `afterPageChange` / `afterLoadMore` emit.
@@ -168,7 +177,6 @@ function getData() {
         return
       }
       isLoading.value = false
-      isRefresh.value = false
       isInitialLoading.value = false
     })
 }
@@ -177,12 +185,19 @@ function getData() {
 // starts the request. setPerPage, setSearch, setSortBy and setSortOrder go back to page 1, and
 // setFilters and clearFilters do the same through the `filters` watcher. refresh refetches the
 // current page (load-more: from page 1). loadMore fetches the next page. updateRowById,
-// updateColumn and setSelection change state without a request.
+// setColumn and setSelection change state without a request.
+// Internal: `requestTrigger` is set by the caller, before the request reads it.
+function fetchPage(value: number) {
+  localPage.value = value
+  getData()
+}
+
 function setPage(value: number) {
   if (!value) {
     return
   }
-  localPage.value = value
+  requestTrigger.value = 'page'
+  fetchPage(value)
 }
 
 function setSearch(value: string) {
@@ -190,7 +205,8 @@ function setSearch(value: string) {
     return
   }
   localSearch.value = value
-  setPage(1)
+  requestTrigger.value = 'search'
+  fetchPage(1)
 }
 
 function setSortBy(value: string) {
@@ -198,7 +214,8 @@ function setSortBy(value: string) {
     return
   }
   localSortBy.value = value
-  setPage(1)
+  requestTrigger.value = 'sortBy'
+  fetchPage(1)
 }
 
 function setSortOrder(value: SortOrder) {
@@ -206,7 +223,8 @@ function setSortOrder(value: SortOrder) {
     return
   }
   localSortOrder.value = value
-  setPage(1)
+  requestTrigger.value = 'sortOrder'
+  fetchPage(1)
 }
 
 function setPerPage(value: number) {
@@ -214,39 +232,43 @@ function setPerPage(value: number) {
     return
   }
   localPerPage.value = value
-  setPage(1)
+  requestTrigger.value = 'perPage'
+  fetchPage(1)
 }
 
 function setSelection(value: unknown[]) {
   selection.value = value
 }
 
-function setFilters(nextFilters: Filters) {
-  if (equal(filters.value, nextFilters)) {
+function changeFilters(next: FilterState[]) {
+  if (equal(localFilters.value, next)) {
     return
   }
 
-  filters.value = nextFilters
-  emit('onFiltersChange', nextFilters)
+  localFilters.value = next
+  requestTrigger.value = 'filters'
+  emit('onFiltersChange', next)
+}
+
+function setFilters(values: FilterValues) {
+  const next = computeFilters(localFilters.value, defaultFilters, values)
+  changeFilters(next)
+}
+
+function setFilter(column: string, value: unknown) {
+  setFilters({ [column]: value })
 }
 
 function clearFilters() {
-  const nextFilters = { ...defaultFilters.value }
-
-  if (equal(filters.value, nextFilters)) {
-    return
-  }
-
-  filters.value = nextFilters
-  emit('onFiltersChange', nextFilters)
+  changeFilters([...defaultFilters])
 }
 
 function refresh() {
-  isRefresh.value = true
+  requestTrigger.value = 'refresh'
 
   if (isLoadMore.value) {
     rows.value = []
-    setPage(1)
+    fetchPage(1)
   } else {
     getData()
   }
@@ -254,7 +276,8 @@ function refresh() {
 
 function loadMore() {
   if (hasMore.value && !isLoading.value) {
-    localPage.value++
+    requestTrigger.value = 'loadMore'
+    fetchPage(localPage.value + 1)
   }
 }
 
@@ -269,8 +292,15 @@ function updateRowById(row: Partial<unknown>, id: string | number) {
   rows.value = next
 }
 
-function updateColumn(name: string, prop: string, value: boolean | unknown) {
-  columnSettings.value = setColumnSetting(columnSettings.value, name, prop, value)
+function setColumn(column: string, key: string, value: unknown) {
+  const next = computeColumns(localColumns.value, column, key, value)
+
+  if (equal(localColumns.value, next)) {
+    return
+  }
+
+  localColumns.value = next
+  requestTrigger.value = 'columns'
   updateStateManager()
 }
 
@@ -292,15 +322,12 @@ const state = reactive({
   hasMore,
   isLoading,
   isInitialLoading,
-  isRefresh,
-  filters: filters.value,
-  columnSettings,
+  requestTrigger,
+  filters: localFilters,
+  columns: localColumns,
   isEmpty,
   hasActiveFilters: computed(() => {
-    return hasActiveFilters(filters.value, defaultFilters.value)
-  }),
-  columns: computed(() => {
-    return getColumns(props.columns, rows.value)
+    return hasActiveFilters(localFilters.value)
   }),
 }) as State
 
@@ -311,13 +338,15 @@ const context = reactive({
   setSearch,
   setSortBy,
   setSortOrder,
+  setFilter,
   setFilters,
   clearFilters,
   loadMore,
   refresh,
+  clearState,
   setSelection,
   updateRowById,
-  updateColumn,
+  setColumn,
 }) as Context
 
 provide('shilp-list-context', context)
@@ -327,7 +356,7 @@ const snapshot = (): State => {
 }
 
 // Lifecycle 1, setup: state starts from the props and defaults. `stateManager.get` runs before any
-// state exists and may restore page, perPage, sort, search, filters and columnSettings. A load-more
+// state exists and may restore page, perPage, sort, search, filters and columns. A load-more
 // list always starts on page 1. Nothing is fetched yet.
 let saved: Partial<State> = {}
 
@@ -359,31 +388,32 @@ if (restored.search != null) {
   localSearch.value = restored.search
 }
 
-if (restored.columnSettings != null) {
-  columnSettings.value = restored.columnSettings
+if (restored.columns != null) {
+  // Saved columns that are no longer in the `columns` prop are ignored.
+  restored.columns.forEach(({ name, ...values }) => {
+    Object.entries(values).forEach(([key, value]) => {
+      localColumns.value = computeColumns(localColumns.value, name, key, value)
+    })
+  })
 }
 
 if (restored.filters != null) {
-  filters.value = restored.filters
+  localFilters.value = computeFilters(
+    localFilters.value,
+    defaultFilters,
+    Object.fromEntries(
+      restored.filters.map(({ column, value }) => {
+        return [column, value]
+      }),
+    ),
+  )
 }
 
-// Every request after the first starts here. One flush covers several changes, so `setSearch` from
-// page 3 (search and page both change) makes a single request.
-// Do not narrow this to `localPage` only: perPage, search and sort changes also set the page to 1,
-// but on page 1 that is not a change, so a `localPage` watcher would not fire and no request would
-// start. If it is ever narrowed, the setters, `refresh` and the `filters` watcher need a helper that
-// fetches directly when the page is already 1.
-// Keep the watchers below the restore block (Lifecycle 1): they only react to changes made after
-// they are created, so the restored values do not start a request. Moved above it, the restore
-// would fire an extra request on top of the one from `onMounted`.
-watch([localPage, localPerPage, localSearch, localSortBy, localSortOrder], () => {
-  getData()
-})
-
-// Lifecycle 7, props changing after mount: only `filters` refetches, except before the first response
-// has arrived. The query props (page, perPage, search, sortBy, sortOrder, endpoint) are read once;
-// change them through the context actions. On page 1 the page watcher would not fire, so fetch here.
-watch(filters, (newValue, oldValue) => {
+// Lifecycle 7, props changing after mount: none. `filters`, `columns` and the query props (page,
+// perPage, search, sortBy, sortOrder, endpoint) are read once; change them through the context
+// actions. A change of `localFilters` or `localColumns` (setFilter, setFilters, clearFilters,
+// setColumn) refetches, except before the first response has arrived.
+watch(localFilters, (newValue, oldValue) => {
   if (isInitialLoading.value) {
     return
   }
@@ -392,11 +422,19 @@ watch(filters, (newValue, oldValue) => {
     return
   }
 
-  if (localPage.value === 1) {
-    getData()
-  } else {
-    setPage(1)
+  fetchPage(1)
+})
+
+watch(localColumns, (newValue, oldValue) => {
+  if (isInitialLoading.value) {
+    return
   }
+
+  if (equal(newValue, oldValue)) {
+    return
+  }
+
+  getData()
 })
 
 // `onRowSelect` emits when the selection really changes, including the reset after a response.
@@ -408,16 +446,20 @@ watch(selection, (newValue, oldValue) => {
   }
 })
 
-// Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the restored filters differ from
-// the prop, then the first request.
-onMounted(() => {
+function init() {
   props.stateManager?.init?.(snapshot())
 
-  if (restored.filters != null && !equal(restored.filters, defaultFilters.value)) {
-    emit('onFiltersChange', restored.filters)
+  if (restored.filters != null && !equal(localFilters.value, defaultFilters)) {
+    emit('onFiltersChange', localFilters.value)
   }
 
   getData()
+}
+
+// Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the restored filters differ from
+// the prop, then the first request.
+onMounted(() => {
+  init()
 })
 
 // Lifecycle 8, unmount: invalidate the request in flight so its late response or error does not
