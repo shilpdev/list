@@ -173,6 +173,10 @@ function setStateInSearchParams(state: {
   window.history.pushState({}, '', url)
 }
 
+// `clearState` runs the list's `init` again, so a request is made and `set` would save the state
+// right back. After a clear nothing is saved until the page reloads.
+let isCleared = false
+
 export const stateManager: StateManager = {
   init(context: State) {
     const { endpoint, version } = context
@@ -189,6 +193,10 @@ export const stateManager: StateManager = {
   },
 
   set(context: State) {
+    if (isCleared) {
+      return
+    }
+
     const {
       endpoint,
       version,
@@ -225,6 +233,7 @@ export const stateManager: StateManager = {
 
   clear(context: State) {
     const { endpoint, version } = context
+    isCleared = true
     localStorage.removeItem(stateManagerKey(endpoint, version))
   },
 
