@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListEmptyProps = {
@@ -12,5 +13,5 @@ export const ListEmpty = ({ children }: ListEmptyProps) => {
     return null
   }
 
-  return <div className="shilp-list__empty">{children || <p>No data found!</p>}</div>
+  return <div className="shilp-list__empty">{children || <p>{MESSAGES.empty}</p>}</div>
 }

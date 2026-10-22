@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import type { ListScope } from '@shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListLoadMoreProps = {
@@ -22,11 +23,11 @@ export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
   } else if (context.hasMore) {
     content = (
       <button type="button" onClick={context.loadMore}>
-        Load More
+        {MESSAGES.loadMore}
       </button>
     )
   } else {
-    content = <p>— That&apos;s all —</p>
+    content = <p>{MESSAGES.loadMoreEnd}</p>
   }
 
   return <div className="shilp-list__load-more">{content}</div>

@@ -6,7 +6,7 @@
         @change="scope.context.setPage(Number(($event.target as HTMLSelectElement).value))"
       >
         <option v-for="pageNum in scope.pages" :key="`page-${pageNum}`" :value="pageNum">
-          Page {{ pageNum }}
+          {{ MESSAGES.pageOptionPrefix }} {{ pageNum }}
         </option>
       </select>
     </slot>
@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { getPagesCount } from '@shared/utils'
+import { MESSAGES } from '@shared/constants'
 import type { GoToScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 

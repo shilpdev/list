@@ -101,13 +101,6 @@ export const patchRowById = <T>(
   return next
 }
 
-export const rowNotFoundMessage = (idKey: string, id: string | number): string => {
-  return (
-    `List: updateRowById did not find a row where ${idKey} === ${JSON.stringify(id)}. ` +
-    `Verify your rows expose "${idKey}" and that the id type matches exactly.`
-  )
-}
-
 /** Columns with `visibility` filled in where it is missing. */
 export const createColumns = (columns: Columns): Columns => {
   return columns.map((column) => {
@@ -168,14 +161,6 @@ export const getSummaryRange = (page: number, perPage: number, count: number) =>
     from: page * perPage - perPage + 1,
     to: Math.min(page * perPage, count),
   }
-}
-
-export const getSummaryMessage = ({ context, from, to, visibleCount }: SummaryScope): string => {
-  return `Showing ${visibleCount} rows (${from} - ${to}) out of ${context.count}`
-}
-
-export const getPerPageMessage = (option: PerPageOption): string => {
-  return `${option.label} rows per page`
 }
 
 export const normalizePerPageOptions = (

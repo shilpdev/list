@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import type { ListScope } from '@shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListErrorProps = {
@@ -23,7 +24,7 @@ export const ListError = ({ children }: ListErrorProps) => {
   } else {
     content = (
       <div>
-        <h3>Error occurred</h3>
+        <h3>{MESSAGES.error}</h3>
         <pre>
           {error.name}: {error.message}
         </pre>

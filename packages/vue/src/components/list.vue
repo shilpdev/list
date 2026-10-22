@@ -27,6 +27,7 @@ import {
   DEFAULT_SORT_BY,
   DEFAULT_SORT_ORDER,
   DEFAULT_VERSION,
+  rowNotFoundMessage,
 } from '@shared/constants'
 import {
   computeColumns,
@@ -35,7 +36,6 @@ import {
   hasSelectionChanged,
   mergeRows,
   patchRowById,
-  rowNotFoundMessage,
   toError,
   computeFilters,
 } from '@shared/utils'

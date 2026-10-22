@@ -2,17 +2,23 @@ import List, {
   ListColumns,
   ListEmpty,
   ListError,
+  ListFilters,
   ListGoTo,
   ListLoaderInitial,
   ListLoader,
   ListPagination,
   ListPerPage,
+  ListRefresh,
   ListRows,
   ListSearch,
   ListSummary,
   useListContext,
 } from '@shilp.dev/react-list'
 import type {
+  ColumnsScope,
+  Context,
+  Filter,
+  FilterScope,
   GoToScope,
   ListScope,
   PaginationScope,
@@ -22,22 +28,32 @@ import type {
   SummaryScope,
 } from '@shilp.dev/react-list'
 import { Icon } from '@iconify/react'
-import { useState } from 'react'
 
-import type { Skill, SkillFilters } from '../types/skill'
+import type { Skill } from '../types/skill'
 import requestHandler from '../api/request-handler'
 import { getStateFromSearchParams, stateManager } from './react-list-config'
 
-function nextSortOrder(current: SortOrder): SortOrder {
-  if (current === '') {
-    return 'asc'
+// The list owns the filters now. Seed `status` and `color` so the filter controls always render,
+// pulling their initial value from the URL/saved state once.
+function getInitialFilters(): Filter[] {
+  const saved = getStateFromSearchParams()?.filters ?? []
+  return ['status', 'color'].map((column) => {
+    return { column, value: saved.find((filter) => filter.column === column)?.value }
+  })
+}
+
+function toFilterValue(value: string): string | undefined {
+  if (value === 'all') {
+    return undefined
   }
 
-  if (current === 'asc') {
-    return 'desc'
-  }
+  return value
+}
 
-  return ''
+// Removes the saved state, then reloads without the query params so the list starts from its props.
+function resetState(clearState: () => void) {
+  clearState()
+  window.location.assign(window.location.pathname)
 }
 
 function PatchRowButton({ id }: { id: Skill['id'] }) {
@@ -64,18 +80,40 @@ function PatchRowButton({ id }: { id: Skill['id'] }) {
 
 function SkillRowsTable({
   rows,
+  sortBy,
   sortOrder,
   setSortBy,
   setSortOrder,
 }: {
   rows: Skill[]
+  sortBy: string
   sortOrder: SortOrder
   setSortBy: (sortBy: string) => void
   setSortOrder: (sortOrder: SortOrder) => void
 }) {
   const listContext = useListContext<Skill>()
-  const columnSettings = listContext.columnSettings
-  const isVisible = (name: string) => columnSettings[name]?.visible ?? true
+  const isVisible = (name: string) => {
+    return listContext.columns.find((column) => column.name === name)?.visibility ?? true
+  }
+
+  function toggleSort(by: string) {
+    const currentOrder = sortBy === by ? sortOrder : ''
+    const sorting: SortOrder = currentOrder === 'asc' ? 'desc' : 'asc'
+    setSortBy(by)
+    setSortOrder(sorting)
+  }
+
+  function sortIcon(by: string) {
+    if (sortBy !== by || sortOrder === '') {
+      return 'mi:sort'
+    }
+
+    if (sortOrder === 'asc') {
+      return 'lucide:sort-asc'
+    }
+
+    return 'lucide:sort-desc'
+  }
 
   return (
     <div className="relative max-h-[70vh] w-full overflow-y-auto rounded-md border border-slate-200">
@@ -98,24 +136,8 @@ function SkillRowsTable({
               <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
                 <span className="inline-flex items-center gap-1">
                   Name
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const sorting = nextSortOrder(sortOrder)
-                      setSortBy('name')
-                      setSortOrder(sorting)
-                    }}
-                  >
-                    <Icon
-                      icon={
-                        sortOrder === ''
-                          ? 'mi:sort'
-                          : sortOrder === 'asc'
-                            ? 'lucide:sort-asc'
-                            : 'lucide:sort-desc'
-                      }
-                      className="size-5 cursor-pointer text-white"
-                    />
+                  <button type="button" onClick={() => toggleSort('name')}>
+                    <Icon icon={sortIcon('name')} className="size-5 cursor-pointer text-slate-700" />
                   </button>
                 </span>
               </th>
@@ -129,23 +151,10 @@ function SkillRowsTable({
               <th className="border border-slate-200 bg-slate-200 px-2.5 py-2.5 text-left">
                 <span className="inline-flex items-center gap-1">
                   Update At
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const sorting = nextSortOrder(sortOrder)
-                      setSortBy('date_updated')
-                      setSortOrder(sorting)
-                    }}
-                  >
+                  <button type="button" onClick={() => toggleSort('date_updated')}>
                     <Icon
-                      icon={
-                        sortOrder === ''
-                          ? 'mi:sort'
-                          : sortOrder === 'asc'
-                            ? 'lucide:sort-asc'
-                            : 'lucide:sort-desc'
-                      }
-                      className="size-5 cursor-pointer text-white"
+                      icon={sortIcon('date_updated')}
+                      className="size-5 cursor-pointer text-slate-700"
                     />
                   </button>
                 </span>
@@ -182,11 +191,61 @@ function SkillRowsTable({
   )
 }
 
-const ListWrapper = () => {
-  const [filters, setFilters] = useState<SkillFilters>(
-    () => getStateFromSearchParams()?.filters ?? {},
-  )
+const FILTER_OPTIONS: Record<string, { label: string; options: Array<{ value: string; label: string }> }> = {
+  status: {
+    label: 'Status',
+    options: [
+      { value: 'all', label: 'All Status' },
+      { value: 'draft', label: 'Draft' },
+      { value: 'published', label: 'Published' },
+      { value: 'archived', label: 'Archived' },
+    ],
+  },
+  color: {
+    label: 'Color',
+    options: [
+      { value: 'all', label: 'All Colors' },
+      { value: 'red', label: 'Red' },
+      { value: 'blue', label: 'Blue' },
+      { value: 'green', label: 'Green' },
+      { value: 'yellow', label: 'Yellow' },
+    ],
+  },
+}
 
+// Renders one filter control, matching Vue's per-column `#status` / `#color` slots.
+function SkillFilter({ column, value, setValue }: FilterScope) {
+  const config = FILTER_OPTIONS[column]
+
+  if (!config) {
+    return null
+  }
+
+  return (
+    <div className="relative flex items-center gap-2">
+      <label className="whitespace-nowrap text-sm text-slate-500" htmlFor={`${column}-filter`}>
+        {config.label}:
+      </label>
+      <select
+        id={`${column}-filter`}
+        className="appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+        value={value == null ? 'all' : String(value)}
+        onChange={(e) => setValue(toFilterValue(e.target.value))}
+      >
+        {config.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-500">
+        <Icon icon="mdi:chevron-down" className="h-4 w-4" />
+      </div>
+    </div>
+  )
+}
+
+const ListWrapper = () => {
   return (
     <div className="w-full max-w-350 rounded-xl bg-white p-8 text-slate-800 shadow-lg">
       <h2 className="mb-6 text-3xl font-bold text-slate-700">
@@ -205,12 +264,13 @@ const ListWrapper = () => {
           { name: 'status', label: 'Status' },
           { name: 'date_updated', label: 'Update At' },
         ]}
-        filters={filters}
-        onFiltersChange={setFilters}
+        filters={getInitialFilters()}
         paginationMode="pagination"
         requestHandler={requestHandler}
         stateManager={stateManager}
       >
+        {({ clearState }: Context<Skill>) => (
+        <>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center">
             <ListSearch>
@@ -233,17 +293,15 @@ const ListWrapper = () => {
               Columns:
             </span>
             <ListColumns>
-              {({ context: { columns, updateColumn, columnSettings } }) => (
+              {({ context: { columns }, setColumn }: ColumnsScope) => (
                 <div className="flex flex-wrap items-center gap-2">
                   {columns.map((column) => {
-                    const columnName = typeof column === 'string' ? column : column.name
-                    const columnLabel =
-                      typeof column === 'string' ? column : column.label || column.name
-                    const isVisible = columnSettings[columnName]?.visible ?? true
+                    const columnLabel = column.label || column.name
+                    const isVisible = column.visibility ?? true
 
                     return (
                       <label
-                        key={columnName}
+                        key={column.name}
                         className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition ${
                           isVisible
                             ? 'border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-50'
@@ -253,7 +311,7 @@ const ListWrapper = () => {
                         <input
                           type="checkbox"
                           checked={isVisible}
-                          onChange={(e) => updateColumn(columnName, 'visible', e.target.checked)}
+                          onChange={(e) => setColumn(column.name, 'visibility', e.target.checked)}
                           className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                         />
                         <span>{columnLabel}</span>
@@ -265,56 +323,16 @@ const ListWrapper = () => {
             </ListColumns>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex items-center gap-2">
-                <label className="whitespace-nowrap text-sm text-slate-500">Status:</label>
-                <select
-                  className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                  value={filters.status ?? 'all'}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    setFilters((prev) => ({
-                      ...prev,
-                      status: value === 'all' ? undefined : value,
-                    }))
-                  }}
-                >
-                  <option value="all">All Status</option>
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="archived">Archived</option>
-                </select>
-                <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-500">
-                  <Icon icon="mdi:chevron-down" className="h-4 w-4" />
-                </div>
-              </div>
+          <ListFilters filter={(scope: FilterScope) => <SkillFilter {...scope} />} />
 
-              <div className="relative flex items-center gap-2">
-                <label className="whitespace-nowrap text-sm text-slate-500">Color:</label>
-                <select
-                  className="max-w-350 appearance-none rounded-md border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                  value={filters.color ?? 'all'}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    setFilters((prev) => ({
-                      ...prev,
-                      color: value === 'all' ? undefined : value,
-                    }))
-                  }}
-                >
-                  <option value="all">All Colors</option>
-                  <option value="red">Red</option>
-                  <option value="blue">Blue</option>
-                  <option value="green">Green</option>
-                  <option value="yellow">Yellow</option>
-                </select>
-                <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-500">
-                  <Icon icon="mdi:chevron-down" className="h-4 w-4" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            onClick={() => resetState(clearState)}
+          >
+            <Icon icon="mdi:restore" className="h-4 w-4" />
+            Reset State
+          </button>
         </div>
 
         <div className="my-6">
@@ -358,13 +376,19 @@ const ListWrapper = () => {
                 We couldn&apos;t find any matching records. Try adjusting your search or filters.
               </p>
 
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded border border-primary-600 bg-primary-500 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-600 hover:shadow"
-              >
-                <Icon icon="mdi:refresh" className="h-5 w-5" />
-                Refresh
-              </button>
+              <ListRefresh>
+                {({ context: { refresh, isLoading } }: ListScope) => (
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => refresh()}
+                    className="flex items-center gap-2 rounded border border-primary-600 bg-primary-500 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-600 hover:shadow disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Icon icon="mdi:refresh" className="h-5 w-5" />
+                    Refresh
+                  </button>
+                )}
+              </ListRefresh>
             </div>
           </ListEmpty>
 
@@ -383,21 +407,28 @@ const ListWrapper = () => {
                     {error?.name}: {error?.message}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded border border-primary-600 bg-primary-500 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-600 hover:shadow"
-                >
-                  <Icon icon="mdi:refresh" className="h-5 w-5" />
-                  Try Again
-                </button>
+                <ListRefresh>
+                  {({ context: { refresh, isLoading } }: ListScope) => (
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => refresh()}
+                      className="flex items-center gap-2 rounded border border-primary-600 bg-primary-500 px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-600 hover:shadow disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Icon icon="mdi:refresh" className="h-5 w-5" />
+                      Try Again
+                    </button>
+                  )}
+                </ListRefresh>
               </div>
             )}
           </ListError>
 
           <ListRows>
-            {({ context: { rows, sortOrder, setSortBy, setSortOrder } }) => (
+            {({ context: { rows, sortBy, sortOrder, setSortBy, setSortOrder } }) => (
               <SkillRowsTable
                 rows={rows as Skill[]}
+                sortBy={sortBy}
                 sortOrder={sortOrder}
                 setSortBy={setSortBy}
                 setSortOrder={setSortOrder}
@@ -536,6 +567,8 @@ const ListWrapper = () => {
             </ListPagination>
           </div>
         </div>
+        </>
+        )}
       </List>
     </div>
   )

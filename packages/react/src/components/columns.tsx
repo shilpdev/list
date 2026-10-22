@@ -1,35 +1,47 @@
 import { Fragment, type ReactNode } from 'react'
-import type { ListScope, ColumnScope } from '@shared'
+import type { Column, ColumnScope, ColumnsScope } from '@shared'
 import { useListContext } from '../context/list-context'
 
 type ListColumnsProps = {
-  children?: ReactNode | ((scope: ListScope) => ReactNode)
-  column?: (args: ColumnScope) => ReactNode
+  /** Replaces the whole list of columns. Gets `{ context, setColumn }`. */
+  children?: ReactNode | ((scope: ColumnsScope) => ReactNode)
+  /** Renders one column. Gets `{ context, name, label, visibility, ...your keys, setValue }`. */
+  column?: (scope: ColumnScope) => ReactNode
 }
 
 export const ListColumns = ({ children, column: columnFn }: ListColumnsProps) => {
   const context = useListContext()
-  const { columns, columnSettings, updateColumn } = context
+  const { columns, setColumn } = context
+
+  function getColumnScope(item: Column): ColumnScope {
+    return {
+      context,
+      ...item,
+      setValue: (key: string, value: unknown) => {
+        setColumn(item.name, key, value)
+      },
+    }
+  }
 
   let content: ReactNode
 
   if (typeof children === 'function') {
-    content = children({ context })
+    content = children({ context, setColumn })
   } else if (children) {
     content = children
   } else {
-    content = columns.map((column, index) => {
+    content = columns.map((item) => {
       if (columnFn) {
-        return <Fragment key={`column-${index}`}>{columnFn({ column, context })}</Fragment>
+        return <Fragment key={item.name}>{columnFn(getColumnScope(item))}</Fragment>
       }
 
       return (
-        <label key={`column-${index}`}>
-          <span>{column.label}</span>
+        <label key={item.name}>
+          <span>{item.label ?? item.name}</span>
           <input
             type="checkbox"
-            checked={columnSettings[column.name]?.visible ?? true}
-            onChange={(e) => updateColumn(column.name, 'visible', e.target.checked)}
+            checked={item.visibility}
+            onChange={(e) => setColumn(item.name, 'visibility', e.target.checked)}
           />
         </label>
       )

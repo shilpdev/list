@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import type { ListScope } from '@shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListLoaderProps = {
@@ -20,7 +21,7 @@ export const ListLoader = ({ children }: ListLoaderProps) => {
   } else if (children) {
     content = children
   } else {
-    content = <p>Loading...</p>
+    content = <p>{MESSAGES.loading}</p>
   }
 
   return <div className="shilp-list__loader">{content}</div>

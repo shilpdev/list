@@ -8,7 +8,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { getSummaryMessage, getSummaryRange } from '@shared/utils'
+import { getSummaryMessage } from '@shared/constants'
+import { getSummaryRange } from '@shared/utils'
 import type { SummaryScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 

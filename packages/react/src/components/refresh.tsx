@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react'
 import type { ListScope } from '@shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListRefreshProps = {
@@ -22,7 +23,7 @@ export const ListRefresh = ({ children }: ListRefreshProps) => {
   } else {
     content = (
       <button type="button" onClick={() => context.refresh()} disabled={context.isLoading}>
-        {context.isLoading ? 'Loading...' : 'Refresh'}
+        {context.isLoading ? MESSAGES.loading : MESSAGES.refresh}
       </button>
     )
   }

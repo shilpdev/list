@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo, type ReactNode } from 'react'
 import type { GoToScope } from '@shared'
 import { getPagesCount } from '@shared/utils'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListGoToProps = {
@@ -47,7 +48,7 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
         {pages.map((pageNum) => {
           return (
             <option key={`page-${pageNum}`} value={pageNum}>
-              Page {pageNum}
+              {MESSAGES.pageOptionPrefix} {pageNum}
             </option>
           )
         })}
