@@ -254,9 +254,28 @@ export const stateManager: StateManager = {
         return null
       }
 
+      // The list uses the filters as they are, so return all of them, with `isDirty` set against the
+      // initial values in `context.filters`.
+      const urlFilters = urlState?.filters ?? []
+      const filters = (parsed?.filters ?? context.filters).map((filter) => {
+        const fromUrl = urlFilters.find((urlFilter) => {
+          return urlFilter.column === filter.column
+        })
+        const initial = context.filters.find((item) => {
+          return item.column === filter.column
+        })
+
+        if (!fromUrl) {
+          return filter
+        }
+
+        return { ...filter, value: fromUrl.value, isDirty: fromUrl.value !== initial?.value }
+      })
+
       return {
         ...parsed,
         ...urlState,
+        filters,
       }
     } catch {
       return urlState

@@ -48,12 +48,6 @@ export const computeFilters = (
   return next
 }
 
-export const hasActiveFilters = (filters: FilterState[]): boolean => {
-  return filters.some((filter) => {
-    return filter.isDirty
-  })
-}
-
 export const computeHasMore = (page: number, perPage: number, count: number): boolean => {
   return page * perPage < count
 }
@@ -137,25 +131,6 @@ export const computeColumns = (
       return item
     }),
   )
-}
-
-/** Values to restore from `stateManager.get()`; a load-more list always starts on page 1. */
-export const getRestoredState = (saved: Partial<State> | null | undefined, isLoadMore: boolean) => {
-  let page = saved?.page
-
-  if (isLoadMore) {
-    page = 1
-  }
-
-  return {
-    page,
-    perPage: saved?.perPage,
-    sortBy: saved?.sortBy,
-    sortOrder: saved?.sortOrder,
-    search: saved?.search,
-    filters: saved?.filters,
-    columns: saved?.columns,
-  }
 }
 
 export const getPagesCount = (count: number, perPage: number): number => {

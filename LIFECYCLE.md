@@ -44,7 +44,7 @@ sequenceDiagram
 ### 2. Mount
 
 1. `stateManager.init(state)`.
-2. `onFiltersChange(filters)` if the restored filters differ from the initial `filters`.
+2. `onFiltersChange(filters)` if the saved filters differ from the initial `filters`.
 3. The first request starts (step 3) for the current page.
 
 ### 3. Request

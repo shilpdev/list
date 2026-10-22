@@ -94,7 +94,6 @@ export interface State<T = unknown> {
   filters: FilterState[]
   columns: Columns
   isEmpty: boolean
-  hasActiveFilters: boolean
   idKey: string
 }
 

@@ -107,7 +107,7 @@ Every scope has `context` (the state plus every action). Other keys are values t
 const context = useListContext<Row>()
 ```
 
-Data: `rows`, `count`, `error`, `response`, `isEmpty`, `hasActiveFilters`, `search`, `filters`, `selection`, `columns`, `columnSettings`.
+Data: `rows`, `count`, `error`, `response`, `isEmpty`, `search`, `filters`, `selection`, `columns`, `columnSettings`.
 
 Flat keys: `isLoading`, `isInitialLoading`, `page`, `perPage`, `hasMore`, `sortBy` (`''` when unset) / `sortOrder`.
 

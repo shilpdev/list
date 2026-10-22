@@ -32,8 +32,6 @@ import {
   computeColumns,
   computeHasMore,
   createColumns,
-  getRestoredState,
-  hasActiveFilters,
   hasSelectionChanged,
   mergeRows,
   patchRowById,
@@ -326,9 +324,6 @@ const state = reactive({
   filters: localFilters,
   columns: localColumns,
   isEmpty,
-  hasActiveFilters: computed(() => {
-    return hasActiveFilters(localFilters.value)
-  }),
 }) as State
 
 const context = reactive({
@@ -366,47 +361,34 @@ try {
   console.error(err)
 }
 
-const restored = getRestoredState(saved, isLoadMore.value)
-
-if (restored.page != null) {
-  localPage.value = restored.page
+if (saved.page != null && !isLoadMore.value) {
+  localPage.value = saved.page
 }
 
-if (restored.perPage != null) {
-  localPerPage.value = restored.perPage
+if (saved.perPage != null) {
+  localPerPage.value = saved.perPage
 }
 
-if (restored.sortBy != null) {
-  localSortBy.value = restored.sortBy
+if (saved.sortBy != null) {
+  localSortBy.value = saved.sortBy
 }
 
-if (restored.sortOrder != null) {
-  localSortOrder.value = restored.sortOrder
+if (saved.sortOrder != null) {
+  localSortOrder.value = saved.sortOrder
 }
 
-if (restored.search != null) {
-  localSearch.value = restored.search
+if (saved.search != null) {
+  localSearch.value = saved.search
 }
 
-if (restored.columns != null) {
-  // Saved columns that are no longer in the `columns` prop are ignored.
-  restored.columns.forEach(({ name, ...values }) => {
-    Object.entries(values).forEach(([key, value]) => {
-      localColumns.value = computeColumns(localColumns.value, name, key, value)
-    })
-  })
+// Saved columns and filters replace the ones from the props as they are, so `get` returns the
+// complete lists, with `isDirty` already worked out.
+if (saved.columns != null) {
+  localColumns.value = saved.columns
 }
 
-if (restored.filters != null) {
-  localFilters.value = computeFilters(
-    localFilters.value,
-    defaultFilters,
-    Object.fromEntries(
-      restored.filters.map(({ column, value }) => {
-        return [column, value]
-      }),
-    ),
-  )
+if (saved.filters != null) {
+  localFilters.value = saved.filters
 }
 
 // Lifecycle 7, props changing after mount: none. `filters`, `columns` and the query props (page,
@@ -449,14 +431,14 @@ watch(selection, (newValue, oldValue) => {
 function init() {
   props.stateManager?.init?.(snapshot())
 
-  if (restored.filters != null && !equal(localFilters.value, defaultFilters)) {
+  if (saved.filters != null && !equal(localFilters.value, defaultFilters)) {
     emit('onFiltersChange', localFilters.value)
   }
 
   getData()
 }
 
-// Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the restored filters differ from
+// Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the saved filters differ from
 // the prop, then the first request.
 onMounted(() => {
   init()
