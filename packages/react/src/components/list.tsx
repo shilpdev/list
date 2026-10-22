@@ -33,25 +33,17 @@ import {
   toError,
 } from '@shared/utils'
 import equal from 'fast-deep-equal'
-import {
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-  type Ref,
-} from 'react'
+import { useEffect, useImperativeHandle, useRef, useState, type ReactNode, type Ref } from 'react'
 import { ListContextProvider } from '../context/list-context'
 
 export interface ListPropsReact<T = unknown> extends ListProps<T>, EventProps<T> {
   filters?: Filters
-  children?: ReactNode | ((context: Context) => ReactNode)
-  /** React 19 ref-as-prop; use with useImperativeHandle for the imperative API. */
-  ref?: Ref<Context>
+  children?: ReactNode | ((context: Context<T>) => ReactNode)
+  /** React 19 ref-as-prop; exposes the list context as an imperative API. */
+  ref?: Ref<Context<T>>
 }
 
-function List({
+function List<T = unknown>({
   ref,
   children,
   endpoint,
@@ -76,134 +68,32 @@ function List({
   onError,
   onRowSelect,
   onFiltersChange,
-}: ListPropsReact) {
+}: ListPropsReact<T>) {
   const isLoadMore = paginationMode === 'loadMore'
-  const [defaultFilters] = useState<Filters>(() => {
-    return { ...filtersProp }
-  })
 
-  const [page, _setPage] = useState<number>(pageProp)
-  const [perPage, _setPerPage] = useState<number>(perPageProp)
-  const [sortBy, _setSortBy] = useState<string>(sortByProp)
-  const [sortOrder, _setSortOrder] = useState<SortOrder>(sortOrderProp)
-  const [search, _setSearch] = useState<string>(searchProp)
-  const [filters, _setFilters] = useState<Filters>(filtersProp)
-  const [columnSettings, _setColumnSettings] = useState<ColumnSettings>({})
-  const [rows, _setRows] = useState<unknown[]>([])
-  const [selection, _setSelection] = useState<unknown[]>([])
-  const [error, _setError] = useState<Error | null>(null)
-  const [response, _setResponse] = useState<RequestHandlerResponse | null>(null)
-  const [count, _setCount] = useState<number>(0)
-  const [isLoading, _setIsLoading] = useState<boolean>(true)
-  const [isInitialLoading, _setIsInitialLoading] = useState<boolean>(true)
-  const [isRefresh, _setIsRefresh] = useState<boolean>(false)
-  // Each bump runs the request effect once. It starts at 1 so the first request runs on mount.
-  const [requestKey, _setRequestKey] = useState<number>(1)
-  // Each bump runs the response effect once, after the response has rendered.
-  const [responseKey, _setResponseKey] = useState<number>(0)
+  const [defaultFilters] = useState<Filters>(() => ({ ...filtersProp }))
+  const [localPage, setLocalPage] = useState<number>(pageProp)
+  const [localPerPage, setLocalPerPage] = useState<number>(perPageProp)
+  const [localSortBy, setLocalSortBy] = useState<string>(sortByProp)
+  const [localSortOrder, setLocalSortOrder] = useState<SortOrder>(sortOrderProp)
+  const [localSearch, setLocalSearch] = useState<string>(searchProp)
+  const [filters, setFiltersState] = useState<Filters>(() => ({ ...filtersProp }))
+  const [columnSettings, setColumnSettings] = useState<ColumnSettings>({})
+  const [rows, setRowsState] = useState<T[]>([])
+  const [selection, setSelectionState] = useState<T[]>([])
+  const [error, setError] = useState<Error | null>(null)
+  const [response, setResponse] = useState<RequestHandlerResponse<T> | null>(null)
+  const [count, setCount] = useState<number>(0)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true)
+  const [isRefresh, setIsRefresh] = useState<boolean>(false)
+  const [isReady, setIsReady] = useState<boolean>(false)
 
-  const state = useMemo((): State => {
-    return {
-      endpoint,
-      version,
-      meta,
-      rows,
-      response,
-      error,
-      count,
-      selection,
-      page,
-      perPage,
-      hasMore: computeHasMore(page, perPage, count),
-      isLoading,
-      isInitialLoading,
-      isRefresh,
-      sortBy,
-      sortOrder,
-      search,
-      filters,
-      columns: getColumns(columns, rows),
-      columnSettings,
-      isEmpty: rows.length === 0,
-      hasActiveFilters: hasActiveFilters(filters, defaultFilters),
-      idKey,
-    }
-  }, [
-    endpoint,
-    version,
-    meta,
-    rows,
-    response,
-    error,
-    count,
-    selection,
-    page,
-    perPage,
-    isLoading,
-    isInitialLoading,
-    isRefresh,
-    sortBy,
-    sortOrder,
-    search,
-    filters,
-    columns,
-    columnSettings,
-    defaultFilters,
-    idKey,
-  ])
+  const requestIdRef = useRef(0)
+  const initializedRef = useRef(false)
+  const previousSelectionRef = useRef(selection)
+  const eventsRef = useRef<EventProps<T>>({})
 
-  // Lifecycle 1, setup (first render): state starts from the props and defaults. `stateManager.get`
-  // runs once and may restore page, perPage, sort, search, filters and columnSettings. A load-more
-  // list always starts on page 1. Nothing is fetched yet. The restore is applied while rendering, so
-  // React renders again at once and the values before it are never committed.
-  const [isRestored, _setIsRestored] = useState<boolean>(false)
-  const [restoredFilters, _setRestoredFilters] = useState<Filters | undefined>(undefined)
-
-  if (!isRestored) {
-    _setIsRestored(true)
-
-    let saved: Partial<State> = {}
-
-    try {
-      saved = stateManager?.get?.(state) ?? {}
-    } catch (err) {
-      console.error(err)
-    }
-
-    const restored = getRestoredState(saved, isLoadMore)
-
-    if (restored.page != null) {
-      _setPage(restored.page)
-    }
-
-    if (restored.perPage != null) {
-      _setPerPage(restored.perPage)
-    }
-
-    if (restored.sortBy != null) {
-      _setSortBy(restored.sortBy)
-    }
-
-    if (restored.sortOrder != null) {
-      _setSortOrder(restored.sortOrder)
-    }
-
-    if (restored.search != null) {
-      _setSearch(restored.search)
-    }
-
-    if (restored.columnSettings != null) {
-      _setColumnSettings(restored.columnSettings)
-    }
-
-    if (restored.filters != null) {
-      _setFilters(restored.filters)
-      _setRestoredFilters(restored.filters)
-    }
-  }
-
-  // Hooks read the latest callbacks without making the effects below depend on them.
-  const eventsRef = useRef<EventProps>({})
   eventsRef.current = {
     beforePageChange,
     afterPageChange,
@@ -215,189 +105,56 @@ function List({
     onFiltersChange,
   }
 
-  // Marks the next render as loading and runs the request effect after it. Called together with the
-  // setters of the fields being changed, so React renders once with all of them.
-  const startRequest = (refreshing = false) => {
-    _setError(null)
-    _setIsLoading(true)
-    _setIsRefresh(refreshing)
-    _setRequestKey((key) => {
-      return key + 1
-    })
+  const state: State<T> = {
+    endpoint,
+    version,
+    meta,
+    idKey,
+    page: localPage,
+    perPage: localPerPage,
+    sortBy: localSortBy,
+    sortOrder: localSortOrder,
+    search: localSearch,
+    filters,
+    rows,
+    response,
+    error,
+    count,
+    selection,
+    hasMore: computeHasMore(localPage, localPerPage, count),
+    isLoading,
+    isInitialLoading,
+    isRefresh,
+    columns: getColumns(columns, rows),
+    columnSettings,
+    isEmpty: rows.length === 0,
+    hasActiveFilters: hasActiveFilters(filters, defaultFilters),
   }
 
-  // Lifecycle 7, props changing after mount: only `filters` refetches, except before the first
-  // response has arrived. The query props (page, perPage, search, sortBy, sortOrder, endpoint) are
-  // read once; change them through the context actions. Applied while rendering, so React renders
-  // again at once instead of committing the old values first.
-  const [prevFiltersProp, _setPrevFiltersProp] = useState<Filters>(filtersProp)
-
-  if (!equal(filtersProp, prevFiltersProp)) {
-    _setPrevFiltersProp(filtersProp)
-
-    // Skip a parent echoing filters already applied (setFilters, clearFilters, or a restore).
-    if (!isInitialLoading && !equal(filtersProp, filters)) {
-      _setFilters(filtersProp)
-      _setPage(1)
-      startRequest()
-    }
+  function snapshot(): State<T> {
+    return state
   }
 
-  // Lifecycle 6, actions called by the consumer. Each one sets the fields it changes and, when it
-  // fetches, calls `startRequest`; the request runs after the render with the new values.
-  // setPerPage, setSearch, setSortBy, setSortOrder, setFilters and clearFilters go back to page 1 and
-  // refetch. refresh refetches the current page (load-more: from page 1). loadMore fetches the next
-  // page. updateRowById, updateColumn and setSelection change state without a request.
-  const actions = useMemo(() => {
-    const setPage = (value: number) => {
-      if (!value) {
-        return
-      }
+  function updateStateManager(nextState: State<T> = snapshot()) {
+    stateManager?.set?.(nextState)
+  }
 
-      _setPage(value)
-      startRequest()
+  // Lifecycle 3 to 5, one request. The query effect below decides when this method runs;
+  // refresh calls it directly only when the watched query values do not change.
+  function getData(refreshing = false) {
+    setError(null)
+    setIsLoading(true)
+
+    if (refreshing) {
+      setIsRefresh(true)
     }
 
-    // While the first response is pending the filters are stored without refetching.
-    const setFilters = (nextFilters: Filters) => {
-      if (equal(state.filters, nextFilters)) {
-        return
-      }
-
-      _setFilters(nextFilters)
-
-      if (!state.isInitialLoading) {
-        setPage(1)
-      }
-
-      eventsRef.current.onFiltersChange?.(nextFilters)
+    const currentRequestId = ++requestIdRef.current
+    const requestState: State<T> = {
+      ...snapshot(),
+      isLoading: true,
+      isRefresh: refreshing || isRefresh,
     }
-
-    return {
-      setPage,
-
-      setPerPage: (value: number) => {
-        _setPerPage(value)
-        setPage(1)
-      },
-
-      setSearch: (value: string) => {
-        if (value === state.search) {
-          return
-        }
-
-        _setSearch(value)
-        setPage(1)
-      },
-
-      setSortBy: (value: string) => {
-        if (value === state.sortBy) {
-          return
-        }
-
-        _setSortBy(value)
-        setPage(1)
-      },
-
-      setSortOrder: (value: SortOrder) => {
-        if (value === state.sortOrder) {
-          return
-        }
-
-        _setSortOrder(value)
-        setPage(1)
-      },
-
-      // Two calls before the next render set the same page and one request runs.
-      loadMore: () => {
-        if (state.hasMore && !state.isLoading) {
-          setPage(state.page + 1)
-        }
-      },
-
-      clearFilters: () => {
-        setFilters({ ...defaultFilters })
-      },
-
-      setFilters,
-
-      refresh: () => {
-        if (isLoadMore) {
-          _setRows([])
-          _setPage(1)
-        }
-
-        startRequest(true)
-      },
-
-      updateRowById: (row: Record<string, unknown>, id: string | number) => {
-        const next = patchRowById(state.rows, row, id, state.idKey)
-
-        if (!next) {
-          console.warn(rowNotFoundMessage(state.idKey, id))
-          return
-        }
-
-        _setRows(next)
-      },
-
-      // No derived field depends on columnSettings, so the saved State is complete without a render.
-      updateColumn: (columnName: string, settingKey: string, value: unknown) => {
-        const next = setColumnSetting(state.columnSettings, columnName, settingKey, value)
-
-        _setColumnSettings(next)
-        stateManager?.set?.({ ...state, columnSettings: next })
-      },
-
-      setSelection: (value: unknown[]) => {
-        _setSelection(value)
-      },
-    }
-  }, [state, stateManager, defaultFilters, isLoadMore])
-
-  const context = useMemo((): Context => {
-    return { ...state, ...actions }
-  }, [state, actions])
-
-  useImperativeHandle(ref, () => {
-    return context
-  }, [context])
-
-  // Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the restored filters differ from
-  // the prop. The first request follows in the request effect below. `initRef` keeps React
-  // StrictMode's second mount from running this twice.
-  const initRef = useRef(false)
-
-  useEffect(() => {
-    if (initRef.current) {
-      return
-    }
-
-    initRef.current = true
-    stateManager?.init?.(state)
-
-    if (restoredFilters != null && !equal(restoredFilters, filtersProp)) {
-      eventsRef.current.onFiltersChange?.(restoredFilters)
-    }
-  }, [])
-
-  // Lifecycle 3 to 5, one request per `requestKey`. It reads the state of the render that started it,
-  // so `requestHandler` gets the values the action set. The cleanup drops the response of a request
-  // that a newer one replaced, or that is still pending when the list unmounts.
-  // 3. Request: `beforePageChange` / `beforeLoadMore` get the State being requested, then
-  //    `requestHandler` runs.
-  // 4. Response: rows are replaced (page mode) or appended (load-more) with their `_index` and
-  //    selection resets. The response effect below then runs `stateManager.set`, `onResponse` and
-  //    `afterPageChange` / `afterLoadMore`.
-  // 5. Error: error is set, rows and count are cleared and `onError` fires. `stateManager.set` and the
-  //    after hooks do not run.
-  useEffect(() => {
-    if (!state.page) {
-      return
-    }
-
-    let isCurrent = true
-    const requestState = state
 
     if (isLoadMore) {
       eventsRef.current.beforeLoadMore?.(requestState)
@@ -406,85 +163,270 @@ function List({
     }
 
     requestHandler(requestState)
-      .then((res) => {
-        if (!isCurrent) {
+      .then((nextResponse) => {
+        if (currentRequestId !== requestIdRef.current) {
           return
         }
 
-        _setResponse(res)
-        _setCount(res.count)
-        _setRows(
-          mergeRows(requestState.rows, res.rows, {
-            page: requestState.page,
-            perPage: requestState.perPage,
-            isLoadMore,
-          }),
-        )
-        // Keep the same array when nothing was selected, so the reset does not re-render.
-        _setSelection((previous) => {
-          if (previous.length === 0) {
-            return previous
-          }
+        const currentRows = refreshing && isLoadMore ? [] : rows
+        const nextRows = mergeRows(currentRows, nextResponse.rows, {
+          page: requestState.page,
+          perPage: requestState.perPage,
+          isLoadMore,
+        })
+        const nextState: State<T> = {
+          ...requestState,
+          response: nextResponse,
+          rows: nextRows,
+          count: nextResponse.count,
+          selection: [],
+          error: null,
+        }
 
-          return []
-        })
-        _setIsInitialLoading(false)
-        _setIsLoading(false)
-        _setIsRefresh(false)
-        _setResponseKey((key) => {
-          return key + 1
-        })
+        setResponse(nextResponse)
+        setRowsState(nextRows)
+        setCount(nextResponse.count)
+        setSelectionState([])
+        setIsInitialLoading(false)
+        setIsLoading(false)
+        setIsRefresh(false)
+
+        // React state setters are asynchronous, so pass the completed snapshot directly.
+        // This mirrors Vue's getData(), where reactive values are updated before callbacks run.
+        updateStateManager(nextState)
+        eventsRef.current.onResponse?.(nextResponse)
+
+        if (isLoadMore) {
+          eventsRef.current.afterLoadMore?.(nextResponse)
+        } else {
+          eventsRef.current.afterPageChange?.(nextResponse)
+        }
       })
-      .catch((err: unknown) => {
-        if (!isCurrent) {
+      .catch((requestError: unknown) => {
+        if (currentRequestId !== requestIdRef.current) {
           return
         }
 
-        const nextError = toError(err)
+        const nextError = toError(requestError)
 
-        _setError(nextError)
-        _setRows([])
-        _setCount(0)
-        _setIsInitialLoading(false)
-        _setIsLoading(false)
-        _setIsRefresh(false)
-
+        setError(nextError)
+        setRowsState([])
+        setCount(0)
+        setIsInitialLoading(false)
+        setIsLoading(false)
+        setIsRefresh(false)
         eventsRef.current.onError?.(nextError)
-        // The list UI already surfaces the error via `state.error`.
-        // Re-throwing here creates unhandled promise rejections.
       })
+  }
 
-    return () => {
-      isCurrent = false
-    }
-  }, [requestKey])
-
-  // Lifecycle 4, after the response has rendered: `stateManager.set` gets the committed State with
-  // the new rows, then `onResponse` and `afterPageChange` / `afterLoadMore` fire.
-  useEffect(() => {
-    if (responseKey === 0 || !state.response) {
+  // Lifecycle 6, actions. Query-changing actions update local state; the watcher effect below
+  // performs one request after React commits the combined changes.
+  function setPage(value: number) {
+    if (!Number.isInteger(value) || value < 1 || value === localPage) {
       return
     }
 
-    stateManager?.set?.(state)
-    eventsRef.current.onResponse?.(state.response)
+    setLocalPage(value)
+  }
+
+  function setPerPage(value: number) {
+    if (!Number.isInteger(value) || value < 1 || value === localPerPage) {
+      return
+    }
+
+    setLocalPerPage(value)
+    setLocalPage(1)
+  }
+
+  function setSearch(value: string) {
+    if (value === localSearch) {
+      return
+    }
+
+    setLocalSearch(value)
+    setLocalPage(1)
+  }
+
+  function setSortBy(value: string) {
+    if (value === localSortBy) {
+      return
+    }
+
+    setLocalSortBy(value)
+    setLocalPage(1)
+  }
+
+  function setSortOrder(value: SortOrder) {
+    if (value === localSortOrder) {
+      return
+    }
+
+    setLocalSortOrder(value)
+    setLocalPage(1)
+  }
+
+  function setFilters(nextFilters: Filters) {
+    if (equal(filters, nextFilters)) {
+      return
+    }
+
+    setFiltersState(nextFilters)
+    setLocalPage(1)
+    eventsRef.current.onFiltersChange?.(nextFilters)
+  }
+
+  function clearFilters() {
+    setFilters({ ...defaultFilters })
+  }
+
+  function setSelection(value: T[]) {
+    setSelectionState(value)
+  }
+
+  function refresh() {
+    setError(null)
+    setIsRefresh(true)
 
     if (isLoadMore) {
-      eventsRef.current.afterLoadMore?.(state.response)
-    } else {
-      eventsRef.current.afterPageChange?.(state.response)
+      setRowsState([])
     }
-  }, [responseKey])
 
-  // `onRowSelect` fires when the selection really changes, including the reset after a response.
-  const prevSelectionRef = useRef(selection)
+    if (localPage === 1) {
+      // The page/query values have not changed, so the watcher cannot trigger this request.
+      getData(true)
+    } else {
+      // Changing the page triggers the watcher once, with isRefresh already set.
+      setLocalPage(1)
+    }
+  }
 
+  function loadMore() {
+    if (!state.hasMore || isLoading) {
+      return
+    }
+
+    setLocalPage((currentPage) => currentPage + 1)
+  }
+
+  function updateRowById(row: Partial<T>, id: string | number) {
+    const nextRows = patchRowById(rows, row, id, idKey)
+
+    if (!nextRows) {
+      console.warn(rowNotFoundMessage(idKey, id))
+      return
+    }
+
+    setRowsState(nextRows)
+  }
+
+  function updateColumn(columnName: string, settingKey: string, value: unknown) {
+    const nextColumnSettings = setColumnSetting(columnSettings, columnName, settingKey, value)
+
+    setColumnSettings(nextColumnSettings)
+    updateStateManager({ ...state, columnSettings: nextColumnSettings })
+  }
+
+  const actions = {
+    setPage,
+    setPerPage,
+    setSearch,
+    setSortBy,
+    setSortOrder,
+    setFilters,
+    clearFilters,
+    loadMore,
+    refresh,
+    setSelection,
+    updateRowById,
+    updateColumn,
+  }
+
+  const context: Context<T> = { ...state, ...actions }
+
+  useImperativeHandle(ref, () => context, [context])
+
+  // Lifecycle 1 and 2: restore persisted state, initialize the state manager, then enable fetching.
   useEffect(() => {
-    const previous = prevSelectionRef.current
-    prevSelectionRef.current = selection
+    if (initializedRef.current) {
+      return
+    }
 
-    if (hasSelectionChanged(selection, previous)) {
-      eventsRef.current.onRowSelect?.(selection, previous)
+    initializedRef.current = true
+    let savedState: Partial<State> = {}
+
+    try {
+      savedState = stateManager?.get?.(state) ?? {}
+    } catch (restoreError) {
+      console.error(restoreError)
+    }
+
+    const restoredState = getRestoredState(savedState, isLoadMore)
+
+    const initialState: State = {
+      ...state,
+      page: restoredState.page ?? (isLoadMore ? 1 : state.page),
+      perPage: restoredState.perPage ?? state.perPage,
+      sortBy: restoredState.sortBy ?? state.sortBy,
+      sortOrder: restoredState.sortOrder ?? state.sortOrder,
+      search: restoredState.search ?? state.search,
+      filters: restoredState.filters ?? state.filters,
+      columnSettings: restoredState.columnSettings ?? state.columnSettings,
+    }
+
+    if (restoredState.page != null) setLocalPage(restoredState.page)
+    else if (isLoadMore) setLocalPage(1)
+    if (restoredState.perPage != null) setLocalPerPage(restoredState.perPage)
+    if (restoredState.sortBy != null) setLocalSortBy(restoredState.sortBy)
+    if (restoredState.sortOrder != null) setLocalSortOrder(restoredState.sortOrder)
+    if (restoredState.search != null) setLocalSearch(restoredState.search)
+    if (restoredState.columnSettings != null) setColumnSettings(restoredState.columnSettings)
+    if (restoredState.filters != null) setFiltersState(restoredState.filters)
+
+    stateManager?.init?.(initialState)
+
+    if (restoredState.filters != null && !equal(restoredState.filters, defaultFilters)) {
+      eventsRef.current.onFiltersChange?.(restoredState.filters)
+    }
+
+    setIsReady(true)
+    // Initialization intentionally runs once, like Vue setup + onMounted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Vue's query watcher equivalent: related state updates are batched into one request.
+  useEffect(() => {
+    if (!isReady || !localPage) {
+      return
+    }
+
+    getData()
+
+    // Invalidate a pending request when its query changes or this list unmounts.
+    return () => {
+      requestIdRef.current += 1
+    }
+    // getData is intentionally a plain function, mirroring the Vue implementation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, localPage, localPerPage, localSearch, localSortBy, localSortOrder, filters])
+
+  // Keep externally supplied filters in sync. The query effect above performs the request.
+  useEffect(() => {
+    if (!isReady || equal(filtersProp, filters)) {
+      return
+    }
+
+    setFiltersState({ ...filtersProp })
+    setLocalPage(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, filtersProp])
+
+  // onRowSelect fires only when selection actually changes, including response resets.
+  useEffect(() => {
+    const previousSelection = previousSelectionRef.current
+    previousSelectionRef.current = selection
+
+    if (hasSelectionChanged(selection, previousSelection)) {
+      eventsRef.current.onRowSelect?.(selection, previousSelection)
     }
   }, [selection])
 
