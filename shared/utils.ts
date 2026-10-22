@@ -1,14 +1,6 @@
 import equal from 'fast-deep-equal'
 import { DEFAULT_COLUMN_VISIBILITY } from './constants'
-import type {
-  Columns,
-  FilterState,
-  FilterValues,
-  PerPageOption,
-  SortOrder,
-  State,
-  SummaryScope,
-} from './types'
+import type { Columns, FilterState, FilterValues, PerPageOption, SortOrder, State } from './types'
 
 export const toError = (err: unknown): Error => {
   if (err instanceof Error) {

@@ -1,4 +1,4 @@
-import type { Filter, Meta, PaginationMode, SortOrder } from './types'
+import type { Filter, Meta, PaginationMode, SortOrder, SummaryScope, PerPageOption } from './types'
 
 export const DEFAULT_ID_KEY = 'id'
 export const DEFAULT_PAGE = 1
