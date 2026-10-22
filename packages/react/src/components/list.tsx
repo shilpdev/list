@@ -192,7 +192,6 @@ function List<T = unknown>({
         setIsRefresh(false)
 
         // React state setters are asynchronous, so pass the completed snapshot directly.
-        // This mirrors Vue's getData(), where reactive values are updated before callbacks run.
         updateStateManager(nextState)
         eventsRef.current.onResponse?.(nextResponse)
 
@@ -389,11 +388,9 @@ function List<T = unknown>({
     }
 
     setIsReady(true)
-    // Initialization intentionally runs once, like Vue setup + onMounted.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Vue's query watcher equivalent: related state updates are batched into one request.
+  // related state updates are batched into one request.
   useEffect(() => {
     if (!isReady || !localPage) {
       return
@@ -405,8 +402,7 @@ function List<T = unknown>({
     return () => {
       requestIdRef.current += 1
     }
-    // getData is intentionally a plain function, mirroring the Vue implementation.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // getData is intentionally a plain function.
   }, [isReady, localPage, localPerPage, localSearch, localSortBy, localSortOrder, filters])
 
   // Keep externally supplied filters in sync. The query effect above performs the request.
@@ -417,7 +413,6 @@ function List<T = unknown>({
 
     setFiltersState({ ...filtersProp })
     setLocalPage(1)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, filtersProp])
 
   // onRowSelect fires only when selection actually changes, including response resets.
