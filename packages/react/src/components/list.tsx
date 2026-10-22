@@ -48,12 +48,12 @@ function List<T = unknown>({
   children,
   endpoint,
   idKey = DEFAULT_ID_KEY,
-  page: pageProp = DEFAULT_PAGE,
-  perPage: perPageProp = DEFAULT_PER_PAGE,
-  sortBy: sortByProp = DEFAULT_SORT_BY,
-  sortOrder: sortOrderProp = DEFAULT_SORT_ORDER,
-  search: searchProp = DEFAULT_SEARCH,
-  filters: filtersProp = DEFAULT_FILTERS,
+  page = DEFAULT_PAGE,
+  perPage = DEFAULT_PER_PAGE,
+  sortBy = DEFAULT_SORT_BY,
+  sortOrder = DEFAULT_SORT_ORDER,
+  search = DEFAULT_SEARCH,
+  filters = DEFAULT_FILTERS,
   columns,
   version = DEFAULT_VERSION,
   paginationMode = DEFAULT_PAGINATION_MODE,
@@ -71,13 +71,13 @@ function List<T = unknown>({
 }: ListPropsReact<T>) {
   const isLoadMore = paginationMode === 'loadMore'
 
-  const [defaultFilters] = useState<Filters>(() => ({ ...filtersProp }))
-  const [localPage, setLocalPage] = useState<number>(pageProp)
-  const [localPerPage, setLocalPerPage] = useState<number>(perPageProp)
-  const [localSortBy, setLocalSortBy] = useState<string>(sortByProp)
-  const [localSortOrder, setLocalSortOrder] = useState<SortOrder>(sortOrderProp)
-  const [localSearch, setLocalSearch] = useState<string>(searchProp)
-  const [filters, setFiltersState] = useState<Filters>(() => ({ ...filtersProp }))
+  const [defaultFilters] = useState<Filters>(() => ({ ...filters }))
+  const [localPage, setLocalPage] = useState<number>(page)
+  const [localPerPage, setLocalPerPage] = useState<number>(perPage)
+  const [localSortBy, setLocalSortBy] = useState<string>(sortBy)
+  const [localSortOrder, setLocalSortOrder] = useState<SortOrder>(sortOrder)
+  const [localSearch, setLocalSearch] = useState<string>(search)
+  const [localFilters, setFiltersState] = useState<Filters>(() => ({ ...filters }))
   const [columnSettings, setColumnSettings] = useState<ColumnSettings>({})
   const [rows, setRowsState] = useState<T[]>([])
   const [selection, setSelectionState] = useState<T[]>([])
@@ -403,17 +403,17 @@ function List<T = unknown>({
       requestIdRef.current += 1
     }
     // getData is intentionally a plain function.
-  }, [isReady, localPage, localPerPage, localSearch, localSortBy, localSortOrder, filters])
+  }, [isReady, localPage, localPerPage, localSearch, localSortBy, localSortOrder, localFilters])
 
   // Keep externally supplied filters in sync. The query effect above performs the request.
   useEffect(() => {
-    if (!isReady || equal(filtersProp, filters)) {
+    if (!isReady || equal(filters, localFilters)) {
       return
     }
 
-    setFiltersState({ ...filtersProp })
+    setFiltersState({ ...filters })
     setLocalPage(1)
-  }, [isReady, filtersProp])
+  }, [isReady, localFilters])
 
   // onRowSelect fires only when selection actually changes, including response resets.
   useEffect(() => {
