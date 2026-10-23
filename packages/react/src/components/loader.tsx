@@ -1,27 +1,28 @@
 import { type ReactNode } from 'react'
-import type { LoaderScope } from '../../../../shared'
+import type { ListScope } from '@shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListLoaderProps = {
-  children?: ReactNode | ((scope: LoaderScope) => ReactNode)
+  children?: ReactNode | ((scope: ListScope) => ReactNode)
 }
 
 export const ListLoader = ({ children }: ListLoaderProps) => {
-  const { listState } = useListContext()
-  const { loader } = listState
-  const { isLoading, initialLoading } = loader
+  const context = useListContext()
 
-  const scope: LoaderScope = {
-    isLoading,
-  }
-
-  if (initialLoading || !isLoading) {
+  if (context.isInitialLoading || !context.isLoading) {
     return null
   }
 
-  return (
-    <div className="react-list__loader">
-      {typeof children === 'function' ? children(scope) : children || <p>Loading...</p>}
-    </div>
-  )
+  let content: ReactNode
+
+  if (typeof children === 'function') {
+    content = children({ context })
+  } else if (children) {
+    content = children
+  } else {
+    content = <p>{MESSAGES.loading}</p>
+  }
+
+  return <div className="shilp-list__loader">{content}</div>
 }

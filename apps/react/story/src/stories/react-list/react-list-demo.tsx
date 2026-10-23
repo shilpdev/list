@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
-import ShilpList, {
+import { useMemo } from 'react'
+import List, {
   ListEmpty,
   ListError,
-  ListInitialLoader,
+  ListFilters,
+  ListLoaderInitial,
   ListRows,
   ListLoadMore,
   ListLoader,
@@ -12,15 +13,21 @@ import ShilpList, {
   ListSearch,
   ListSummary,
 } from '@shilp.dev/react-list'
-import type { ListSort } from '@shilp.dev/react-list'
-import {
-  createRequestHandler,
-  type CreateRequestHandlerOptions,
-} from '@/api/request-handler'
+import type { Context, FilterScope } from '@shilp.dev/react-list'
+import { createRequestHandler, type CreateRequestHandlerOptions } from '@/api/request-handler'
 import { formatSkillDate, type Skill } from '@/types/skill'
 import './react-list-demo.css'
 
 const PER_PAGE_OPTIONS = [8, 10, 15, 25, 50, 100]
+
+const COLUMNS = [
+  { name: 'id', label: 'ID' },
+  { name: 'name', label: 'Name' },
+  { name: 'status', label: 'Status' },
+  { name: 'date_updated', label: 'Updated' },
+]
+
+const FILTERS = [{ column: 'status', value: undefined }]
 
 export interface ReactListDemoProps {
   endpoint?: string
@@ -36,13 +43,17 @@ export interface ReactListDemoProps {
 }
 
 function toggleSort(
-  sort: ListSort,
-  setSort: (next: { by: string; order: 'asc' | 'desc' }) => void,
+  {
+    sortBy,
+    sortOrder,
+    setSortBy,
+    setSortOrder,
+  }: Pick<Context, 'sortBy' | 'sortOrder' | 'setSortBy' | 'setSortOrder'>,
   by: string,
 ) {
-  const currentOrder = sort.sortBy === by ? sort.sortOrder : ''
-  const order: 'asc' | 'desc' = currentOrder === 'asc' ? 'desc' : 'asc'
-  setSort({ by, order })
+  const currentOrder = sortBy === by ? sortOrder : ''
+  setSortBy(by)
+  setSortOrder(currentOrder === 'asc' ? 'desc' : 'asc')
 }
 
 export function ReactListDemo(props: ReactListDemoProps) {
@@ -65,13 +76,8 @@ function ReactListDemoInner({
   perPage = 10,
   paginationMode = 'pagination',
   requestHandler,
-  count,
 }: ReactListDemoProps) {
-  const [filters, setFilters] = useState<Record<string, string | undefined>>({})
-  const handler = useMemo(
-    () => createRequestHandler(requestHandler ?? {}),
-    [requestHandler],
-  )
+  const handler = useMemo(() => createRequestHandler(requestHandler ?? {}), [requestHandler])
   const perPageOptions = useMemo(() => {
     if (PER_PAGE_OPTIONS.includes(perPage)) {
       return PER_PAGE_OPTIONS
@@ -80,23 +86,24 @@ function ReactListDemoInner({
     return [...PER_PAGE_OPTIONS, perPage].sort((a, b) => a - b)
   }, [perPage])
 
-  function onStatusChange(value: string) {
-    setFilters((current) => ({
-      ...current,
-      status: value === 'all' ? undefined : value,
-    }))
+  function onStatusChange({ setValue }: FilterScope, value: string) {
+    if (value === 'all') {
+      setValue(undefined)
+    } else {
+      setValue(value)
+    }
   }
 
   return (
     <div className="react-list-demo">
-      <ShilpList
+      <List
         endpoint={endpoint}
         page={page}
         perPage={perPage}
         paginationMode={paginationMode}
         requestHandler={handler}
-        count={count}
-        filters={filters}
+        columns={COLUMNS}
+        filters={FILTERS}
       >
         <div className="react-list-demo__toolbar">
           <ListSearch>
@@ -111,39 +118,43 @@ function ReactListDemoInner({
             )}
           </ListSearch>
 
-          <label className="react-list-demo__filter">
-            Status
-            <select
-              className="react-list-demo__select"
-              onChange={(event) => onStatusChange(event.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </label>
+          <ListFilters
+            filter={(scope) => (
+              <label className="react-list-demo__filter">
+                Status
+                <select
+                  className="react-list-demo__select"
+                  onChange={(event) => onStatusChange(scope, event.target.value)}
+                >
+                  <option value="all">All</option>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </label>
+            )}
+          />
         </div>
 
-        <ListInitialLoader>
+        <ListLoaderInitial>
           <p className="react-list-demo__message">Loading initial data...</p>
-        </ListInitialLoader>
+        </ListLoaderInitial>
 
         <ListEmpty>
           <p className="react-list-demo__message">No skills found.</p>
         </ListEmpty>
 
         <ListError>
-          {({ error }) => (
+          {({ context: { error } }) => (
             <div className="react-list-demo__error">
-              <p>{error.message}</p>
+              <p>{error?.message}</p>
               <ListRefresh>
-                {({ refresh, isLoading }) => (
+                {({ context: { refresh, isLoading } }) => (
                   <button
                     type="button"
                     className="react-list-demo__button"
                     disabled={isLoading}
-                    onClick={refresh}
+                    onClick={() => refresh()}
                   >
                     Try again
                   </button>
@@ -154,7 +165,7 @@ function ReactListDemoInner({
         </ListError>
 
         <ListRows>
-          {({ rows, sort, setSort }) => (
+          {({ context: { rows, sortBy, sortOrder, setSortBy, setSortOrder } }) => (
             <div className="react-list-demo__table-wrap">
               <ListLoader>
                 <p className="react-list-demo__overlay">Updating...</p>
@@ -168,7 +179,9 @@ function ReactListDemoInner({
                       <button
                         type="button"
                         className="react-list-demo__sort"
-                        onClick={() => toggleSort(sort, setSort, 'name')}
+                        onClick={() =>
+                          toggleSort({ sortBy, sortOrder, setSortBy, setSortOrder }, 'name')
+                        }
                       >
                         Name
                       </button>
@@ -178,7 +191,9 @@ function ReactListDemoInner({
                       <button
                         type="button"
                         className="react-list-demo__sort"
-                        onClick={() => toggleSort(sort, setSort, 'date_updated')}
+                        onClick={() =>
+                          toggleSort({ sortBy, sortOrder, setSortBy, setSortOrder }, 'date_updated')
+                        }
                       >
                         Updated
                       </button>
@@ -202,7 +217,7 @@ function ReactListDemoInner({
 
         <div className="react-list-demo__footer">
           <ListSummary>
-            {({ count: total, from, to }) => (
+            {({ context: { count: total }, from, to }) => (
               <span>
                 {from} - {to} of {total}
               </span>
@@ -210,7 +225,7 @@ function ReactListDemoInner({
           </ListSummary>
 
           <ListPerPage options={perPageOptions}>
-            {({ perPage: currentPerPage, setPerPage, options }) => (
+            {({ context: { perPage: currentPerPage, setPerPage }, options }) => (
               <label className="react-list-demo__filter">
                 Per page
                 <select
@@ -230,7 +245,14 @@ function ReactListDemoInner({
 
           {paginationMode === 'pagination' ? (
             <ListPagination>
-              {({ page: currentPage, pagesToDisplay, hasNext, hasPrev, prev, next, setPage }) => (
+              {({
+                context: { page: currentPage, setPage },
+                pagesToDisplay,
+                hasNext,
+                hasPrev,
+                prev,
+                next,
+              }) => (
                 <div className="react-list-demo__pagination">
                   <button
                     type="button"
@@ -265,20 +287,20 @@ function ReactListDemoInner({
             </ListPagination>
           ) : (
             <ListLoadMore>
-              {({ loadMore, hasMoreRows, isLoading }) => (
+              {({ context: { loadMore, hasMore, isLoading } }) => (
                 <button
                   type="button"
                   className="react-list-demo__button"
-                  disabled={!hasMoreRows || isLoading}
+                  disabled={!hasMore || isLoading}
                   onClick={loadMore}
                 >
-                  {hasMoreRows ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded'}
+                  {hasMore ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded'}
                 </button>
               )}
             </ListLoadMore>
           )}
         </div>
-      </ShilpList>
+      </List>
     </div>
   )
 }

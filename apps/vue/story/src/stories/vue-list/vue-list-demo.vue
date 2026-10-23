@@ -1,6 +1,6 @@
 <template>
   <div class="vue-list-demo">
-    <ShilpList
+    <List
       :key="listKey"
       :endpoint="endpoint"
       :page="page"
@@ -9,7 +9,8 @@
       :request-handler="handler"
       :count="count"
       :sync-page-to-url="false"
-      v-model:filters="filters"
+      :filters="[{ column: 'status', value: undefined }]"
+      :columns="columns"
     >
       <div class="vue-list-demo__toolbar">
         <ListSearch v-slot="{ search, setSearch }">
@@ -22,40 +23,44 @@
           />
         </ListSearch>
 
-        <label class="vue-list-demo__filter">
-          Status
-          <select
-            class="vue-list-demo__select"
-            @change="onStatusChange(($event.target as HTMLSelectElement).value)"
-          >
-            <option value="all">All</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-        </label>
+        <ListFilters>
+          <template #status="{ setValue }">
+            <label class="vue-list-demo__filter">
+              Status
+              <select
+                class="vue-list-demo__select"
+                @change="onStatusChange(setValue, ($event.target as HTMLSelectElement).value)"
+              >
+                <option value="all">All</option>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="archived">Archived</option>
+              </select>
+            </label>
+          </template>
+        </ListFilters>
       </div>
 
-      <ListInitialLoader>
+      <ListLoaderInitial>
         <p class="vue-list-demo__message">Loading initial data...</p>
-      </ListInitialLoader>
+      </ListLoaderInitial>
 
       <ListEmpty>
         <p class="vue-list-demo__message">No skills found.</p>
       </ListEmpty>
 
-      <ListError v-slot="{ error }">
+      <ListError v-slot="{ context: { error } }">
         <div class="vue-list-demo__error">
-          <p>{{ error.message }}</p>
-          <ListRefresh v-slot="{ refresh, isLoading }">
-            <button type="button" class="vue-list-demo__button" :disabled="isLoading" @click="refresh">
+          <p>{{ error?.message }}</p>
+          <ListRefresh v-slot="{ context: { refresh, isLoading } }">
+            <button type="button" class="vue-list-demo__button" :disabled="isLoading" @click="refresh()">
               Try again
             </button>
           </ListRefresh>
         </div>
       </ListError>
 
-      <ListRows v-slot="{ rows, sort, setSort }">
+      <ListRows v-slot="{ context: { rows, sortBy, sortOrder, setSortBy, setSortOrder } }">
         <div class="vue-list-demo__table-wrap">
           <ListLoader>
             <p class="vue-list-demo__overlay">Updating...</p>
@@ -66,7 +71,7 @@
               <tr>
                 <th>ID</th>
                 <th>
-                  <button type="button" class="vue-list-demo__sort" @click="toggleSort(sort, setSort, 'name')">
+                  <button type="button" class="vue-list-demo__sort" @click="toggleSort({ sortBy, sortOrder, setSortBy, setSortOrder }, 'name')">
                     Name
                   </button>
                 </th>
@@ -75,7 +80,7 @@
                   <button
                     type="button"
                     class="vue-list-demo__sort"
-                    @click="toggleSort(sort, setSort, 'date_updated')"
+                    @click="toggleSort({ sortBy, sortOrder, setSortBy, setSortOrder }, 'date_updated')"
                   >
                     Updated
                   </button>
@@ -95,11 +100,11 @@
       </ListRows>
 
       <div class="vue-list-demo__footer">
-        <ListSummary v-slot="{ count: total, from, to }">
+        <ListSummary v-slot="{ context: { count: total }, from, to }">
           <span>{{ from }} - {{ to }} of {{ total }}</span>
         </ListSummary>
 
-        <ListPerPage :options="perPageOptions" v-slot="{ perPage: currentPerPage, setPerPage, options }">
+        <ListPerPage :options="perPageOptions" v-slot="{ context: { perPage: currentPerPage, setPerPage }, options }">
           <label class="vue-list-demo__filter">
             Per page
             <select
@@ -116,7 +121,7 @@
 
         <ListPagination
           v-if="paginationMode === 'pagination'"
-          v-slot="{ page: currentPage, pagesToDisplay, hasNext, hasPrev, prev, next, setPage }"
+          v-slot="{ context: { page: currentPage, setPage }, pagesToDisplay, hasNext, hasPrev, prev, next }"
         >
           <div class="vue-list-demo__pagination">
             <button type="button" class="vue-list-demo__button" :disabled="!hasPrev" @click="prev">
@@ -138,28 +143,29 @@
           </div>
         </ListPagination>
 
-        <ListLoadMore v-else v-slot="{ loadMore, hasMoreRows, isLoading }">
+        <ListLoadMore v-else v-slot="{ context: { loadMore, hasMore, isLoading } }">
           <button
             type="button"
             class="vue-list-demo__button"
-            :disabled="!hasMoreRows || isLoading"
+            :disabled="!hasMore || isLoading"
             @click="loadMore"
           >
-            {{ hasMoreRows ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded' }}
+            {{ hasMore ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded' }}
           </button>
         </ListLoadMore>
       </div>
-    </ShilpList>
+    </List>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import type { ListSort } from '@shilp.dev/vue-list'
+import { computed } from 'vue'
+import type { Context, FilterScope } from '@shilp.dev/vue-list'
 import {
   ListEmpty,
   ListError,
-  ListInitialLoader,
+  ListFilters,
+  ListLoaderInitial,
   ListRows,
   ListLoadMore,
   ListLoader,
@@ -168,7 +174,7 @@ import {
   ListRefresh,
   ListSearch,
   ListSummary,
-  ShilpList,
+  List,
 } from '@shilp.dev/vue-list'
 import {
   createRequestHandler,
@@ -182,71 +188,70 @@ defineOptions({
   name: 'vue-list-demo',
 })
 
-const props = withDefaults(
-  defineProps<{
-    endpoint?: string
-    page?: number
-    perPage?: number
-    paginationMode?: 'pagination' | 'loadMore'
-    /**
-     * Serializable options for the demo request handler.
-     * Sample JSON: `{ "forceEmpty": false, "shouldFail": false }`
-     */
-    requestHandler?: CreateRequestHandlerOptions
-    count?: number
-  }>(),
-  {
-    endpoint: 'skills',
-    page: 1,
-    perPage: 10,
-    paginationMode: 'pagination',
-    requestHandler: () => ({ forceEmpty: false, shouldFail: false }),
-  },
-)
-
-const filters = ref<Record<string, string | undefined>>({})
+const {
+  endpoint = 'skills',
+  page = 1,
+  perPage = 10,
+  paginationMode = 'pagination',
+  requestHandler = { forceEmpty: false, shouldFail: false },
+  count,
+} = defineProps<{
+  endpoint?: string
+  page?: number
+  perPage?: number
+  paginationMode?: 'pagination' | 'loadMore'
+  /**
+   * Serializable options for the demo request handler.
+   * Sample JSON: `{ "forceEmpty": false, "shouldFail": false }`
+   */
+  requestHandler?: CreateRequestHandlerOptions
+  count?: number
+}>()
 
 const listKey = computed(() =>
   [
-    props.endpoint,
-    props.page,
-    props.perPage,
-    props.paginationMode,
-    props.count,
-    props.requestHandler?.forceEmpty,
-    props.requestHandler?.shouldFail,
+    endpoint,
+    page,
+    perPage,
+    paginationMode,
+    count,
+    requestHandler?.forceEmpty,
+    requestHandler?.shouldFail,
   ].join(':'),
 )
 
-const handler = computed(() => createRequestHandler(props.requestHandler ?? {}))
+const handler = computed(() => createRequestHandler(requestHandler ?? {}))
 
 const perPageOptions = computed(() => {
-  if (PER_PAGE_OPTIONS.includes(props.perPage)) {
+  if (PER_PAGE_OPTIONS.includes(perPage)) {
     return PER_PAGE_OPTIONS
   }
 
-  return [...PER_PAGE_OPTIONS, props.perPage].sort((a, b) => a - b)
+  return [...PER_PAGE_OPTIONS, perPage].sort((a, b) => a - b)
 })
 
-watch(listKey, () => {
-  filters.value = {}
-})
+const columns = [
+  { name: 'id', label: 'ID' },
+  { name: 'name', label: 'Name' },
+  { name: 'status', label: 'Status' },
+  { name: 'date_updated', label: 'Updated' },
+]
 
-function onStatusChange(value: string) {
-  filters.value = {
-    ...filters.value,
-    status: value === 'all' ? undefined : value,
+function onStatusChange(setValue: FilterScope['setValue'], value: string) {
+  if (value === 'all') {
+    setValue(undefined)
+  } else {
+    setValue(value)
   }
 }
 
 function toggleSort(
-  sort: ListSort,
-  setSort: (next: { by: string; order: 'asc' | 'desc' }) => void,
+  { sortBy, sortOrder, setSortBy, setSortOrder }: Pick<Context, 'sortBy' | 'sortOrder' | 'setSortBy' | 'setSortOrder'>,
   by: string,
 ) {
-  const currentOrder = sort.sortBy === by ? sort.sortOrder : ''
-  const order: 'asc' | 'desc' = currentOrder === 'asc' ? 'desc' : 'asc'
-  setSort({ by, order })
+  const currentOrder = sortBy === by ? sortOrder : ''
+  setSortBy(by)
+  setSortOrder(currentOrder === 'asc' ? 'desc' : 'asc')
 }
 </script>
 

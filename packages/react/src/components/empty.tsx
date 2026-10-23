@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListEmptyProps = {
@@ -6,13 +7,11 @@ type ListEmptyProps = {
 }
 
 export const ListEmpty = ({ children }: ListEmptyProps) => {
-  const { listState } = useListContext()
-  const { rows, loader, error } = listState
-  const { isLoading, initialLoading } = loader
+  const { rows, error, isLoading, isInitialLoading } = useListContext()
 
-  if (rows?.length > 0 || initialLoading || isLoading || error) {
+  if (rows?.length > 0 || isInitialLoading || isLoading || error) {
     return null
   }
 
-  return <div className="react-list__empty">{children || <p>No data found!</p>}</div>
+  return <div className="shilp-list__empty">{children || <p>{MESSAGES.empty}</p>}</div>
 }

@@ -1,393 +1,450 @@
 <template>
-  <div class="vue-list">
-    <slot v-bind="listState" />
+  <div class="shilp-list">
+    <slot v-bind="context" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, provide, ref, watch } from 'vue'
 import type {
-  ColumnSettings,
-  Filters,
-  ListResponse,
-  ListState,
-  RequestContextPatch,
-  SavedListState,
+  Columns,
+  Context,
+  Events,
+  FilterState,
+  FilterValues,
+  RequestHandlerResponse,
+  RequestTrigger,
+  RowId,
   SortOrder,
-  StateManagerContext,
-} from '../../../../shared'
-import { LIST_CONTEXT_KEY } from '../composables/use-list-context'
-import { deepEqual, hasActiveFilters } from '../list-utils'
-import type { ShilpListEmits, ShilpListProps } from '../types'
-import { DEFAULT_ID_KEY, getRowId } from '../utils'
+  State,
+} from '@shared'
+import {
+  DEFAULT_FILTERS,
+  DEFAULT_ID_KEY,
+  DEFAULT_META,
+  DEFAULT_PAGE,
+  DEFAULT_PAGINATION_MODE,
+  DEFAULT_PER_PAGE,
+  DEFAULT_SEARCH,
+  DEFAULT_SORT_BY,
+  DEFAULT_SORT_ORDER,
+  DEFAULT_VERSION,
+  rowNotFoundMessage,
+} from '@shared/constants'
+import {
+  computeColumns,
+  computeHasMore,
+  createColumns,
+  hasSelectionChanged,
+  mergeRows,
+  patchRowById,
+  toError,
+  toggleId,
+  computeFilters,
+  computeDefaultFilters,
+} from '@shared/utils'
+import equal from 'fast-deep-equal'
+import { computed, onMounted, onUnmounted, provide, reactive, ref, toRefs, watch } from 'vue'
+import type { ListPropsVue } from '../types'
 
 defineOptions({
-  name: 'ShilpList',
+  // eslint-disable-next-line vue/multi-word-component-names
+  name: 'List',
 })
 
-type ShilpListComponentProps = Omit<
-  ShilpListProps,
-  'filters' | 'onResponse' | 'onRowSelect' | 'onFiltersChange'
->
+const {
+  endpoint,
+  idKey = DEFAULT_ID_KEY,
+  page = DEFAULT_PAGE,
+  perPage = DEFAULT_PER_PAGE,
+  sortBy = DEFAULT_SORT_BY,
+  sortOrder = DEFAULT_SORT_ORDER,
+  search = DEFAULT_SEARCH,
+  version = DEFAULT_VERSION,
+  paginationMode = DEFAULT_PAGINATION_MODE,
+  meta = { ...DEFAULT_META },
+  filters = [...DEFAULT_FILTERS],
+  columns,
+  requestHandler,
+  stateManager,
+} = defineProps<ListPropsVue>()
 
-const props = withDefaults(defineProps<ShilpListComponentProps>(), {
-  idKey: DEFAULT_ID_KEY,
-  page: 1,
-  perPage: 25,
-  sortBy: '',
-  sortOrder: 'desc',
-  search: '',
-  version: 1,
-  paginationMode: 'pagination',
-  meta: () => ({}),
+const emit = defineEmits<Events>()
+
+const isLoadMore = computed(() => {
+  return paginationMode === 'loadMore'
 })
 
-const emit = defineEmits<ShilpListEmits>()
-const filters = defineModel<Filters>('filters', { default: () => ({}) })
+const defaultFilters = computeDefaultFilters(filters)
 
-if (!props.requestHandler) {
-  throw new Error('ShilpList: requestHandler is required.')
-}
-
-const defaultFilters = ref<Filters>({ ...(filters.value ?? {}) })
-
-const isLoadMore = computed(() => props.paginationMode === 'loadMore')
-
-const localPage = ref<number>(props.page)
-const localPerPage = ref<number>(props.perPage)
-const localSortBy = ref<string>(props.sortBy)
-const localSortOrder = ref<SortOrder>(props.sortOrder)
-const localSearch = ref<string>(props.search ?? '')
-const columnSettings = ref<ColumnSettings>()
-
-const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
-
-const buildRequestContext = () => ({
-  endpoint: props.endpoint,
-  version: props.version,
-  meta: props.meta,
-  search: localSearch.value,
-  page: localPage.value,
-  perPage: localPerPage.value,
-  sortBy: localSortBy.value,
-  sortOrder: localSortOrder.value,
-  filters: filters.value ?? {},
-})
-
-const buildContext = (): StateManagerContext => ({
-  ...buildRequestContext(),
-  columnSettings: columnSettings.value,
-})
-
-function getSavedState(): SavedListState {
-  try {
-    return props.stateManager?.get?.(buildContext()) ?? {}
-  } catch (err) {
-    console.error(err)
-    return {}
-  }
-}
-
-const savedState = getSavedState()
-
-if (isLoadMore.value) {
-  localPage.value = 1
-} else if (savedState.page != null) {
-  localPage.value = savedState.page
-}
-
-if (savedState.perPage != null) localPerPage.value = savedState.perPage
-if (savedState.sortBy != null) localSortBy.value = savedState.sortBy
-if (savedState.sortOrder != null) localSortOrder.value = savedState.sortOrder
-if (savedState.search != null) localSearch.value = savedState.search
-if (savedState.columnSettings != null) columnSettings.value = savedState.columnSettings
-if (savedState.filters != null) filters.value = savedState.filters
+const localPage = ref<number>(page)
+const localPerPage = ref<number>(perPage)
+const localSortBy = ref<string>(sortBy)
+const localSortOrder = ref<SortOrder>(sortOrder)
+const localSearch = ref<string>(search)
+const localFilters = ref<FilterState[]>([...defaultFilters])
+const localColumns = ref<Columns>(createColumns(columns))
 
 const rows = ref<unknown[]>([])
-const selection = ref<unknown[]>([])
+const selection = ref<RowId[]>([])
 const error = ref<Error | null>(null)
-const response = ref<ListResponse | null>(null)
-const count = ref(props.count ?? 0)
+const response = ref<RequestHandlerResponse | null>(null)
+const count = ref(0)
 const isLoading = ref(true)
-const initializingState = ref(true)
+const isInitialLoading = ref(true)
+const requestTrigger = ref<RequestTrigger>('mount')
 let requestId = 0
 
-const isEmpty = computed(() => rows.value.length === 0)
+const isEmpty = computed(() => {
+  return rows.value.length === 0
+})
 
-function setRows(res: ListResponse) {
-  emit('response', res)
-
-  if (isLoadMore.value) {
-    if (localPage.value === 1) {
-      rows.value = res.rows
-    } else {
-      rows.value = rows.value.concat(res.rows)
-    }
-    emit('afterLoadMore', res)
-    props.afterLoadMore?.(res)
-  } else {
-    rows.value = res.rows
-    emit('afterPageChange', res)
-    props.afterPageChange?.(res)
-  }
-
-  count.value = res.count
-}
+const hasMore = computed(() => {
+  return computeHasMore(localPage.value, localPerPage.value, count.value)
+})
 
 function updateStateManager() {
-  props.stateManager?.set?.(buildContext())
+  stateManager?.set?.(snapshot())
 }
 
-function getData(addContext: RequestContextPatch = {}) {
+function clearState() {
+  stateManager?.clear?.(snapshot())
+  init()
+}
+
+// Lifecycle 3 to 5, one request. Only the latest request counts (`requestId`).
+// 3. Request: state shows isLoading (`requestTrigger` says what started it), `beforePageChange` / `beforeLoadMore` get the
+//    State being requested, then `requestHandler` runs.
+// 4. Response: rows are replaced (page mode) or appended (load-more) with their `_index`, selection
+//    resets, `stateManager.set` runs, then `onResponse` and `afterPageChange` / `afterLoadMore` emit.
+// 5. Error: error is set, rows and count are cleared and `onError` emits. `stateManager.set` and the
+//    after events do not run.
+function getData() {
   error.value = null
   isLoading.value = true
   const currentRequestId = ++requestId
 
-  props
-    .requestHandler({
-      ...buildRequestContext(),
-      isRefresh: false,
-      ...addContext,
-    })
+  const requestState = snapshot()
+
+  if (isLoadMore.value) {
+    emit('beforeLoadMore', requestState)
+  } else {
+    emit('beforePageChange', requestState)
+  }
+
+  requestHandler(requestState)
     .then((res) => {
-      if (currentRequestId !== requestId) return
+      if (currentRequestId !== requestId) {
+        return
+      }
+
       response.value = res
-      updateStateManager()
       selection.value = []
-      setRows(res)
-      initializingState.value = false
+      rows.value = mergeRows(rows.value, res.rows, {
+        page: localPage.value,
+        perPage: localPerPage.value,
+        isLoadMore: isLoadMore.value,
+      })
+      count.value = res.count
+      updateStateManager()
+      emit('onResponse', res)
+
+      if (isLoadMore.value) {
+        emit('afterLoadMore', res)
+      } else {
+        emit('afterPageChange', res)
+      }
     })
     .catch((err: unknown) => {
-      if (currentRequestId !== requestId) return
+      if (currentRequestId !== requestId) {
+        return
+      }
+
       error.value = toError(err)
       rows.value = []
       count.value = 0
-      initializingState.value = false
+      emit('onError', error.value)
       // The list UI already surfaces the error via `error`.
       // Re-throwing here creates unhandled promise rejections.
     })
     .finally(() => {
-      if (currentRequestId === requestId) {
-        isLoading.value = false
+      if (currentRequestId !== requestId) {
+        return
       }
+      isLoading.value = false
+      isInitialLoading.value = false
     })
 }
 
-function setPage(value: number | string, addContext?: RequestContextPatch) {
-  let nextPage: number | string = value
-  if (value === 0) {
-    nextPage = ''
-  }
-  if (nextPage === '') {
+// Lifecycle 6, actions called by the consumer. They only change local state; the watcher below
+// starts the request. setPerPage, setSearch, setSortBy and setSortOrder go back to page 1, and
+// setFilters and clearFilters do the same through the `filters` watcher. refresh refetches the
+// current page (load-more: from page 1). loadMore fetches the next page. updateRowById,
+// setColumn and toggleRowSelection change state without a request.
+// Internal: `requestTrigger` is set by the caller, before the request reads it.
+function fetchPage(value: number) {
+  localPage.value = value
+  getData()
+}
+
+function setPage(value: number) {
+  if (!value) {
     return
   }
-  localPage.value = Number(nextPage)
-  getData(addContext)
-}
-
-function setSearch(value: string) {
-  if (value === localSearch.value) return
-  localSearch.value = value
-  setPage(1)
-}
-
-function setSort({ by, order }: { by: string; order: 'asc' | 'desc' }) {
-  localSortBy.value = by
-  localSortOrder.value = order
-  setPage(1)
-}
-
-function setSelection(value: unknown[]) {
-  selection.value = value
-}
-
-function setFilters(nextFilters: Filters) {
-  if (deepEqual(filters.value, nextFilters)) return
-  filters.value = nextFilters
-  emit('filtersChange', nextFilters)
-}
-
-function clearFilters() {
-  const nextFilters = { ...defaultFilters.value }
-  if (deepEqual(filters.value, nextFilters)) return
-  filters.value = nextFilters
-  emit('filtersChange', nextFilters)
-}
-
-function refresh(addContext: RequestContextPatch = { isRefresh: true }) {
-  if (isLoadMore.value) {
-    rows.value = []
-    setPage(1, addContext)
-  } else {
-    getData(addContext)
-  }
+  requestTrigger.value = 'page'
+  fetchPage(value)
 }
 
 function setPerPage(value: number) {
+  if (value === localPerPage.value) {
+    return
+  }
   localPerPage.value = value
-  setPage(1)
+  requestTrigger.value = 'perPage'
+  fetchPage(1)
 }
 
-function loadMore() {
-  const hasMore = localPage.value * localPerPage.value < count.value
-  if (hasMore && !isLoading.value) {
-    localPage.value++
+function setSearch(value: string) {
+  if (value === localSearch.value) {
+    return
+  }
+  localSearch.value = value
+  requestTrigger.value = 'search'
+  fetchPage(1)
+}
+
+function setSortBy(value: string) {
+  if (value === localSortBy.value) {
+    return
+  }
+  localSortBy.value = value
+  requestTrigger.value = 'sortBy'
+  fetchPage(1)
+}
+
+function setSortOrder(value: SortOrder) {
+  if (value === localSortOrder.value) {
+    return
+  }
+  localSortOrder.value = value
+  requestTrigger.value = 'sortOrder'
+  fetchPage(1)
+}
+
+function changeFilters(next: FilterState[]) {
+  if (equal(localFilters.value, next)) {
+    return
+  }
+
+  localFilters.value = next
+  requestTrigger.value = 'filters'
+  emit('onFiltersChange', next)
+}
+
+function setFilters(values: FilterValues) {
+  const next = computeFilters(localFilters.value, defaultFilters, values)
+  changeFilters(next)
+}
+
+function setFilter(column: string, value: unknown) {
+  setFilters({ [column]: value })
+}
+
+function clearFilters() {
+  changeFilters([...defaultFilters])
+}
+
+function toggleRowSelection(id: RowId) {
+  selection.value = toggleId(selection.value, id)
+}
+
+function refresh() {
+  requestTrigger.value = 'refresh'
+
+  if (isLoadMore.value) {
+    rows.value = []
+    fetchPage(1)
+  } else {
     getData()
   }
 }
 
-function updateRowById(row: Partial<unknown>, id: string | number) {
-  let matched = false
+function loadMore() {
+  if (hasMore.value && !isLoading.value) {
+    requestTrigger.value = 'loadMore'
+    fetchPage(localPage.value + 1)
+  }
+}
 
-  const next = rows.value.map((entry) => {
-    if (getRowId(entry, props.idKey) !== id) return entry
-    matched = true
-    return { ...(entry as Record<string, unknown>), ...row }
-  })
+function updateRowById(row: Partial<unknown>, id: RowId) {
+  const next = patchRowById(rows.value, row, id, idKey)
 
-  if (!matched) {
-    console.warn(
-      `ShilpList: updateRowById did not find a row where ${props.idKey} === ${JSON.stringify(id)}. ` +
-      `Verify your rows expose "${props.idKey}" and that the id type matches exactly.`,
-    )
+  if (!next) {
+    console.warn(rowNotFoundMessage(idKey, id))
     return
   }
 
   rows.value = next
 }
 
-function updateColumn(name: string, prop: string, value: boolean | unknown) {
-  const current = columnSettings.value ?? {}
-  columnSettings.value = {
-    ...current,
-    [name]: {
-      ...current[name],
-      [prop]: value,
-    },
+function setColumn(column: string, key: string, value: unknown) {
+  const next = computeColumns(localColumns.value, column, key, value)
+
+  if (equal(localColumns.value, next)) {
+    return
   }
+
+  localColumns.value = next
+  requestTrigger.value = 'columns'
   updateStateManager()
 }
 
-const listState = computed(
-  (): ListState => ({
-    rows: rows.value,
-    response: response.value,
-    error: error.value,
-    count: count.value,
-    selection: selection.value,
-    pagination: {
-      page: localPage.value,
-      perPage: localPerPage.value,
-      hasMore: rows.value.length < count.value,
-    },
-    loader: {
-      isLoading: isLoading.value,
-      initialLoading: initializingState.value,
-    },
-    sort: {
-      sortBy: localSortBy.value || null,
-      sortOrder: localSortOrder.value,
-    },
-    search: localSearch.value,
-    filters: filters.value ?? {},
-    columns:
-      props.columns ??
-      Object.keys((rows.value[0] as Record<string, unknown>) || {}).map((name) => ({ name })),
-    columnSettings: columnSettings.value,
-    isEmpty: isEmpty.value,
-    hasActiveFilters: hasActiveFilters(filters.value ?? {}, defaultFilters.value),
-    isInitializing: initializingState.value,
-    idKey: props.idKey,
-    setPage,
-    setPerPage,
-    setSearch,
-    setSort,
-    setFilters,
-    clearFilters,
-    loadMore,
-    refresh,
-    setSelection,
-    updateRowById,
-    updateColumn,
-  }),
-)
-
-provide(LIST_CONTEXT_KEY, { listState })
-
-watch(filters, (newValue, oldValue) => {
-  if (initializingState.value) return
-  if (deepEqual(newValue, oldValue)) return
-  setPage(1)
-})
-
-watch(
-  () =>
-    [
-      props.page,
-      props.perPage,
-      props.search ?? '',
-      props.sortBy,
-      props.sortOrder,
-      props.endpoint,
-    ] as const,
-  (next, prev) => {
-    if (initializingState.value || !prev) return
-
-    const [page, perPage, search, sortBy, sortOrder, endpoint] = next
-    const [prevPage, prevPerPage, prevSearch, prevSortBy, prevSortOrder, prevEndpoint] = prev
-    const pageChanged = page !== prevPage
-    const perPageChanged = perPage !== prevPerPage
-    const searchChanged = search !== prevSearch
-    const sortByChanged = sortBy !== prevSortBy
-    const sortOrderChanged = sortOrder !== prevSortOrder
-    const endpointChanged = endpoint !== prevEndpoint
-
-    if (
-      !pageChanged &&
-      !perPageChanged &&
-      !searchChanged &&
-      !sortByChanged &&
-      !sortOrderChanged &&
-      !endpointChanged
-    ) {
-      return
-    }
-
-    if (perPageChanged) localPerPage.value = perPage
-    if (searchChanged) localSearch.value = search
-    if (sortByChanged) localSortBy.value = sortBy
-    if (sortOrderChanged) localSortOrder.value = sortOrder
-
-    setPage(pageChanged ? page : 1)
-  },
-)
-
-watch(selection, (newValue, oldValue) => {
-  emit('rowSelect', newValue, oldValue ?? [])
-})
-
-onMounted(() => {
-  props.stateManager?.init?.(buildContext())
-  setPage(localPage.value)
-})
-
-defineExpose({
+const state = reactive({
+  endpoint: endpoint,
+  version: version,
+  meta: meta,
+  idKey: idKey,
+  page: localPage,
+  perPage: localPerPage,
+  sortBy: localSortBy,
+  sortOrder: localSortOrder,
+  search: localSearch,
+  columns: localColumns,
+  filters: localFilters,
   rows,
   response,
-  isLoading,
   error,
   count,
   selection,
+  hasMore,
+  isLoading,
+  isInitialLoading,
+  requestTrigger,
+  isEmpty,
+}) as State
+
+const context = reactive({
+  ...toRefs(state),
   setPage,
   setPerPage,
-  setSort,
   setSearch,
-  setSelection,
-  refresh,
-  loadMore,
+  setSortBy,
+  setSortOrder,
+  setFilter,
   setFilters,
   clearFilters,
+  loadMore,
+  refresh,
+  clearState,
+  toggleRowSelection,
   updateRowById,
-  updateColumn,
+  setColumn,
+}) as Context
+
+provide('shilp-list-context', context)
+
+const snapshot = (): State => {
+  return { ...state }
+}
+
+// Lifecycle 1, setup: state starts from the props and defaults. `stateManager.get` runs before any
+// state exists and may restore page, perPage, sort, search, filters and columns. A load-more
+// list always starts on page 1. Nothing is fetched yet.
+let saved: Partial<State> = {}
+
+try {
+  saved = stateManager?.get?.(snapshot()) ?? {}
+} catch (err) {
+  console.error(err)
+}
+
+if (saved.page != null && !isLoadMore.value) {
+  localPage.value = saved.page
+}
+
+if (saved.perPage != null) {
+  localPerPage.value = saved.perPage
+}
+
+if (saved.sortBy != null) {
+  localSortBy.value = saved.sortBy
+}
+
+if (saved.sortOrder != null) {
+  localSortOrder.value = saved.sortOrder
+}
+
+if (saved.search != null) {
+  localSearch.value = saved.search
+}
+
+// Saved columns and filters replace the ones from the props as they are, so `get` returns the
+// complete lists, with `isDirty` already worked out.
+if (saved.columns != null) {
+  localColumns.value = saved.columns
+}
+
+if (saved.filters != null) {
+  localFilters.value = saved.filters
+}
+
+// Lifecycle 7, props changing after mount: none. `filters`, `columns` and the query props (page,
+// perPage, search, sortBy, sortOrder, endpoint) are read once; change them through the context
+// actions. A change of `localFilters` or `localColumns` (setFilter, setFilters, clearFilters,
+// setColumn) refetches, except before the first response has arrived.
+watch(localFilters, (newValue, oldValue) => {
+  if (isInitialLoading.value) {
+    return
+  }
+
+  if (equal(newValue, oldValue)) {
+    return
+  }
+
+  fetchPage(1)
 })
+
+watch(localColumns, (newValue, oldValue) => {
+  if (isInitialLoading.value) {
+    return
+  }
+
+  if (equal(newValue, oldValue)) {
+    return
+  }
+
+  getData()
+})
+
+// `onRowSelect` emits when the selection really changes, including the reset after a response.
+watch(selection, (newValue, oldValue) => {
+  const previous = oldValue ?? []
+
+  if (hasSelectionChanged(newValue, previous)) {
+    emit('onRowSelect', newValue, previous)
+  }
+})
+
+function init() {
+  stateManager?.init?.(snapshot())
+
+  if (saved.filters != null && !equal(localFilters.value, defaultFilters)) {
+    emit('onFiltersChange', localFilters.value)
+  }
+
+  getData()
+}
+
+// Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the saved filters differ from
+// the prop, then the first request.
+onMounted(() => {
+  init()
+})
+
+// Lifecycle 8, unmount: invalidate the request in flight so its late response or error does not
+// update state, call `stateManager.set` or emit events on a list that no longer exists.
+onUnmounted(() => {
+  requestId++
+})
+
+defineExpose(toRefs(context))
 </script>

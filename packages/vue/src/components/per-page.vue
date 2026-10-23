@@ -1,16 +1,16 @@
 <template>
-  <div v-if="showContent" class="vue-list__per-page">
+  <div v-if="showContent" class="shilp-list__per-page">
     <slot v-bind="scope">
       <select
-        :value="scope.perPage"
-        @change="scope.setPerPage(Number(($event.target as HTMLSelectElement).value))"
+        :value="scope.context.perPage"
+        @change="scope.context.setPerPage(Number(($event.target as HTMLSelectElement).value))"
       >
         <option
           v-for="option in scope.options"
           :key="`option-${option.value}`"
           :value="option.value"
         >
-          {{ option.label }} items per page
+          {{ getPerPageMessage(option) }}
         </option>
       </select>
     </slot>
@@ -19,41 +19,31 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { PerPageComponentOptions, PerPageScope } from '../../../../shared'
+import { DEFAULT_PER_PAGE_OPTIONS, getPerPageMessage } from '@shared/constants'
+import { normalizePerPageOptions } from '@shared/utils'
+import type { PerPageProps, PerPageScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListPerPage',
 })
 
-const props = withDefaults(defineProps<PerPageComponentOptions>(), {
-  options: () => [10, 25, 50, 100],
-})
+const { options = DEFAULT_PER_PAGE_OPTIONS } = defineProps<PerPageProps>()
 
-const { listState } = useListContext()
+const context = useListContext()
 
 const showContent = computed(() => {
-  const state = listState
-  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
+  return !context.isInitialLoading && context.rows.length > 0 && !context.error
 })
 
 const serializedOptions = computed(() => {
-  return (props.options ?? []).map((item) => {
-    if (typeof item !== 'object') {
-      return {
-        value: item,
-        label: item,
-      }
-    }
-    return item
-  })
+  return normalizePerPageOptions(options)
 })
 
-const scope = computed(
-  (): PerPageScope => ({
-    perPage: listState.pagination.perPage,
-    setPerPage: listState.setPerPage,
+const scope = computed((): PerPageScope => {
+  return {
+    context,
     options: serializedOptions.value,
-  }),
-)
+  }
+})
 </script>

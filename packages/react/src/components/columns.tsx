@@ -1,64 +1,52 @@
-import { Fragment, memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { ColumnsScope, ListColumn, RenderColumnArgs } from '../../../../shared'
+import { Fragment, type ReactNode } from 'react'
+import type { Column, ColumnScope, ColumnsScope } from '@shared'
 import { useListContext } from '../context/list-context'
 
 type ListColumnsProps = {
+  /** Replaces the whole list of columns. Gets `{ context, setColumn }`. */
   children?: ReactNode | ((scope: ColumnsScope) => ReactNode)
-  column?: (args: RenderColumnArgs) => ReactNode
+  /** Renders one column. Gets `{ context, name, label, visibility, ...your keys, setValue }`. */
+  column?: (scope: ColumnScope) => ReactNode
 }
 
-export const ListColumns = memo(({ children, column: columnFn }: ListColumnsProps) => {
-  const { listState } = useListContext()
-  const { columns, columnSettings, updateColumn } = listState
+export const ListColumns = ({ children, column: columnFn }: ListColumnsProps) => {
+  const context = useListContext()
+  const { columns, setColumn } = context
 
-  const normalizedColumns = columns as ListColumn[]
+  function getColumnScope(column: Column): ColumnScope {
+    return {
+      context,
+      ...column,
+      setValue: (key: string, value: unknown) => {
+        setColumn(column.name, key, value)
+      },
+    }
+  }
 
-  const handleColumnChange = useCallback(
-    (columnName: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateColumn?.(columnName, 'visible', e.target.checked)
-    },
-    [updateColumn],
-  )
+  let content: ReactNode
 
-  const scope = useMemo(
-    (): ColumnsScope => ({
-      columns: normalizedColumns,
-      columnSettings: columnSettings ?? {},
-      updateColumn: updateColumn ?? (() => {}),
-    }),
-    [normalizedColumns, columnSettings, updateColumn],
-  )
+  if (typeof children === 'function') {
+    content = children({ context, setColumn })
+  } else if (children) {
+    content = children
+  } else {
+    content = columns.map((column) => {
+      if (columnFn) {
+        return <Fragment key={column.name}>{columnFn(getColumnScope(column))}</Fragment>
+      }
 
-  return (
-    <div className="react-list__columns">
-      {typeof children === 'function'
-        ? children(scope)
-        : children
-          ? children
-          : normalizedColumns.map((column, index) => {
-              if (columnFn) {
-                return (
-                  <Fragment key={`column-${index}`}>
-                    {columnFn({
-                      column,
-                      updateColumn: updateColumn ?? (() => {}),
-                      columnSettings: columnSettings ?? {},
-                    })}
-                  </Fragment>
-                )
-              }
+      return (
+        <label key={column.name}>
+          <span>{column.label ?? column.name}</span>
+          <input
+            type="checkbox"
+            checked={column.visibility}
+            onChange={(e) => setColumn(column.name, 'visibility', e.target.checked)}
+          />
+        </label>
+      )
+    })
+  }
 
-              return (
-                <label key={`column-${index}`}>
-                  <span>{column.label}</span>
-                  <input
-                    type="checkbox"
-                    checked={columnSettings?.[column.name]?.visible ?? true}
-                    onChange={handleColumnChange(column.name)}
-                  />
-                </label>
-              )
-            })}
-    </div>
-  )
-})
+  return <div className="shilp-list__columns">{content}</div>
+}

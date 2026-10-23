@@ -1,32 +1,36 @@
 import { type ReactNode } from 'react'
-import type { ErrorScope } from '../../../../shared'
+import type { ListScope } from '@shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListErrorProps = {
-  children?: ReactNode | ((scope: ErrorScope) => ReactNode)
+  children?: ReactNode | ((scope: ListScope) => ReactNode)
 }
 
 export const ListError = ({ children }: ListErrorProps) => {
-  const { listState } = useListContext()
-  const { error, loader } = listState
-  const { isLoading } = loader
+  const context = useListContext()
+  const { error } = context
 
-  if (!error || isLoading) {
+  if (!error || context.isLoading) {
     return null
   }
 
-  return (
-    <div className="react-list__error">
-      {typeof children === 'function'
-        ? children({ error })
-        : children || (
-            <div>
-              <h3>Error occurred</h3>
-              <pre>
-                {error.name}: {error.message}
-              </pre>
-            </div>
-          )}
-    </div>
-  )
+  let content: ReactNode
+
+  if (typeof children === 'function') {
+    content = children({ context })
+  } else if (children) {
+    content = children
+  } else {
+    content = (
+      <div>
+        <h3>{MESSAGES.error}</h3>
+        <pre>
+          {error.name}: {error.message}
+        </pre>
+      </div>
+    )
+  }
+
+  return <div className="shilp-list__error">{content}</div>
 }

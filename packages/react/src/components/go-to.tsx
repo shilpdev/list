@@ -1,5 +1,7 @@
 import { memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { GoToScope } from '../../../../shared'
+import type { GoToScope } from '@shared'
+import { getPagesCount } from '@shared/utils'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListGoToProps = {
@@ -7,14 +9,15 @@ type ListGoToProps = {
 }
 
 export const ListGoTo = memo(({ children }: ListGoToProps) => {
-  const { listState } = useListContext()
-  const { rows, count, pagination, setPage, loader, error } = listState
-  const { page, perPage } = pagination
-  const { initialLoading } = loader
+  const context = useListContext()
+  const { rows, count, setPage, error, page, perPage, isInitialLoading } = context
 
   const { pages, pagesCount } = useMemo(() => {
-    const pagesCount = Math.ceil(count / perPage)
-    const pages = Array.from({ length: pagesCount }, (_, i) => i + 1)
+    const pagesCount = getPagesCount(count, perPage)
+    const pages = Array.from({ length: pagesCount }, (_, index) => {
+      return index + 1
+    })
+
     return { pages, pagesCount }
   }, [count, perPage])
 
@@ -25,41 +28,33 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
     [setPage],
   )
 
-  const scope = useMemo(
-    (): GoToScope => ({
-      setPage,
-      page,
-      pages,
-      pagesCount,
-    }),
-    [setPage, page, pages, pagesCount],
-  )
+  const scope = useMemo((): GoToScope => {
+    return { context, pages, pagesCount }
+  }, [context, pages, pagesCount])
 
-  if (initialLoading) return null
-
-  if (!rows || rows.length === 0) {
+  if (isInitialLoading || rows.length === 0 || error) {
     return null
   }
 
-  if (error) {
-    return null
-  }
+  let content: ReactNode
 
-  return (
-    <div className="react-list__go-to">
-      {typeof children === 'function' ? (
-        children(scope)
-      ) : children ? (
-        children
-      ) : (
-        <select value={page} onChange={handlePageChange}>
-          {pages.map((pageNum) => (
+  if (typeof children === 'function') {
+    content = children(scope)
+  } else if (children) {
+    content = children
+  } else {
+    content = (
+      <select value={page} onChange={handlePageChange}>
+        {pages.map((pageNum) => {
+          return (
             <option key={`page-${pageNum}`} value={pageNum}>
-              Page {pageNum}
+              {MESSAGES.pageOptionPrefix} {pageNum}
             </option>
-          ))}
-        </select>
-      )}
-    </div>
-  )
+          )
+        })}
+      </select>
+    )
+  }
+
+  return <div className="shilp-list__go-to">{content}</div>
 })

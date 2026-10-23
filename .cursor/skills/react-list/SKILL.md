@@ -1,10 +1,10 @@
 ---
 name: react-list
 description: >-
-  Implements and integrates @shilp.dev/react-list (ShilpList, ListRows,
+  Implements and integrates @shilp.dev/react-list (List, ListRows,
   ListPagination, requestHandler, updateRowById). Use when building React
   lists, tables, pagination, search, load-more, or when the user mentions
-  @shilp.dev/react-list or ShilpList.
+  @shilp.dev/react-list or List.
 ---
 
 # @shilp.dev/react-list
@@ -17,7 +17,7 @@ Peers: `react` and `react-dom` `^19`. Do not import `@shilp.dev/vue-list`.
 
 ## Rules
 
-1. Wrap all list slots in `<ShilpList>`. Slots use `useListContext()` and throw outside it.
+1. Wrap all list slots in `<List>`. Slots use `useListContext()` and throw outside it.
 2. Always pass `requestHandler`. Missing it throws.
 3. Return `{ rows, count, meta? }` from `requestHandler`. Map your API into that shape.
 4. Drive extra filters from parent state via `filters` and `onFiltersChange` (pass the state setter). `onFiltersChange` also runs when `stateManager` restores filters. Do not call `setFilters` from a local form unless that form lives inside the list tree.
@@ -27,10 +27,10 @@ Peers: `react` and `react-dom` `^19`. Do not import `@shilp.dev/vue-list`.
 ## Setup
 
 ```tsx
-import ShilpList, {
+import List, {
   ListEmpty,
   ListError,
-  ListInitialLoader,
+  ListLoaderInitial,
   ListLoader,
   ListPagination,
   ListRows,
@@ -39,77 +39,79 @@ import ShilpList, {
 import type { RequestHandler } from '@shilp.dev/react-list'
 ```
 
-`requestHandler` receives `RequestContext` and must return `Promise<ListResponse<T>>`:
+`requestHandler` receives a snapshot of `State` (data only, no methods) and must return `Promise<RequestHandlerResponse<T>>`:
 
 ```ts
-const requestHandler: RequestHandler<Row> = async (ctx) => {
-  // ctx: endpoint, page, perPage, search, sortBy, sortOrder, filters, version, meta, isRefresh?
-  const res = await fetchList(ctx)
+const requestHandler: RequestHandler<Row> = async (state) => {
+  // state: endpoint, page, perPage, search, sortBy, sortOrder, filters, version, meta, columnSettings, isRefresh (plus rows, response, selection, ...)
+  const res = await fetchList(state)
   return { rows: res.data, count: res.total, meta: res.meta }
 }
 ```
 
-## ShilpList props
+## List props
 
-Required: `endpoint`, `requestHandler`. A later `endpoint` change refetches from page 1.
+Required: `endpoint`, `requestHandler`. `endpoint` is read once at setup; to load another endpoint call `refresh()` or remount with a `key`.
 
-| Prop                                               | Default        | Notes                                           |
-| -------------------------------------------------- | -------------- | ----------------------------------------------- |
-| `page`                                             | `1`            | Refetches when changed after mount              |
-| `perPage`                                          | `25`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
-| `sortBy`                                           | `''`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
-| `sortOrder`                                        | `'desc'`       | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
-| `search`                                           | `''`           | Refetches when changed after mount. Resets to page 1 unless `page` also changes. |
-| `filters`                                          | `{}`           | Parent-controlled query filters. Pair with `onFiltersChange`. |
-| `paginationMode`                                   | `'pagination'` | `'loadMore'` appends pages                      |
-| `version`                                          | `1`            | Passed to handler / state manager               |
-| `meta`                                             | `{}`           | Passed through to handler                       |
-| `columns`                                          |                | Column definitions (`string[]` or `{ name }[]`) |
-| `count`                                            | `0`            | Initial count before first fetch                |
-| `stateManager`                                     |                | Optional `{ init, get, set }` persistence       |
-| `onResponse` / `afterPageChange` / `afterLoadMore` / `onFiltersChange` | | Lifecycle hooks. `onFiltersChange` also fires when `stateManager` restores filters. |
+| Prop                                                                   | Default        | Notes                                                                               |
+| ---------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------- |
+| `page`                                                                 | `1`            | Initial value only; change it later with `setPage`.                                 |
+| `perPage`                                                              | `25`           | Initial value only; change it later with the matching action.                       |
+| `sortBy`                                                               | `''`           | Initial value only; change it later with the matching action.                       |
+| `sortOrder`                                                            | `'desc'`       | Initial value only; change it later with the matching action.                       |
+| `search`                                                               | `''`           | Initial value only; change it later with the matching action.                       |
+| `filters`                                                              | `{}`           | Parent-controlled query filters. Pair with `onFiltersChange`.                       |
+| `paginationMode`                                                       | `'pagination'` | `'loadMore'` appends pages                                                          |
+| `version`                                                              | `1`            | Passed to handler / state manager                                                   |
+| `meta`                                                                 | `{}`           | Passed through to handler                                                           |
+| `columns`                                                              |                | Column definitions (`string[]` or `{ name }[]`)                                     |
+| `idKey`                                                                | `'id'`         | Row field `updateRowById` matches on (not used for keys)                            |
+| `stateManager`                                                         |                | Optional `{ init, get, set }` persistence                                           |
+| `beforePageChange` / `afterPageChange` / `beforeLoadMore` / `afterLoadMore` / `onResponse` / `onError` / `onRowSelect` / `onFiltersChange` |                | Hooks, with the same names in both packages (Vue emits them, so its listeners are `@on-response`, `@before-page-change`, ...). `before*` get the `State` of the request, `after*` and `onResponse` the response, `onError` the error. `onFiltersChange` also fires when `stateManager` restores filters. `onRowSelect` fires only when the selection changes. |
 
-Children: `ReactNode` or `(state: ListState<T>) => ReactNode`.
+Children: `ReactNode` or `(context: Context<T>) => ReactNode`.
 
 ## Slots
 
-All slots must be descendants of `ShilpList`. Most hide themselves during initial load, empty, or error.
+All slots must be descendants of `List`. Most hide themselves during initial load, empty, or error.
 
-| Component           | When it renders                              | Children scope                                                         |
-| ------------------- | -------------------------------------------- | ---------------------------------------------------------------------- |
-| `ListInitialLoader` | First fetch                                  | `{ loading }` or node                                                  |
-| `ListLoader`        | Any load (`position`: `overlay` \| `inline`) | `{ isLoading }` or node                                                |
-| `ListError`         | `error` and not loading                      | `{ error }`                                                            |
-| `ListEmpty`         | No rows, not loading, no error               | node                                                                   |
-| `ListRows`          | Has rows, not initial, no error              | `(scope) =>` or `row`                                                  |
-| `ListSearch`        | Always                                       | `{ search, setSearch }` (debounced, default 500ms)                     |
-| `ListPagination`    | Has rows                                     | `{ page, pagesToDisplay, hasNext, hasPrev, prev, next, setPage, ... }` |
-| `ListLoadMore`      | Has rows                                     | `{ loadMore, hasMoreRows, isLoading }`                                 |
-| `ListPerPage`       | Has rows                                     | `{ perPage, setPerPage, options }`                                     |
-| `ListSummary`       | Has rows                                     | `{ from, to, visibleCount, count }`                                    |
-| `ListRefresh`       | Always                                       | `{ refresh, isLoading }`                                               |
-| `ListGoTo`          | Has rows                                     | `{ page, pages, pagesCount, setPage }`                                 |
-| `ListColumns`       | Always                                       | `{ columns, columnSettings, updateColumn }`                            |
+| Component           | When it renders                              | Children scope                                                                       |
+| ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `ListLoaderInitial` | First fetch                                  | `{ context }` or node                                                                |
+| `ListLoader`        | Any load (`position`: `overlay` \| `inline`) | `{ context }` or node                                                                |
+| `ListError`         | `error` and not loading                      | `{ context }` or node (`context.error` is `Error \| null`)                           |
+| `ListEmpty`         | No rows, not loading, no error               | node                                                                                 |
+| `ListRows`          | Has rows, not initial, no error              | `{ context }` or `row`                                                         |
+| `ListSearch`        | Always                                       | `{ context, search, setSearch }` (debounced, default 500ms)                          |
+| `ListPagination`    | Has rows                                     | `{ context, pagesCount, pagesToDisplay, hasNext, hasPrev, prev, next, first, last }` |
+| `ListLoadMore`      | Has rows                                     | `{ context }` (`context.hasMore`, `context.loadMore`, `context.isLoading`)           |
+| `ListPerPage`       | Has rows                                     | `{ context, options }`                                                               |
+| `ListSummary`       | Has rows                                     | `{ context, from, to, visibleCount }`                                                |
+| `ListRefresh`       | Always                                       | `{ context }` (call `context.refresh()`)                                             |
+| `ListGoTo`          | Has rows                                     | `{ context, pages, pagesCount }`                                                     |
+| `ListColumns`       | Always                                       | `{ context }` (`context.columns`, `context.columnSettings`, `context.updateColumn`)  |
+
+Every scope has `context` (the state plus every action). Other keys are values the component computes. Read shared values such as `page`, `perPage`, `count` and `isLoading` from `state`.
 
 `ListRows`:
 
-- `children={(scope) => ...}` — `scope.rows` includes `_index` (1-based across pages).
-- `row={({ row, index }) => ...}` — wraps each row; key is `row.id`.
+- `children={({ context }) => ...}` — `context.rows` entries include `_index` (1-based across pages).
+- `row={({ row, index }) => ...}` — wraps each row; the wrapper's key is `row._index`.
 - Prefer `children` for tables (one `<table>`). Use `row` for card/row lists.
 
 `ListSearch` `setSearch` in the scope is already debounced (`debounceTime`, default 500).
 
-## List state (`useListContext` or root render fn)
+## List context (`useListContext` or root render fn)
 
 ```ts
-const { listState } = useListContext<Row>()
+const context = useListContext<Row>()
 ```
 
-Data: `rows`, `count`, `error`, `response`, `isEmpty`, `hasActiveFilters`, `search`, `filters`, `selection`, `columns`, `columnSettings`.
+Data: `rows`, `count`, `error`, `response`, `isEmpty`, `search`, `filters`, `selection`, `columns`, `columnSettings`.
 
-Slices: `loader.isLoading` / `loader.initialLoading`, `pagination.page` / `perPage` / `hasMore`, `sort.sortBy` (`null` when unset) / `sortOrder`.
+Flat keys: `isLoading`, `isInitialLoading`, `page`, `perPage`, `hasMore`, `sortBy` (`''` when unset) / `sortOrder`.
 
-Handlers: `setPage`, `setPerPage`, `setSearch`, `setSort({ by, order })`, `setFilters`, `clearFilters`, `loadMore`, `refresh`, `setSelection`, `updateRowById`, `updateColumn`.
+Handlers: `setPage`, `setPerPage`, `setSearch`, `setSortBy`, `setSortOrder`, `setFilters`, `clearFilters`, `loadMore`, `refresh`, `toggleRowSelection`, `updateRowById`, `updateColumn`.
 
 `ListRows` scope does **not** include `updateRowById`. Call `useListContext()` in the row or use the root children function.
 
@@ -117,13 +119,13 @@ Handlers: `setPage`, `setPerPage`, `setSearch`, `setSort({ by, order })`, `setFi
 
 ```ts
 // After PATCH /rows/:id succeeds
-listState.updateRowById(savedRow, savedRow.id)
+context.updateRowById(savedRow, savedRow.id)
 
 // After create/delete, or when the page query is stale
-listState.refresh()
+context.refresh()
 ```
 
-`updateRowById` shallow-merges by `row.id`. It does not refetch, change `count`, or update `selection`.
+`updateRowById` shallow-merges into the row whose `idKey` field (default `id`) equals the id you pass. It does not refetch, change `count`, or update `selection`.
 
 ## Do not
 

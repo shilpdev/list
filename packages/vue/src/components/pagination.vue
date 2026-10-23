@@ -1,5 +1,5 @@
 <template>
-  <div v-if="showContent" class="vue-list__pagination">
+  <div v-if="showContent" class="shilp-list__pagination">
     <slot v-bind="scope">
       <slot name="first" v-bind="scope">
         <button type="button" :disabled="!scope.hasPrev" @click="scope.first">First</button>
@@ -11,9 +11,9 @@
 
       <slot name="pages" v-bind="scope">
         <template v-for="item in scope.pagesToDisplay" :key="item">
-          <slot name="page" v-bind="scope" :page="item" :isActive="item === scope.page">
-            <span v-if="item === scope.page">{{ item }}</span>
-            <button v-else type="button" @click="scope.setPage(item)">
+          <slot name="page" v-bind="itemScope(item)">
+            <span v-if="item === scope.context.page">{{ item }}</span>
+            <button v-else type="button" @click="scope.context.setPage(item)">
               {{ item }}
             </button>
           </slot>
@@ -33,58 +33,43 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { PaginationComponentOptions, PaginationScope } from '../../../../shared'
+import { DEFAULT_PAGE_LINKS } from '@shared/constants'
+import { getPagination } from '@shared/utils'
+import type { PaginationProps, PaginationScope, PaginationItemScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListPagination',
 })
 
-const props = withDefaults(defineProps<PaginationComponentOptions>(), {
-  pageLinks: 5,
-})
+const { pageLinks = DEFAULT_PAGE_LINKS } = defineProps<PaginationProps>()
 
-const { listState } = useListContext()
+const context = useListContext()
 
 const showContent = computed(() => {
-  const state = listState
-  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
+  return !context.isInitialLoading && context.rows.length > 0 && !context.error
 })
 
 const scope = computed((): PaginationScope => {
-  const state = listState
-  const { page, perPage } = state.pagination
-  const total = state.count
-  const pagesCount = Math.ceil(total / perPage)
-  const halfWay = Math.floor(props.pageLinks / 2)
-  const hasNext = page * perPage < total
-  const hasPrev = page !== 1
-  const pageCount = Math.min(props.pageLinks, pagesCount)
-  const pages = Array.from({ length: pageCount })
-
-  let pagesToDisplay: number[]
-  if (page <= halfWay) {
-    pagesToDisplay = pages.map((_, index) => index + 1)
-  } else if (pagesCount - page < halfWay) {
-    pagesToDisplay = pages.map((_, index) => pagesCount - index).reverse()
-  } else {
-    pagesToDisplay = pages.map((_, index) => page - halfWay + index)
-  }
+  const { page, perPage, count } = context
+  const pagination = getPagination(page, perPage, count, pageLinks)
 
   return {
-    page,
-    perPage,
-    count: total,
-    pagesCount,
-    halfWay,
-    hasNext,
-    hasPrev,
-    pagesToDisplay,
-    prev: () => state.setPage(page - 1),
-    next: () => state.setPage(page + 1),
-    first: () => state.setPage(1),
-    last: () => state.setPage(pagesCount),
-    setPage: (nextPage: number) => state.setPage(nextPage),
+    context,
+    ...pagination,
+    hasNext: context.hasMore,
+    prev: () => context.setPage(page - 1),
+    next: () => context.setPage(page + 1),
+    first: () => context.setPage(1),
+    last: () => context.setPage(pagination.pagesCount),
   }
 })
+
+const itemScope = (item: number): PaginationItemScope => {
+  return {
+    ...scope.value,
+    page: item,
+    isActive: item === context.page,
+  }
+}
 </script>

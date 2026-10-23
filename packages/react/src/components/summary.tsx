@@ -1,5 +1,7 @@
 import { type ReactNode } from 'react'
-import type { SummaryScope } from '../../../../shared'
+import type { SummaryScope } from '@shared'
+import { getSummaryRange } from '@shared/utils'
+import { getSummaryMessage } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListSummaryProps = {
@@ -7,47 +9,28 @@ type ListSummaryProps = {
 }
 
 export const ListSummary = ({ children }: ListSummaryProps) => {
-  const { listState } = useListContext()
-  const { rows, count, pagination, loader, error } = listState
-  const { page, perPage } = pagination
-  const { initialLoading } = loader
+  const context = useListContext()
+  const { rows, count, error, page, perPage, isInitialLoading } = context
 
-  const summaryData = {
-    from: page * perPage - perPage + 1,
-    to: Math.min(page * perPage, count),
-    visibleCount: rows?.length || 0,
+  if (isInitialLoading || rows.length === 0 || error) {
+    return null
   }
 
   const scope: SummaryScope = {
-    ...summaryData,
-    count,
+    context,
+    ...getSummaryRange(page, perPage, count),
+    visibleCount: rows.length,
   }
 
-  if (initialLoading) return null
+  let content: ReactNode
 
-  if (!rows || rows.length === 0) {
-    return null
+  if (typeof children === 'function') {
+    content = children(scope)
+  } else if (children) {
+    content = children
+  } else {
+    content = <span>{getSummaryMessage(scope)}</span>
   }
 
-  if (error) {
-    return null
-  }
-
-  return (
-    <div className="react-list__summary">
-      {typeof children === 'function' ? (
-        children(scope)
-      ) : children ? (
-        children
-      ) : (
-        <span>
-          Showing <span>{summaryData.visibleCount}</span> items (
-          <span>
-            {summaryData.from} - {summaryData.to}
-          </span>
-          ) out of <span>{count}</span>
-        </span>
-      )}
-    </div>
-  )
+  return <div className="shilp-list__summary">{content}</div>
 }

@@ -1,46 +1,34 @@
 import { type ReactNode } from 'react'
-import type { LoadMoreScope } from '../../../../shared'
+import type { ListScope } from '@shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
 
 type ListLoadMoreProps = {
-  children?: ReactNode | ((scope: LoadMoreScope) => ReactNode)
+  children?: ReactNode | ((scope: ListScope) => ReactNode)
 }
 
 export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
-  const { listState } = useListContext()
-  const { rows, count, pagination, loader, error, loadMore } = listState
-  const { page, perPage } = pagination
-  const { isLoading } = loader
+  const context = useListContext()
 
-  const hasMoreRows = page * perPage < count
-
-  const scope: LoadMoreScope = {
-    isLoading,
-    loadMore,
-    hasMoreRows,
-  }
-
-  if (!rows || rows.length === 0) {
+  if (context.isEmpty || context.error) {
     return null
   }
 
-  if (error) {
-    return null
+  let content: ReactNode
+
+  if (typeof children === 'function') {
+    content = children({ context })
+  } else if (children) {
+    content = children
+  } else if (context.hasMore) {
+    content = (
+      <button type="button" onClick={context.loadMore}>
+        {MESSAGES.loadMore}
+      </button>
+    )
+  } else {
+    content = <p>{MESSAGES.loadMoreEnd}</p>
   }
 
-  return (
-    <div className="react-list__load-more">
-      {typeof children === 'function' ? (
-        children(scope)
-      ) : children ? (
-        children
-      ) : hasMoreRows ? (
-        <button type="button" onClick={loadMore}>
-          Load More
-        </button>
-      ) : (
-        <p>— That&apos;s all —</p>
-      )}
-    </div>
-  )
+  return <div className="shilp-list__load-more">{content}</div>
 }
