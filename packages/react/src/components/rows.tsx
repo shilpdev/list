@@ -10,10 +10,27 @@ type ListRowsProps = {
 
 function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
   const context = useListContext()
-  const { rows, error, isInitialLoading } = context
 
-  if (isInitialLoading || rows.length === 0 || error) {
+  if (context.isInitialLoading || context.error || context.isEmpty) {
     return null
+  }
+
+  function getKey(row: unknown): number {
+    return (row as { _index: number })._index
+  }
+
+  function getRowScope(row: unknown, index: number): RowScope {
+    const id = getRowId(row, context.idKey)
+
+    return {
+      context,
+      row,
+      index,
+      isSelected: context.selection.includes(id),
+      toggleSelection: () => {
+        context.toggleRowSelection(id)
+      },
+    }
   }
 
   let content: ReactNode
@@ -23,26 +40,14 @@ function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
   } else if (children) {
     content = children
   } else {
-    content = rows.map((row, index) => {
-      let rowContent: ReactNode
+    content = context.rows.map((row, index) => {
+      const rowContent = rowFn ? (
+        rowFn(getRowScope(row, index))
+      ) : (
+        <pre>{JSON.stringify(row, null, 2)}</pre>
+      )
 
-      if (rowFn) {
-        const id = getRowId(row, context.idKey)
-
-        rowContent = rowFn({
-          context,
-          row,
-          index,
-          isSelected: context.selection.includes(id),
-          toggleSelection: () => {
-            context.toggleRowSelection(id)
-          },
-        })
-      } else {
-        rowContent = <pre>{JSON.stringify(row, null, 2)}</pre>
-      }
-
-      return <div key={(row as { _index: number })._index}>{rowContent}</div>
+      return <div key={getKey(row)}>{rowContent}</div>
     })
   }
 

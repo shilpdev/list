@@ -85,7 +85,7 @@ function List<T = unknown>({
     return createColumns(columns)
   })
   const [rows, setRows] = useState<T[]>([])
-  const [selection, _setSelection] = useState<RowId[]>([])
+  const [selection, setSelection] = useState<RowId[]>([])
   const [error, setError] = useState<Error | null>(null)
   const [response, setResponse] = useState<RequestHandlerResponse<T> | null>(null)
   const [count, setCount] = useState<number>(0)
@@ -207,7 +207,7 @@ function List<T = unknown>({
         })
         setCount(res.count)
         // Keep the same array when nothing was selected, so the reset does not re-render.
-        _setSelection((previousSelection) => {
+        setSelection((previousSelection) => {
           if (previousSelection.length === 0) {
             return previousSelection
           }
@@ -316,7 +316,7 @@ function List<T = unknown>({
   }
 
   function toggleRowSelection(id: RowId) {
-    _setSelection((previousSelection) => {
+    setSelection((previousSelection) => {
       return toggleId(previousSelection, id)
     })
   }
