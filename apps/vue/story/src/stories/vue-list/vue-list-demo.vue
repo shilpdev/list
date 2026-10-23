@@ -188,48 +188,46 @@ defineOptions({
   name: 'vue-list-demo',
 })
 
-const props = withDefaults(
-  defineProps<{
-    endpoint?: string
-    page?: number
-    perPage?: number
-    paginationMode?: 'pagination' | 'loadMore'
-    /**
-     * Serializable options for the demo request handler.
-     * Sample JSON: `{ "forceEmpty": false, "shouldFail": false }`
-     */
-    requestHandler?: CreateRequestHandlerOptions
-    count?: number
-  }>(),
-  {
-    endpoint: 'skills',
-    page: 1,
-    perPage: 10,
-    paginationMode: 'pagination',
-    requestHandler: () => ({ forceEmpty: false, shouldFail: false }),
-  },
-)
+const {
+  endpoint = 'skills',
+  page = 1,
+  perPage = 10,
+  paginationMode = 'pagination',
+  requestHandler = { forceEmpty: false, shouldFail: false },
+  count,
+} = defineProps<{
+  endpoint?: string
+  page?: number
+  perPage?: number
+  paginationMode?: 'pagination' | 'loadMore'
+  /**
+   * Serializable options for the demo request handler.
+   * Sample JSON: `{ "forceEmpty": false, "shouldFail": false }`
+   */
+  requestHandler?: CreateRequestHandlerOptions
+  count?: number
+}>()
 
 const listKey = computed(() =>
   [
-    props.endpoint,
-    props.page,
-    props.perPage,
-    props.paginationMode,
-    props.count,
-    props.requestHandler?.forceEmpty,
-    props.requestHandler?.shouldFail,
+    endpoint,
+    page,
+    perPage,
+    paginationMode,
+    count,
+    requestHandler?.forceEmpty,
+    requestHandler?.shouldFail,
   ].join(':'),
 )
 
-const handler = computed(() => createRequestHandler(props.requestHandler ?? {}))
+const handler = computed(() => createRequestHandler(requestHandler ?? {}))
 
 const perPageOptions = computed(() => {
-  if (PER_PAGE_OPTIONS.includes(props.perPage)) {
+  if (PER_PAGE_OPTIONS.includes(perPage)) {
     return PER_PAGE_OPTIONS
   }
 
-  return [...PER_PAGE_OPTIONS, props.perPage].sort((a, b) => a - b)
+  return [...PER_PAGE_OPTIONS, perPage].sort((a, b) => a - b)
 })
 
 const columns = [

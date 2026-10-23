@@ -50,40 +50,40 @@ defineOptions({
   name: 'List',
 })
 
-const props = withDefaults(defineProps<ListPropsVue>(), {
-  idKey: DEFAULT_ID_KEY,
-  page: DEFAULT_PAGE,
-  perPage: DEFAULT_PER_PAGE,
-  sortBy: DEFAULT_SORT_BY,
-  sortOrder: DEFAULT_SORT_ORDER,
-  search: DEFAULT_SEARCH,
-  version: DEFAULT_VERSION,
-  paginationMode: DEFAULT_PAGINATION_MODE,
-  filters: () => {
-    return [...DEFAULT_FILTERS]
-  },
-  meta: () => {
-    return { ...DEFAULT_META }
-  },
-})
+const {
+  endpoint,
+  idKey = DEFAULT_ID_KEY,
+  page = DEFAULT_PAGE,
+  perPage = DEFAULT_PER_PAGE,
+  sortBy = DEFAULT_SORT_BY,
+  sortOrder = DEFAULT_SORT_ORDER,
+  search = DEFAULT_SEARCH,
+  version = DEFAULT_VERSION,
+  paginationMode = DEFAULT_PAGINATION_MODE,
+  meta = { ...DEFAULT_META },
+  filters = [...DEFAULT_FILTERS],
+  columns,
+  requestHandler,
+  stateManager,
+} = defineProps<ListPropsVue>()
 
 const emit = defineEmits<Events>()
 
 const isLoadMore = computed(() => {
-  return props.paginationMode === 'loadMore'
+  return paginationMode === 'loadMore'
 })
 
-const defaultFilters = props.filters.map(({ column, value }): FilterState => {
+const defaultFilters = filters.map(({ column, value }): FilterState => {
   return { column, value, isDirty: false }
 })
 
-const localPage = ref<number>(props.page)
-const localPerPage = ref<number>(props.perPage)
-const localSortBy = ref<string>(props.sortBy)
-const localSortOrder = ref<SortOrder>(props.sortOrder)
-const localSearch = ref<string>(props.search)
+const localPage = ref<number>(page)
+const localPerPage = ref<number>(perPage)
+const localSortBy = ref<string>(sortBy)
+const localSortOrder = ref<SortOrder>(sortOrder)
+const localSearch = ref<string>(search)
 const localFilters = ref<FilterState[]>([...defaultFilters])
-const localColumns = ref<Columns>(createColumns(props.columns))
+const localColumns = ref<Columns>(createColumns(columns))
 
 const rows = ref<unknown[]>([])
 const selection = ref<RowId[]>([])
@@ -104,11 +104,11 @@ const hasMore = computed(() => {
 })
 
 function updateStateManager() {
-  props.stateManager?.set?.(snapshot())
+  stateManager?.set?.(snapshot())
 }
 
 function clearState() {
-  props.stateManager?.clear?.(snapshot())
+  stateManager?.clear?.(snapshot())
   init()
 }
 
@@ -132,8 +132,7 @@ function getData() {
     emit('beforePageChange', requestState)
   }
 
-  props
-    .requestHandler(requestState)
+  requestHandler(requestState)
     .then((res) => {
       if (currentRequestId !== requestId) {
         return
@@ -278,10 +277,10 @@ function loadMore() {
 }
 
 function updateRowById(row: Partial<unknown>, id: RowId) {
-  const next = patchRowById(rows.value, row, id, props.idKey)
+  const next = patchRowById(rows.value, row, id, idKey)
 
   if (!next) {
-    console.warn(rowNotFoundMessage(props.idKey, id))
+    console.warn(rowNotFoundMessage(idKey, id))
     return
   }
 
@@ -301,10 +300,10 @@ function setColumn(column: string, key: string, value: unknown) {
 }
 
 const state = reactive({
-  endpoint: props.endpoint,
-  version: props.version,
-  meta: props.meta,
-  idKey: props.idKey,
+  endpoint: endpoint,
+  version: version,
+  meta: meta,
+  idKey: idKey,
   page: localPage,
   perPage: localPerPage,
   sortBy: localSortBy,
@@ -354,7 +353,7 @@ const snapshot = (): State => {
 let saved: Partial<State> = {}
 
 try {
-  saved = props.stateManager?.get?.(snapshot()) ?? {}
+  saved = stateManager?.get?.(snapshot()) ?? {}
 } catch (err) {
   console.error(err)
 }
@@ -427,7 +426,7 @@ watch(selection, (newValue, oldValue) => {
 })
 
 function init() {
-  props.stateManager?.init?.(snapshot())
+  stateManager?.init?.(snapshot())
 
   if (saved.filters != null && !equal(localFilters.value, defaultFilters)) {
     emit('onFiltersChange', localFilters.value)

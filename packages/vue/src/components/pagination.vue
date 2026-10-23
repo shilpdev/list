@@ -42,9 +42,7 @@ defineOptions({
   name: 'ListPagination',
 })
 
-const props = withDefaults(defineProps<PaginationProps>(), {
-  pageLinks: DEFAULT_PAGE_LINKS,
-})
+const { pageLinks = DEFAULT_PAGE_LINKS } = defineProps<PaginationProps>()
 
 const context = useListContext()
 
@@ -54,7 +52,7 @@ const showContent = computed(() => {
 
 const scope = computed((): PaginationScope => {
   const { page, perPage, count } = context
-  const pagination = getPagination(page, perPage, count, props.pageLinks)
+  const pagination = getPagination(page, perPage, count, pageLinks)
 
   return {
     context,

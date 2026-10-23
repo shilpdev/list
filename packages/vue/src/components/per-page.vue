@@ -28,11 +28,7 @@ defineOptions({
   name: 'ListPerPage',
 })
 
-const props = withDefaults(defineProps<PerPageProps>(), {
-  options: () => {
-    return DEFAULT_PER_PAGE_OPTIONS
-  },
-})
+const { options = DEFAULT_PER_PAGE_OPTIONS } = defineProps<PerPageProps>()
 
 const context = useListContext()
 
@@ -41,7 +37,7 @@ const showContent = computed(() => {
 })
 
 const serializedOptions = computed(() => {
-  return normalizePerPageOptions(props.options ?? [])
+  return normalizePerPageOptions(options)
 })
 
 const scope = computed((): PerPageScope => {

@@ -78,6 +78,7 @@ These rules came out of the cleanup, renaming and reuse work on this repo. They 
 - No ternaries for logic. Use `if` / `else`. A short ternary for a label or a class name is fine.
 - A function that returns a value uses braces and an explicit `return`, including `map`/`filter` callbacks, `computed` and `useMemo` factories, and default-value factories. Single-expression arrows are only for functions that return nothing.
 - Build conditional markup with a `content` variable filled by `if` / `else if` / `else`, then render it once. Do not nest ternaries in markup.
+- Vue props declare their defaults by destructuring (`const { page = DEFAULT_PAGE } = defineProps<...>()`, Vue 3.5+), not with `withDefaults`. React does the same with destructured parameters.
 - Comments explain why, or describe the lifecycle step the code belongs to. Delete comments that repeat the code. Keep lifecycle comments numbered the same as the lifecycle document.
 - Prefer a well-known, small npm package over hand-writing a generic utility (for example deep equality). Add it where the importing code resolves it from, and note it in the docs.
 

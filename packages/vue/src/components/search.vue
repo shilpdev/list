@@ -21,9 +21,7 @@ defineOptions({
   name: 'ListSearch',
 })
 
-const props = withDefaults(defineProps<SearchProps>(), {
-  debounceTime: DEFAULT_DEBOUNCE_TIME,
-})
+const { debounceTime = DEFAULT_DEBOUNCE_TIME } = defineProps<SearchProps>()
 
 const context = useListContext()
 const localSearch = ref(context.search)
@@ -50,7 +48,7 @@ function handleInput(value: string) {
 
   debounceTimer = setTimeout(() => {
     context.setSearch(value)
-  }, props.debounceTime)
+  }, debounceTime)
 }
 
 onUnmounted(() => {
