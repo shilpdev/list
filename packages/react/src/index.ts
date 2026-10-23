@@ -1,4 +1,3 @@
-export type { ListPropsReact } from './components/list'
 export { default, default as List } from './components/list'
 export { ListGoTo } from './components/go-to'
 export { ListError } from './components/error'
@@ -17,4 +16,5 @@ export { ListRows } from './components/rows'
 export { useListContext } from './context/list-context'
 export { DEFAULT_ID_KEY } from '@shared/constants'
 
+export type { ListPropsReact } from './types'
 export type * from '@shared'

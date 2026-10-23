@@ -20,7 +20,7 @@ export const ListSearch = memo(
       }
     }, [search])
 
-    const handleChange = (value: string) => {
+    const handleInput = (value: string) => {
       setLocalSearch(value)
 
       if (debounceTimerRef.current) {
@@ -43,7 +43,7 @@ export const ListSearch = memo(
     const scope: SearchScope = {
       context,
       search: localSearch,
-      setSearch: handleChange,
+      setSearch: handleInput,
     }
 
     let content: ReactNode
@@ -57,7 +57,7 @@ export const ListSearch = memo(
         <input
           type="text"
           value={localSearch}
-          onChange={(e) => handleChange(e.target.value)}
+          onChange={(e) => handleInput(e.target.value)}
           placeholder="Search..."
         />
       )

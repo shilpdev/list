@@ -13,12 +13,12 @@ export const ListColumns = ({ children, column: columnFn }: ListColumnsProps) =>
   const context = useListContext()
   const { columns, setColumn } = context
 
-  function getColumnScope(item: Column): ColumnScope {
+  function getColumnScope(column: Column): ColumnScope {
     return {
       context,
-      ...item,
+      ...column,
       setValue: (key: string, value: unknown) => {
-        setColumn(item.name, key, value)
+        setColumn(column.name, key, value)
       },
     }
   }
@@ -30,18 +30,18 @@ export const ListColumns = ({ children, column: columnFn }: ListColumnsProps) =>
   } else if (children) {
     content = children
   } else {
-    content = columns.map((item) => {
+    content = columns.map((column) => {
       if (columnFn) {
-        return <Fragment key={item.name}>{columnFn(getColumnScope(item))}</Fragment>
+        return <Fragment key={column.name}>{columnFn(getColumnScope(column))}</Fragment>
       }
 
       return (
-        <label key={item.name}>
-          <span>{item.label ?? item.name}</span>
+        <label key={column.name}>
+          <span>{column.label ?? column.name}</span>
           <input
             type="checkbox"
-            checked={item.visibility}
-            onChange={(e) => setColumn(item.name, 'visibility', e.target.checked)}
+            checked={column.visibility}
+            onChange={(e) => setColumn(column.name, 'visibility', e.target.checked)}
           />
         </label>
       )

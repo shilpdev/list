@@ -101,15 +101,6 @@ const hasMore = computed(() => {
   return computeHasMore(localPage.value, localPerPage.value, count.value)
 })
 
-function setRows(res: RequestHandlerResponse) {
-  rows.value = mergeRows(rows.value, res.rows, {
-    page: localPage.value,
-    perPage: localPerPage.value,
-    isLoadMore: isLoadMore.value,
-  })
-  count.value = res.count
-}
-
 function updateStateManager() {
   props.stateManager?.set?.(snapshot())
 }
@@ -148,7 +139,12 @@ function getData() {
 
       response.value = res
       selection.value = []
-      setRows(res)
+      rows.value = mergeRows(rows.value, res.rows, {
+        page: localPage.value,
+        perPage: localPerPage.value,
+        isLoadMore: isLoadMore.value,
+      })
+      count.value = res.count
       updateStateManager()
       emit('onResponse', res)
 

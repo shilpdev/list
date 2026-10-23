@@ -13,12 +13,12 @@ export const ListFilters = ({ children, filter: filterFn }: ListFiltersProps) =>
   const context = useListContext()
   const { filters, setFilter, setFilters } = context
 
-  function getFilterScope(item: FilterState): FilterScope {
+  function getFilterScope(filter: FilterState): FilterScope {
     return {
       context,
-      ...item,
+      ...filter,
       setValue: (value: unknown) => {
-        setFilter(item.column, value)
+        setFilter(filter.column, value)
       },
     }
   }
@@ -30,18 +30,18 @@ export const ListFilters = ({ children, filter: filterFn }: ListFiltersProps) =>
   } else if (children) {
     content = children
   } else {
-    content = filters.map((item) => {
+    content = filters.map((filter) => {
       if (filterFn) {
-        return <Fragment key={item.column}>{filterFn(getFilterScope(item))}</Fragment>
+        return <Fragment key={filter.column}>{filterFn(getFilterScope(filter))}</Fragment>
       }
 
       return (
-        <label key={item.column}>
-          <span>{item.column}</span>
+        <label key={filter.column}>
+          <span>{filter.column}</span>
           <input
             type="text"
-            value={String(item.value ?? '')}
-            onChange={(e) => setFilter(item.column, e.target.value)}
+            value={String(filter.value ?? '')}
+            onChange={(e) => setFilter(filter.column, e.target.value)}
           />
         </label>
       )
