@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import List, {
   ListEmpty,
   ListError,
+  ListFilters,
   ListLoaderInitial,
   ListRows,
   ListLoadMore,
@@ -12,12 +13,21 @@ import List, {
   ListSearch,
   ListSummary,
 } from '@shilp.dev/react-list'
-import type { Context } from '@shilp.dev/react-list'
+import type { Context, FilterScope } from '@shilp.dev/react-list'
 import { createRequestHandler, type CreateRequestHandlerOptions } from '@/api/request-handler'
 import { formatSkillDate, type Skill } from '@/types/skill'
 import './react-list-demo.css'
 
 const PER_PAGE_OPTIONS = [8, 10, 15, 25, 50, 100]
+
+const COLUMNS = [
+  { name: 'id', label: 'ID' },
+  { name: 'name', label: 'Name' },
+  { name: 'status', label: 'Status' },
+  { name: 'date_updated', label: 'Updated' },
+]
+
+const FILTERS = [{ column: 'status', value: undefined }]
 
 export interface ReactListDemoProps {
   endpoint?: string
@@ -66,9 +76,7 @@ function ReactListDemoInner({
   perPage = 10,
   paginationMode = 'pagination',
   requestHandler,
-  count,
 }: ReactListDemoProps) {
-  const [filters, setFilters] = useState<Record<string, string | undefined>>({})
   const handler = useMemo(() => createRequestHandler(requestHandler ?? {}), [requestHandler])
   const perPageOptions = useMemo(() => {
     if (PER_PAGE_OPTIONS.includes(perPage)) {
@@ -78,11 +86,12 @@ function ReactListDemoInner({
     return [...PER_PAGE_OPTIONS, perPage].sort((a, b) => a - b)
   }, [perPage])
 
-  function onStatusChange(value: string) {
-    setFilters((current) => ({
-      ...current,
-      status: value === 'all' ? undefined : value,
-    }))
+  function onStatusChange({ setValue }: FilterScope, value: string) {
+    if (value === 'all') {
+      setValue(undefined)
+    } else {
+      setValue(value)
+    }
   }
 
   return (
@@ -93,8 +102,8 @@ function ReactListDemoInner({
         perPage={perPage}
         paginationMode={paginationMode}
         requestHandler={handler}
-        count={count}
-        filters={filters}
+        columns={COLUMNS}
+        filters={FILTERS}
       >
         <div className="react-list-demo__toolbar">
           <ListSearch>
@@ -109,18 +118,22 @@ function ReactListDemoInner({
             )}
           </ListSearch>
 
-          <label className="react-list-demo__filter">
-            Status
-            <select
-              className="react-list-demo__select"
-              onChange={(event) => onStatusChange(event.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
-          </label>
+          <ListFilters
+            filter={(scope) => (
+              <label className="react-list-demo__filter">
+                Status
+                <select
+                  className="react-list-demo__select"
+                  onChange={(event) => onStatusChange(scope, event.target.value)}
+                >
+                  <option value="all">All</option>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </label>
+            )}
+          />
         </div>
 
         <ListLoaderInitial>

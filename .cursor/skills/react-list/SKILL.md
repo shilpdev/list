@@ -111,7 +111,7 @@ Data: `rows`, `count`, `error`, `response`, `isEmpty`, `search`, `filters`, `sel
 
 Flat keys: `isLoading`, `isInitialLoading`, `page`, `perPage`, `hasMore`, `sortBy` (`''` when unset) / `sortOrder`.
 
-Handlers: `setPage`, `setPerPage`, `setSearch`, `setSortBy`, `setSortOrder`, `setFilters`, `clearFilters`, `loadMore`, `refresh`, `setSelection`, `updateRowById`, `updateColumn`.
+Handlers: `setPage`, `setPerPage`, `setSearch`, `setSortBy`, `setSortOrder`, `setFilters`, `clearFilters`, `loadMore`, `refresh`, `toggleRowSelection`, `updateRowById`, `updateColumn`.
 
 `ListRows` scope does **not** include `updateRowById`. Call `useListContext()` in the row or use the root children function.
 

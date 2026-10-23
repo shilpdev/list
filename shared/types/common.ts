@@ -19,6 +19,9 @@ export type RequestTrigger =
   | 'loadMore'
   | 'refresh'
 
+/** The value of a row's `idKey` field. */
+export type RowId = string | number
+
 /** How the list loads additional pages. */
 export type PaginationMode = 'pagination' | 'loadMore'
 
@@ -64,8 +67,9 @@ export interface Actions<T = unknown> {
   refresh: () => void
   /** Calls `stateManager.clear`. The list itself is not reset. */
   clearState: () => void
-  setSelection: (selection: T[]) => void
-  updateRowById: (row: Partial<T>, id: string | number) => void
+  /** Adds the row with this id (its `idKey` field) to the selection, or removes it when it is already there. */
+  toggleRowSelection: (id: RowId) => void
+  updateRowById: (row: Partial<T>, id: RowId) => void
   /** Sets one key of one column, such as `visibility` or a key of your own. Unknown columns are ignored. */
   setColumn: (column: string, key: string, value: unknown) => void
 }
@@ -80,7 +84,8 @@ export interface State<T = unknown> {
   response: RequestHandlerResponse<T> | null
   error: Error | null
   count: number
-  selection: T[]
+  /** Ids of the selected rows. */
+  selection: RowId[]
   page: number
   perPage: number
   hasMore: boolean

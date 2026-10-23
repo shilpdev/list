@@ -1,5 +1,6 @@
 import { memo, type ReactNode } from 'react'
 import type { ListScope, RowScope } from '@shared'
+import { getRowId } from '@shared/utils'
 import { useListContext } from '../context/list-context'
 
 type ListRowsProps = {
@@ -26,7 +27,17 @@ function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
       let rowContent: ReactNode
 
       if (rowFn) {
-        rowContent = rowFn({ row, index })
+        const id = getRowId(row, context.idKey)
+
+        rowContent = rowFn({
+          context,
+          row,
+          index,
+          isSelected: context.selection.includes(id),
+          toggleSelection: () => {
+            context.toggleRowSelection(id)
+          },
+        })
       } else {
         rowContent = <pre>{JSON.stringify(row, null, 2)}</pre>
       }

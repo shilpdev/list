@@ -55,21 +55,17 @@ export function createRequestHandler(
       params.append('sort', sortOrder === 'desc' ? `-${sortBy}` : sortBy)
     }
 
-    if (filters && Object.keys(filters).length > 0) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== '') {
-          if (typeof value === 'object' && value !== null) {
-            Object.entries(value as Record<string, unknown>).forEach(
-              ([operator, operatorValue]) => {
-                params.append(`filter[${key}][${operator}]`, String(operatorValue))
-              },
-            )
-          } else {
-            params.append(`filter[${key}][_eq]`, String(value))
-          }
+    filters.forEach(({ column, value }) => {
+      if (value !== undefined && value !== '') {
+        if (typeof value === 'object' && value !== null) {
+          Object.entries(value as Record<string, unknown>).forEach(([operator, operatorValue]) => {
+            params.append(`filter[${column}][${operator}]`, String(operatorValue))
+          })
+        } else {
+          params.append(`filter[${column}][_eq]`, String(value))
         }
-      })
-    }
+      }
+    })
 
     params.append('meta', '*')
 

@@ -1,4 +1,4 @@
-import type { Filter, Meta, PaginationMode, SortOrder, SummaryScope, PerPageOption } from './types'
+import type { Filter, Meta, PaginationMode, SortOrder, SummaryScope, PerPageOption, RowId } from './types'
 
 export const DEFAULT_ID_KEY = 'id'
 export const DEFAULT_PAGE = 1
@@ -42,7 +42,7 @@ export const getPerPageMessage = (option: PerPageOption): string => {
   return `${option.label} rows per page`
 }
 
-export const rowNotFoundMessage = (idKey: string, id: string | number): string => {
+export const rowNotFoundMessage = (idKey: string, id: RowId): string => {
   return (
     `List: updateRowById did not find a row where ${idKey} === ${JSON.stringify(id)}. ` +
     `Verify your rows expose "${idKey}" and that the id type matches exactly.`

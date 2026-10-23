@@ -13,6 +13,7 @@ import type {
   FilterValues,
   RequestHandlerResponse,
   RequestTrigger,
+  RowId,
   SortOrder,
   State,
 } from '@shared'
@@ -37,6 +38,7 @@ import {
   mergeRows,
   patchRowById,
   toError,
+  toggleId,
   computeFilters,
 } from '@shared/utils'
 import equal from 'fast-deep-equal'
@@ -84,7 +86,7 @@ const localFilters = ref<FilterState[]>([...defaultFilters])
 const localColumns = ref<Columns>(createColumns(props.columns))
 
 const rows = ref<unknown[]>([])
-const selection = ref<unknown[]>([])
+const selection = ref<RowId[]>([])
 const error = ref<Error | null>(null)
 const response = ref<RequestHandlerResponse | null>(null)
 const count = ref(0)
@@ -179,7 +181,7 @@ function getData() {
 // starts the request. setPerPage, setSearch, setSortBy and setSortOrder go back to page 1, and
 // setFilters and clearFilters do the same through the `filters` watcher. refresh refetches the
 // current page (load-more: from page 1). loadMore fetches the next page. updateRowById,
-// setColumn and setSelection change state without a request.
+// setColumn and toggleRowSelection change state without a request.
 // Internal: `requestTrigger` is set by the caller, before the request reads it.
 function fetchPage(value: number) {
   localPage.value = value
@@ -230,8 +232,8 @@ function setPerPage(value: number) {
   fetchPage(1)
 }
 
-function setSelection(value: unknown[]) {
-  selection.value = value
+function toggleRowSelection(id: RowId) {
+  selection.value = toggleId(selection.value, id)
 }
 
 function changeFilters(next: FilterState[]) {
@@ -275,7 +277,7 @@ function loadMore() {
   }
 }
 
-function updateRowById(row: Partial<unknown>, id: string | number) {
+function updateRowById(row: Partial<unknown>, id: RowId) {
   const next = patchRowById(rows.value, row, id, props.idKey)
 
   if (!next) {
@@ -335,7 +337,7 @@ const context = reactive({
   loadMore,
   refresh,
   clearState,
-  setSelection,
+  toggleRowSelection,
   updateRowById,
   setColumn,
 }) as Context

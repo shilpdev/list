@@ -1,6 +1,14 @@
 import equal from 'fast-deep-equal'
 import { DEFAULT_COLUMN_VISIBILITY } from './constants'
-import type { Columns, FilterState, FilterValues, PerPageOption, SortOrder, State } from './types'
+import type {
+  Columns,
+  FilterState,
+  FilterValues,
+  PerPageOption,
+  RowId,
+  SortOrder,
+  State,
+} from './types'
 
 export const toError = (err: unknown): Error => {
   if (err instanceof Error) {
@@ -70,15 +78,13 @@ export const mergeRows = <T>(
 export const patchRowById = <T>(
   rows: T[],
   patch: Partial<T>,
-  id: string | number,
+  id: RowId,
   idKey: string,
 ): T[] | null => {
   let matched = false
 
   const next = rows.map((row) => {
-    const rowId = (row as Record<string, unknown> | null)?.[idKey]
-
-    if (rowId !== id) {
+    if (getRowId(row, idKey) !== id) {
       return row
     }
 
@@ -167,6 +173,22 @@ export const normalizePerPageOptions = (
   })
 }
 
-export const hasSelectionChanged = (selection: unknown[], previous: unknown[]): boolean => {
+/** The value of the row's `idKey` field. */
+export const getRowId = (row: unknown, idKey: string): RowId => {
+  return (row as Record<string, RowId>)[idKey]
+}
+
+/** Returns `ids` with `id` removed when it is there, or added at the end when it is not. */
+export const toggleId = (ids: RowId[], id: RowId): RowId[] => {
+  if (ids.includes(id)) {
+    return ids.filter((item) => {
+      return item !== id
+    })
+  }
+
+  return [...ids, id]
+}
+
+export const hasSelectionChanged = (selection: RowId[], previous: RowId[]): boolean => {
   return !equal(selection, previous)
 }

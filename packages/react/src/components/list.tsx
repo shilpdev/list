@@ -6,6 +6,7 @@ import type {
   FilterValues,
   RequestHandlerResponse,
   RequestTrigger,
+  RowId,
   SortOrder,
   State,
 } from '@shared'
@@ -31,6 +32,7 @@ import {
   mergeRows,
   patchRowById,
   toError,
+  toggleId,
 } from '@shared/utils'
 import equal from 'fast-deep-equal'
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react'
@@ -83,7 +85,7 @@ function List<T = unknown>({
     return createColumns(columns)
   })
   const [rows, setRows] = useState<T[]>([])
-  const [selection, _setSelection] = useState<T[]>([])
+  const [selection, _setSelection] = useState<RowId[]>([])
   const [error, setError] = useState<Error | null>(null)
   const [response, setResponse] = useState<RequestHandlerResponse<T> | null>(null)
   const [count, setCount] = useState<number>(0)
@@ -313,8 +315,10 @@ function List<T = unknown>({
     changeFilters([...defaultFilters])
   }
 
-  function setSelection(value: T[]) {
-    _setSelection(value)
+  function toggleRowSelection(id: RowId) {
+    _setSelection((previousSelection) => {
+      return toggleId(previousSelection, id)
+    })
   }
 
   // Refetches the current page; load-more starts again from page 1. `refreshKey` makes the
@@ -350,7 +354,7 @@ function List<T = unknown>({
     initRef.current()
   }
 
-  function updateRowById(row: Partial<T>, id: string | number) {
+  function updateRowById(row: Partial<T>, id: RowId) {
     const next = patchRowById(state.rows, row, id, state.idKey)
 
     if (!next) {
@@ -392,7 +396,7 @@ function List<T = unknown>({
       loadMore,
       refresh,
       clearState,
-      setSelection,
+      toggleRowSelection,
       updateRowById,
       setColumn,
     }

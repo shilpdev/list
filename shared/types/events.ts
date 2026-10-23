@@ -1,4 +1,4 @@
-import type { RequestHandlerResponse, State } from './common'
+import type { RequestHandlerResponse, RowId, State } from './common'
 import type { FilterState } from './filters'
 
 /**
@@ -15,7 +15,7 @@ export interface Events<T = unknown> {
   afterLoadMore: [response: RequestHandlerResponse<T>]
   onResponse: [response: RequestHandlerResponse<T>]
   onError: [error: Error]
-  onRowSelect: [selection: T[], previous: T[]]
+  onRowSelect: [selection: RowId[], previous: RowId[]]
   onFiltersChange: [filters: FilterState[]]
 }
 
