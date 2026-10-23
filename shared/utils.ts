@@ -2,6 +2,7 @@ import equal from 'fast-deep-equal'
 import { DEFAULT_COLUMN_VISIBILITY } from './constants'
 import type {
   Columns,
+  Filter,
   FilterState,
   FilterValues,
   PerPageOption,
@@ -191,4 +192,10 @@ export const toggleId = (ids: RowId[], id: RowId): RowId[] => {
 
 export const hasSelectionChanged = (selection: RowId[], previous: RowId[]): boolean => {
   return !equal(selection, previous)
+}
+
+export const computeDefaultFilters = (filters: Filter[]): FilterState[] => {
+  return filters.map(({ column, value }): FilterState => {
+    return { column, value, isDirty: false }
+  })
 }

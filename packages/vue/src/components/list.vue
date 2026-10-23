@@ -40,6 +40,7 @@ import {
   toError,
   toggleId,
   computeFilters,
+  computeDefaultFilters,
 } from '@shared/utils'
 import equal from 'fast-deep-equal'
 import { computed, onMounted, onUnmounted, provide, reactive, ref, toRefs, watch } from 'vue'
@@ -73,9 +74,7 @@ const isLoadMore = computed(() => {
   return paginationMode === 'loadMore'
 })
 
-const defaultFilters = filters.map(({ column, value }): FilterState => {
-  return { column, value, isDirty: false }
-})
+const defaultFilters = computeDefaultFilters(filters)
 
 const localPage = ref<number>(page)
 const localPerPage = ref<number>(perPage)
@@ -195,6 +194,15 @@ function setPage(value: number) {
   fetchPage(value)
 }
 
+function setPerPage(value: number) {
+  if (value === localPerPage.value) {
+    return
+  }
+  localPerPage.value = value
+  requestTrigger.value = 'perPage'
+  fetchPage(1)
+}
+
 function setSearch(value: string) {
   if (value === localSearch.value) {
     return
@@ -222,19 +230,6 @@ function setSortOrder(value: SortOrder) {
   fetchPage(1)
 }
 
-function setPerPage(value: number) {
-  if (value === localPerPage.value) {
-    return
-  }
-  localPerPage.value = value
-  requestTrigger.value = 'perPage'
-  fetchPage(1)
-}
-
-function toggleRowSelection(id: RowId) {
-  selection.value = toggleId(selection.value, id)
-}
-
 function changeFilters(next: FilterState[]) {
   if (equal(localFilters.value, next)) {
     return
@@ -256,6 +251,10 @@ function setFilter(column: string, value: unknown) {
 
 function clearFilters() {
   changeFilters([...defaultFilters])
+}
+
+function toggleRowSelection(id: RowId) {
+  selection.value = toggleId(selection.value, id)
 }
 
 function refresh() {
@@ -309,6 +308,8 @@ const state = reactive({
   sortBy: localSortBy,
   sortOrder: localSortOrder,
   search: localSearch,
+  columns: localColumns,
+  filters: localFilters,
   rows,
   response,
   error,
@@ -318,8 +319,6 @@ const state = reactive({
   isLoading,
   isInitialLoading,
   requestTrigger,
-  filters: localFilters,
-  columns: localColumns,
   isEmpty,
 }) as State
 
