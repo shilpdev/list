@@ -34,6 +34,7 @@ import {
   toggleId,
   computeFilters,
   computeDefaultFilters,
+  hasSavedState,
 } from '@shared/utils'
 import equal from 'fast-deep-equal'
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react'
@@ -55,6 +56,7 @@ function List<T = unknown>(props: ListProps<T>) {
     filters = [...DEFAULT_FILTERS],
     columns,
     requestHandler,
+    initialResponse,
     stateManager,
     beforePageChange,
     afterPageChange,
@@ -82,16 +84,26 @@ function List<T = unknown>(props: ListProps<T>) {
     return createColumns(columns)
   })
 
-  const [rows, setRows] = useState<T[]>([])
+  const [rows, setRows] = useState<T[]>(() => {
+    if (initialResponse == null) {
+      return []
+    }
+    return mergeRows<T>([], initialResponse.rows, { page, perPage, isLoadMore })
+  })
   const [selection, setSelection] = useState<RowId[]>([])
   const [error, setError] = useState<Error | null>(null)
-  const [response, setResponse] = useState<RequestHandlerResponse<T> | null>(null)
-  const [count, setCount] = useState<number>(0)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true)
+  const [response, setResponse] = useState<RequestHandlerResponse<T> | null>(
+    initialResponse ?? null,
+  )
+  const [count, setCount] = useState<number>(initialResponse?.count ?? 0)
+  const [isLoading, setIsLoading] = useState<boolean>(initialResponse == null)
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(initialResponse == null)
   const [requestTrigger, setRequestTrigger] = useState<RequestTrigger>('mount')
   const [isReady, setIsReady] = useState(false)
   const requestIdRef = useRef(0)
+  // Query effects wait for the first request, or for the decision to skip it (`initialResponse`).
+  const isStartedRef = useRef(false)
+  const isSeededRef = useRef(initialResponse != null)
 
   const previousSelectionRef = useRef(selection)
   const previousFiltersRef = useRef(localFilters)
@@ -193,6 +205,7 @@ function List<T = unknown>(props: ListProps<T>) {
         if (currentRequestId !== requestIdRef.current) {
           return
         }
+        isStartedRef.current = true
         setIsLoading(false)
         setIsInitialLoading(false)
       })
@@ -370,7 +383,7 @@ function List<T = unknown>(props: ListProps<T>) {
   }
 
   useEffect(() => {
-    if (isInitialLoading) {
+    if (!isStartedRef.current) {
       return
     }
     getData()
@@ -385,7 +398,7 @@ function List<T = unknown>(props: ListProps<T>) {
     const previousFilters = previousFiltersRef.current
     previousFiltersRef.current = localFilters
 
-    if (isInitialLoading) {
+    if (!isStartedRef.current) {
       return
     }
 
@@ -400,7 +413,7 @@ function List<T = unknown>(props: ListProps<T>) {
     const previousColumns = previousColumnsRef.current
     previousColumnsRef.current = localColumns
 
-    if (isInitialLoading) {
+    if (!isStartedRef.current) {
       return
     }
 
@@ -421,11 +434,16 @@ function List<T = unknown>(props: ListProps<T>) {
   }, [selection])
 
   // Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the saved filters differ from
-  // the prop, then the first request.
+  // the prop, then the first request (skipped for a seeded list).
   useEffect(() => {
     if (isReady) return
 
-    let saved = stateManagerRef.current?.get?.(snapshot()) ?? {}
+    const saved = stateManagerRef.current?.get?.(snapshot()) ?? {}
+
+    // A seeded list keeps its response only when nothing was restored (see `initialResponse`).
+    if (isSeededRef.current && hasSavedState(saved)) {
+      isSeededRef.current = false
+    }
 
     if (saved.page != null && !isLoadMore) {
       setLocalPage(saved.page)
@@ -463,6 +481,10 @@ function List<T = unknown>(props: ListProps<T>) {
 
     stateManagerRef.current?.init?.(state)
 
+    if (isSeededRef.current) {
+      isStartedRef.current = true
+    }
+
     setIsReady(true)
 
     // Lifecycle 8, unmount: invalidate the request in flight so its late response or error does not
@@ -474,6 +496,12 @@ function List<T = unknown>(props: ListProps<T>) {
 
   useEffect(() => {
     if (!isReady) return
+
+    if (isSeededRef.current) {
+      isSeededRef.current = false
+      return
+    }
+
     getData()
   }, [isReady])
 

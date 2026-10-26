@@ -40,12 +40,13 @@ sequenceDiagram
 - `stateManager.get(state)` runs once, with the State built from the props and defaults, before anything is shown or fetched. React applies what it returns while rendering, so the values before the restore are never committed. It may return `page`, `perPage`, `sortBy`, `sortOrder`, `search`, `filters` and `columns`; other fields are ignored.
 - A `loadMore` list always starts on page 1, whatever was saved.
 - Nothing is fetched yet, and `isInitialLoading` is `true`.
+- With `initialResponse` (a response fetched earlier, for example on the server), the list starts with its `rows`, `count` and `response`, and `isLoading` and `isInitialLoading` are `false`, so the server renders the rows. No hook fires for it.
 
 ### 2. Mount
 
 1. `stateManager.init(state)`.
 2. `onFiltersChange(filters)` if the saved filters differ from the initial `filters`.
-3. The first request starts (step 3) for the current page.
+3. The first request starts (step 3) for the current page. It is skipped when the list was seeded with `initialResponse` and `stateManager.get` returned no value. If `get` restored anything, the saved state may ask for a different query, so the list fetches as usual (with the seeded rows shown meanwhile). `clearState` and every later action always fetch.
 
 ### 3. Request
 

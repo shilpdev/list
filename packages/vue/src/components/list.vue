@@ -41,6 +41,7 @@ import {
   toggleId,
   computeFilters,
   computeDefaultFilters,
+  hasSavedState,
 } from '@shared/utils'
 import equal from 'fast-deep-equal'
 import { computed, onMounted, onUnmounted, provide, reactive, ref, toRefs, watch } from 'vue'
@@ -65,6 +66,7 @@ const {
   filters = [...DEFAULT_FILTERS],
   columns,
   requestHandler,
+  initialResponse,
   stateManager,
 } = defineProps<ListProps>()
 
@@ -387,6 +389,23 @@ if (saved.filters != null) {
   localFilters.value = saved.filters
 }
 
+// A seeded list (`initialResponse`) shows that response without a request. It stays seeded only
+// when nothing was restored: saved values may ask for another query, so then the list fetches.
+let isSeeded = false
+
+if (initialResponse != null) {
+  response.value = initialResponse
+  rows.value = mergeRows(rows.value, initialResponse.rows, {
+    page: localPage.value,
+    perPage: localPerPage.value,
+    isLoadMore: isLoadMore.value,
+  })
+  count.value = initialResponse.count
+  isLoading.value = false
+  isInitialLoading.value = false
+  isSeeded = !hasSavedState(saved)
+}
+
 // Lifecycle 7, props changing after mount: none. `filters`, `columns` and the query props (page,
 // perPage, search, sortBy, sortOrder, endpoint) are read once; change them through the context
 // actions. A change of `localFilters` or `localColumns` (setFilter, setFilters, clearFilters,
@@ -431,11 +450,16 @@ function init() {
     emit('onFiltersChange', localFilters.value)
   }
 
+  if (isSeeded) {
+    isSeeded = false
+    return
+  }
+
   getData()
 }
 
 // Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the saved filters differ from
-// the prop, then the first request.
+// the prop, then the first request (skipped for a seeded list).
 onMounted(() => {
   init()
 })

@@ -65,6 +65,13 @@ export const withRowIndex = <T>(rows: T[], page: number, perPage: number): T[] =
   })
 }
 
+/** Whether `stateManager.get` returned any value to restore. */
+export const hasSavedState = (saved: Partial<State>): boolean => {
+  return Object.values(saved).some((value) => {
+    return value != null
+  })
+}
+
 /** Rows after a response: appended in load-more mode (after page 1), replaced otherwise. */
 export const mergeRows = <T>(
   previous: T[],

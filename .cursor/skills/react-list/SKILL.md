@@ -67,6 +67,7 @@ Required: `endpoint`, `requestHandler`. `endpoint` is read once at setup; to loa
 | `columns`                                                              |                | Column definitions (`string[]` or `{ name }[]`)                                     |
 | `idKey`                                                                | `'id'`         | Row field `updateRowById` matches on (not used for keys)                            |
 | `stateManager`                                                         |                | Optional `{ init, get, set }` persistence                                           |
+| `initialResponse`                                                      |                | A response fetched earlier (SSR with Nuxt or Next). The list shows it and skips the first request, unless `stateManager.get` returns saved values: then it fetches again. |
 | `beforePageChange` / `afterPageChange` / `beforeLoadMore` / `afterLoadMore` / `onResponse` / `onError` / `onRowSelect` / `onFiltersChange` |                | Hooks, with the same names in both packages (Vue emits them, so its listeners are `@on-response`, `@before-page-change`, ...). `before*` get the `State` of the request, `after*` and `onResponse` the response, `onError` the error. `onFiltersChange` also fires when `stateManager` restores filters. `onRowSelect` fires only when the selection changes. |
 
 Children: `ReactNode` or `(context: Context<T>) => ReactNode`.
