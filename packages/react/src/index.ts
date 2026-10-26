@@ -16,5 +16,5 @@ export { ListRows } from './components/rows'
 export { useListContext } from './context/list-context'
 export { DEFAULT_ID_KEY } from '@shared/constants'
 
-export type { ListPropsReact } from './types'
+export type { ListProps } from './types'
 export type * from '@shared'

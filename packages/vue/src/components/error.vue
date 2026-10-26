@@ -1,9 +1,9 @@
 <template>
-  <div v-if="context.error && !context.isLoading" class="shilp-list__error">
+  <div v-if="error && !isLoading" class="shilp-list__error">
     <slot :context="context">
       <div>
         <h3>{{ MESSAGES.error }}</h3>
-        <pre>{{ context.error.name }}: {{ context.error.message }}</pre>
+        <pre>{{ error.name }}: {{ error.message }}</pre>
       </div>
     </slot>
   </div>
@@ -18,4 +18,5 @@ defineOptions({
 })
 
 const context = useListContext()
+const { error, isLoading } = context
 </script>

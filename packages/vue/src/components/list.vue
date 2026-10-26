@@ -44,7 +44,7 @@ import {
 } from '@shared/utils'
 import equal from 'fast-deep-equal'
 import { computed, onMounted, onUnmounted, provide, reactive, ref, toRefs, watch } from 'vue'
-import type { ListPropsVue } from '../types'
+import type { ListProps } from '../types'
 
 defineOptions({
   // eslint-disable-next-line vue/multi-word-component-names
@@ -66,7 +66,7 @@ const {
   columns,
   requestHandler,
   stateManager,
-} = defineProps<ListPropsVue>()
+} = defineProps<ListProps>()
 
 const emit = defineEmits<Events>()
 

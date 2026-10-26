@@ -1,14 +1,14 @@
 <template>
   <div class="shilp-list__filters">
     <slot name="filters" v-bind="scope">
-      <template v-for="filter in context.filters" :key="filter.column">
-        <slot :name="filter.column" v-bind="getFilterScope(filter)">
+      <template v-for="filter in filters" :key="filter.column">
+        <slot :name="filter.column" v-bind="getFilterScope(filter, context)">
           <label>
             <span>{{ filter.column }}</span>
             <input
               type="text"
               :value="String(filter.value ?? '')"
-              @input="context.setFilter(filter.column, ($event.target as HTMLInputElement).value)"
+              @input="setFilter(filter.column, ($event.target as HTMLInputElement).value)"
             />
           </label>
         </slot>
@@ -19,30 +19,22 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { FilterState, FilterScope, FiltersScope } from '@shared'
+import type { FiltersScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
+import { getFilterScope } from '@shared/utils'
 
 defineOptions({
   name: 'ListFilters',
 })
 
 const context = useListContext()
-
-function getFilterScope(filter: FilterState): FilterScope {
-  return {
-    context,
-    ...filter,
-    setValue: (value: unknown) => {
-      context.setFilter(filter.column, value)
-    },
-  }
-}
+const { filters, setFilter, setFilters } = context
 
 const scope = computed((): FiltersScope => {
   return {
     context,
-    setFilter: context.setFilter,
-    setFilters: context.setFilters,
+    setFilter: setFilter,
+    setFilters: setFilters,
   }
 })
 </script>

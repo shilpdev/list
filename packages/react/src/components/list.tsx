@@ -38,9 +38,9 @@ import {
 import equal from 'fast-deep-equal'
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ListContextProvider } from '../context/list-context'
-import type { ListPropsReact } from '../types'
+import type { ListProps } from '../types'
 
-function List<T = unknown>(props: ListPropsReact<T>) {
+function List<T = unknown>(props: ListProps<T>) {
   const {
     endpoint,
     idKey = DEFAULT_ID_KEY,

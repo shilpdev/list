@@ -1,11 +1,9 @@
-import { memo, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { SearchProps, SearchScope } from '@shared'
+import { memo, useEffect, useRef, useState } from 'react'
+import type { SearchScope } from '@shared'
 import { DEFAULT_DEBOUNCE_TIME } from '@shared/constants'
 import { useListContext } from '../context/list-context'
-
-type ListSearchProps = SearchProps & {
-  children?: ReactNode | ((scope: SearchScope) => ReactNode)
-}
+import { Slot } from './slot'
+import { ListSearchProps } from '../types'
 
 export const ListSearch = memo(
   ({ children, debounceTime = DEFAULT_DEBOUNCE_TIME }: ListSearchProps) => {
@@ -46,23 +44,20 @@ export const ListSearch = memo(
       setSearch: handleInput,
     }
 
-    let content: ReactNode
-
-    if (typeof children === 'function') {
-      content = children(scope)
-    } else if (children) {
-      content = children
-    } else {
-      content = (
-        <input
-          type="text"
-          value={localSearch}
-          onChange={(e) => handleInput(e.target.value)}
-          placeholder="Search..."
-        />
-      )
-    }
-
-    return <div className="shilp-list__search">{content}</div>
+    return (
+      <Slot
+        className="shilp-list__search"
+        scope={scope}
+        children={children}
+        fallback={() => (
+          <input
+            type="text"
+            value={localSearch}
+            onChange={(e) => handleInput(e.target.value)}
+            placeholder="Search..."
+          />
+        )}
+      />
+    )
   },
 )

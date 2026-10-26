@@ -3,9 +3,9 @@ import type { Columns } from './columns'
 
 /**
  * Props both packages accept. `filters` and the callbacks are framework specific, so they live in
- * `ListPropsReact` and `ListPropsVue` (Vue takes `filters` as initial values and uses emits).
+ * `ListProps` and `ListProps` (Vue takes `filters` as initial values and uses emits).
  */
-export interface ListProps<T = unknown> {
+export interface ListPropsBase<T = unknown> {
   /** Unique identifier for the data source (API route or key). */
   endpoint: string
   idKey?: string

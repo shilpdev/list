@@ -1,12 +1,17 @@
 import equal from 'fast-deep-equal'
 import { DEFAULT_COLUMN_VISIBILITY } from './constants'
 import type {
+  Column,
   Columns,
+  ColumnScope,
+  Context,
   Filter,
+  FilterScope,
   FilterState,
   FilterValues,
   PerPageOption,
   RowId,
+  RowScope,
   SortOrder,
   State,
 } from './types'
@@ -198,4 +203,42 @@ export const computeDefaultFilters = (filters: Filter[]): FilterState[] => {
   return filters.map(({ column, value }): FilterState => {
     return { column, value, isDirty: false }
   })
+}
+
+export function getColumnScope(column: Column, context: Context): ColumnScope {
+  return {
+    context,
+    ...column,
+    setValue: (key: string, value: unknown) => {
+      context.setColumn(column.name, key, value)
+    },
+  }
+}
+
+export function getFilterScope(filter: FilterState, context: Context): FilterScope {
+  return {
+    context,
+    ...filter,
+    setValue: (value: unknown) => {
+      context.setFilter(filter.column, value)
+    },
+  }
+}
+
+export function getRowScope(row: unknown, index: number, context: Context): RowScope {
+  const id = getRowId(row, context.idKey)
+
+  return {
+    context,
+    row,
+    index,
+    isSelected: context.selection.includes(id),
+    toggleSelection: () => {
+      context.toggleRowSelection(id)
+    },
+  }
+}
+
+export function getKey(row: unknown): number {
+  return (row as { _index: number })._index
 }

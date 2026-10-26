@@ -19,9 +19,9 @@ defineSlots<{
   default(): unknown
 }>()
 
-const context = useListContext()
+const { error, isLoading, isInitialLoading, isEmpty } = useListContext()
 
 const showEmpty = computed(() => {
-  return !context.isInitialLoading && !context.isLoading && context.isEmpty && !context.error
+  return !isInitialLoading && !isLoading && isEmpty && !error
 })
 </script>

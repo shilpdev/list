@@ -1,139 +1,66 @@
-import { Fragment, memo, useMemo, type ReactNode } from 'react'
-import type { PaginationProps, PaginationScope, PaginationItemScope } from '@shared'
+import { memo, useMemo } from 'react'
+import type { PaginationScope } from '@shared'
 import { getPagination } from '@shared/utils'
 import { DEFAULT_PAGE_LINKS } from '@shared/constants'
 import { useListContext } from '../context/list-context'
-
-type ListPaginationProps = PaginationProps & {
-  children?: ReactNode | ((scope: PaginationScope) => ReactNode)
-  renderFirst?: (scope: PaginationScope) => ReactNode
-  renderPrev?: (scope: PaginationScope) => ReactNode
-  renderPages?: (scope: PaginationScope) => ReactNode
-  renderPage?: (scope: PaginationItemScope) => ReactNode
-  renderNext?: (scope: PaginationScope) => ReactNode
-  renderLast?: (scope: PaginationScope) => ReactNode
-}
+import { Slot } from './slot'
+import { ListPaginationProps } from '../types'
 
 export const ListPagination = memo(
-  ({
-    children,
-    pageLinks = DEFAULT_PAGE_LINKS,
-    renderFirst,
-    renderPrev,
-    renderPages,
-    renderPage,
-    renderNext,
-    renderLast,
-  }: ListPaginationProps) => {
+  ({ children, pageLinks = DEFAULT_PAGE_LINKS }: ListPaginationProps) => {
     const context = useListContext()
-    const { rows, count, setPage, error, page, perPage, isInitialLoading, hasMore } = context
+    const { rows, count, setPage, error, page, perPage, isInitialLoading, hasMore, isEmpty } =
+      context
 
-    const pagination = useMemo(() => {
-      return { ...getPagination(page, perPage, count, pageLinks), hasNext: hasMore }
-    }, [page, perPage, count, pageLinks, hasMore])
-    const { pagesToDisplay } = pagination
+    const scope = useMemo((): PaginationScope => {
+      const pagination = getPagination(page, perPage, count, pageLinks)
 
-    const navigation = useMemo(() => {
       return {
+        context,
+        ...pagination,
+        hasNext: hasMore,
         prev: () => setPage(page - 1),
         next: () => setPage(page + 1),
         first: () => setPage(1),
         last: () => setPage(pagination.pagesCount),
       }
-    }, [setPage, page, pagination.pagesCount])
+    }, [context, setPage, page, perPage, count, pageLinks, hasMore])
 
-    const scope = useMemo((): PaginationScope => {
-      return { context, ...pagination, ...navigation }
-    }, [context, pagination, navigation])
-
-    if (isInitialLoading || rows.length === 0 || error) {
+    if (isInitialLoading || isEmpty || error) {
       return null
     }
 
-    if (typeof children === 'function') {
-      return <div className="shilp-list__pagination">{children(scope)}</div>
-    }
-
-    if (children) {
-      return <div className="shilp-list__pagination">{children}</div>
-    }
-
-    let first: ReactNode
-    if (renderFirst) {
-      first = renderFirst(scope)
-    } else {
-      first = (
-        <button type="button" disabled={!pagination.hasPrev} onClick={navigation.first}>
-          First
-        </button>
-      )
-    }
-
-    let prev: ReactNode
-    if (renderPrev) {
-      prev = renderPrev(scope)
-    } else {
-      prev = (
-        <button type="button" disabled={!pagination.hasPrev} onClick={navigation.prev}>
-          Prev
-        </button>
-      )
-    }
-
-    let pages: ReactNode
-    if (renderPages) {
-      pages = renderPages(scope)
-    } else {
-      pages = pagesToDisplay.map((pageNum) => {
-        const isActive = pageNum === page
-
-        if (renderPage) {
-          const pageScope: PaginationItemScope = { ...scope, page: pageNum, isActive }
-          return <Fragment key={`page-${pageNum}`}>{renderPage(pageScope)}</Fragment>
-        }
-
-        if (isActive) {
-          return <span key={`page-${pageNum}`}>{pageNum}</span>
-        }
-
-        return (
-          <button key={`page-${pageNum}`} type="button" onClick={() => setPage(pageNum)}>
-            {pageNum}
-          </button>
-        )
-      })
-    }
-
-    let next: ReactNode
-    if (renderNext) {
-      next = renderNext(scope)
-    } else {
-      next = (
-        <button type="button" disabled={!pagination.hasNext} onClick={navigation.next}>
-          Next
-        </button>
-      )
-    }
-
-    let last: ReactNode
-    if (renderLast) {
-      last = renderLast(scope)
-    } else {
-      last = (
-        <button type="button" disabled={!pagination.hasNext} onClick={navigation.last}>
-          Last
-        </button>
-      )
-    }
-
     return (
-      <div className="shilp-list__pagination">
-        {first}
-        {prev}
-        {pages}
-        {next}
-        {last}
-      </div>
+      <Slot
+        className="shilp-list__pagination"
+        scope={scope}
+        children={children}
+        fallback={() => (
+          <>
+            <button type="button" disabled={!scope.hasPrev} onClick={scope.first}>
+              First
+            </button>
+            <button type="button" disabled={!scope.hasPrev} onClick={scope.prev}>
+              Prev
+            </button>
+            {scope.pagesToDisplay.map((item) =>
+              item === page ? (
+                <span key={`page-${item}`}>{item}</span>
+              ) : (
+                <button key={`page-${item}`} type="button" onClick={() => setPage(item)}>
+                  {item}
+                </button>
+              ),
+            )}
+            <button type="button" disabled={!scope.hasNext} onClick={scope.next}>
+              Next
+            </button>
+            <button type="button" disabled={!scope.hasNext} onClick={scope.last}>
+              Last
+            </button>
+          </>
+        )}
+      />
     )
   },
 )

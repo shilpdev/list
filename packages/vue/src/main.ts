@@ -14,7 +14,7 @@ export { default as ListGoTo } from './components/go-to.vue'
 export { default as ListRefresh } from './components/refresh.vue'
 export { default as ListEmpty } from './components/empty.vue'
 
-export type { ListPropsVue } from './types'
+export type { ListProps } from './types'
 export type * from '@shared'
 export { useListContext } from './composables/use-list-context'
 export { DEFAULT_ID_KEY } from '@shared/constants'

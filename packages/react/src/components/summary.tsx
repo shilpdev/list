@@ -1,20 +1,13 @@
-import { type ReactNode } from 'react'
 import type { SummaryScope } from '@shared'
 import { getSummaryRange } from '@shared/utils'
 import { getSummaryMessage } from '@shared/constants'
 import { useListContext } from '../context/list-context'
-
-type ListSummaryProps = {
-  children?: ReactNode | ((scope: SummaryScope) => ReactNode)
-}
+import { Slot } from './slot'
+import { ListSummaryProps } from '../types'
 
 export const ListSummary = ({ children }: ListSummaryProps) => {
   const context = useListContext()
-  const { rows, count, error, page, perPage, isInitialLoading } = context
-
-  if (isInitialLoading || rows.length === 0 || error) {
-    return null
-  }
+  const { rows, count, error, page, perPage, isInitialLoading, isEmpty } = context
 
   const scope: SummaryScope = {
     context,
@@ -22,15 +15,16 @@ export const ListSummary = ({ children }: ListSummaryProps) => {
     visibleCount: rows.length,
   }
 
-  let content: ReactNode
-
-  if (typeof children === 'function') {
-    content = children(scope)
-  } else if (children) {
-    content = children
-  } else {
-    content = <span>{getSummaryMessage(scope)}</span>
+  if (isInitialLoading || isEmpty || error) {
+    return null
   }
 
-  return <div className="shilp-list__summary">{content}</div>
+  return (
+    <Slot
+      className="shilp-list__summary"
+      scope={scope}
+      children={children}
+      fallback={(scope) => <span>{getSummaryMessage(scope)}</span>}
+    />
+  )
 }
