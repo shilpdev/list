@@ -2,8 +2,8 @@
   <div v-if="showContent" class="shilp-list__per-page">
     <slot v-bind="scope">
       <select
-        :value="perPage"
-        @change="setPerPage(Number(($event.target as HTMLSelectElement).value))"
+        :value="context.perPage"
+        @change="context.setPerPage(Number(($event.target as HTMLSelectElement).value))"
       >
         <option
           v-for="option in scope.options"
@@ -31,10 +31,9 @@ defineOptions({
 const { options = DEFAULT_PER_PAGE_OPTIONS } = defineProps<PerPageProps>()
 
 const context = useListContext()
-const { isEmpty, error, perPage, setPerPage, isInitialLoading } = context
 
 const showContent = computed(() => {
-  return !isInitialLoading && !isEmpty && !error
+  return !context.isInitialLoading && !context.isEmpty && !context.error
 })
 
 const serializedOptions = computed(() => {

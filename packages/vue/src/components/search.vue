@@ -24,13 +24,12 @@ defineOptions({
 const { debounceTime = DEFAULT_DEBOUNCE_TIME } = defineProps<SearchProps>()
 
 const context = useListContext()
-const { search, setSearch } = context
 
-const localSearch = ref(search)
+const localSearch = ref(context.search)
 
 watch(
   () => {
-    return search
+    return context.search
   },
   (value) => {
     if (value !== localSearch.value) {
@@ -49,7 +48,7 @@ function handleInput(value: string) {
   }
 
   debounceTimer = setTimeout(() => {
-    setSearch(value)
+    context.setSearch(value)
   }, debounceTime)
 }
 

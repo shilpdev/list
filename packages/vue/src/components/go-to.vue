@@ -1,7 +1,7 @@
 <template>
   <div v-if="showContent" class="shilp-list__go-to">
     <slot v-bind="scope">
-      <select :value="page" @change="setPage(Number(($event.target as HTMLSelectElement).value))">
+      <select :value="context.page" @change="context.setPage(Number(($event.target as HTMLSelectElement).value))">
         <option v-for="pageNum in scope.pages" :key="`page-${pageNum}`" :value="pageNum">
           {{ MESSAGES.pageOptionPrefix }} {{ pageNum }}
         </option>
@@ -22,14 +22,13 @@ defineOptions({
 })
 
 const context = useListContext()
-const { isEmpty, count, setPage, error, page, perPage, isInitialLoading } = context
 
 const showContent = computed(() => {
-  return !isInitialLoading && !isEmpty && !error
+  return !context.isInitialLoading && !context.isEmpty && !context.error
 })
 
 const scope = computed((): GoToScope => {
-  const pagesCount = getPagesCount(count, perPage)
+  const pagesCount = getPagesCount(context.count, context.perPage)
   const pages = Array.from({ length: pagesCount }, (_, index) => {
     return index + 1
   })

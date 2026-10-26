@@ -18,17 +18,16 @@ defineOptions({
 })
 
 const context = useListContext()
-const { rows, isEmpty, count, error, page, perPage, isInitialLoading } = context
 
 const showSummary = computed(() => {
-  return !isInitialLoading && !isEmpty && !error
+  return !context.isInitialLoading && !context.isEmpty && !context.error
 })
 
 const scope = computed((): SummaryScope => {
   return {
     context,
-    ...getSummaryRange(page, perPage, count),
-    visibleCount: rows.length,
+    ...getSummaryRange(context.page, context.perPage, context.count),
+    visibleCount: context.rows.length,
   }
 })
 </script>

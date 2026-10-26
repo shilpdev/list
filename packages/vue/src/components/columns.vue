@@ -1,7 +1,7 @@
 <template>
   <div class="shilp-list__columns">
     <slot name="columns" v-bind="scope">
-      <template v-for="column in columns" :key="column.name">
+      <template v-for="column in context.columns" :key="column.name">
         <slot :name="column.name" v-bind="getColumnScope(column, context)">
           <label>
             <span>{{ column.label ?? column.name }}</span>
@@ -9,7 +9,7 @@
               type="checkbox"
               :checked="column.visibility"
               @change="
-                setColumn(column.name, 'visibility', ($event.target as HTMLInputElement).checked)
+                context.setColumn(column.name, 'visibility', ($event.target as HTMLInputElement).checked)
               "
             />
           </label>
@@ -30,7 +30,6 @@ defineOptions({
 })
 
 const context = useListContext()
-const { columns, setColumn } = context
 
 const scope = computed((): ColumnsScope => {
   return {

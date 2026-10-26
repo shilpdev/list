@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+/*
+ * Mono theme: Nuxt UI has no built-in "mono" preset, so we make the primary color solid
+ * black (white in dark mode) and keep every other color neutral (see app.config.ts).
+ */
+:root {
+  --ui-primary: black;
+}
+
+.dark {
+  --ui-primary: white;
+}

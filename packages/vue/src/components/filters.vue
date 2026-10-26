@@ -1,14 +1,14 @@
 <template>
   <div class="shilp-list__filters">
     <slot name="filters" v-bind="scope">
-      <template v-for="filter in filters" :key="filter.column">
+      <template v-for="filter in context.filters" :key="filter.column">
         <slot :name="filter.column" v-bind="getFilterScope(filter, context)">
           <label>
             <span>{{ filter.column }}</span>
             <input
               type="text"
               :value="String(filter.value ?? '')"
-              @input="setFilter(filter.column, ($event.target as HTMLInputElement).value)"
+              @input="context.setFilter(filter.column, ($event.target as HTMLInputElement).value)"
             />
           </label>
         </slot>
@@ -28,13 +28,12 @@ defineOptions({
 })
 
 const context = useListContext()
-const { filters, setFilter, setFilters } = context
 
 const scope = computed((): FiltersScope => {
   return {
     context,
-    setFilter: setFilter,
-    setFilters: setFilters,
+    setFilter: context.setFilter,
+    setFilters: context.setFilters,
   }
 })
 </script>

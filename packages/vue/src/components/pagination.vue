@@ -45,23 +45,22 @@ defineOptions({
 const { pageLinks = DEFAULT_PAGE_LINKS } = defineProps<PaginationProps>()
 
 const context = useListContext()
-const { isEmpty, count, setPage, error, page, perPage, isInitialLoading, hasMore } = context
 
 const showContent = computed(() => {
-  return !isInitialLoading && !isEmpty && !error
+  return !context.isInitialLoading && !context.isEmpty && !context.error
 })
 
 const scope = computed((): PaginationScope => {
-  const pagination = getPagination(page, perPage, count, pageLinks)
+  const pagination = getPagination(context.page, context.perPage, context.count, pageLinks)
 
   return {
     context,
     ...pagination,
-    hasNext: hasMore,
-    prev: () => setPage(page - 1),
-    next: () => setPage(page + 1),
-    first: () => setPage(1),
-    last: () => setPage(pagination.pagesCount),
+    hasNext: context.hasMore,
+    prev: () => context.setPage(context.page - 1),
+    next: () => context.setPage(context.page + 1),
+    first: () => context.setPage(1),
+    last: () => context.setPage(pagination.pagesCount),
   }
 })
 
