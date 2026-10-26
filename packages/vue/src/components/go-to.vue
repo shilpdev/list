@@ -1,12 +1,9 @@
 <template>
-  <div v-if="showContent" class="vue-list__go-to">
+  <div v-if="showContent" class="shilp-list__go-to">
     <slot v-bind="scope">
-      <select
-        :value="scope.page"
-        @change="scope.setPage(Number(($event.target as HTMLSelectElement).value))"
-      >
+      <select :value="page" @change="setPage(Number(($event.target as HTMLSelectElement).value))">
         <option v-for="pageNum in scope.pages" :key="`page-${pageNum}`" :value="pageNum">
-          Page {{ pageNum }}
+          {{ MESSAGES.pageOptionPrefix }} {{ pageNum }}
         </option>
       </select>
     </slot>
@@ -15,31 +12,32 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { GoToScope } from '../../../../shared'
+import { getPagesCount } from '@shared/utils'
+import { MESSAGES } from '@shared/constants'
+import type { GoToScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListGoTo',
 })
 
-const { listState } = useListContext()
+const context = useListContext()
+const { isEmpty, count, setPage, error, page, perPage, isInitialLoading } = context
 
 const showContent = computed(() => {
-  const state = listState
-  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
+  return !isInitialLoading && !isEmpty && !error
 })
 
 const scope = computed((): GoToScope => {
-  const state = listState
-  const { page, perPage } = state.pagination
-  const pagesCount = Math.ceil(state.count / perPage)
-  const pages = Array.from({ length: pagesCount }, (_, index) => index + 1)
+  const pagesCount = getPagesCount(count, perPage)
+  const pages = Array.from({ length: pagesCount }, (_, index) => {
+    return index + 1
+  })
 
   return {
-    page,
+    context,
     pages,
     pagesCount,
-    setPage: state.setPage,
   }
 })
 </script>

@@ -1,70 +1,46 @@
-import { memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { PerPageComponentOptions, PerPageScope } from '../../../../shared'
+import { memo, useMemo } from 'react'
+import type { PerPageScope } from '@shared'
+import { normalizePerPageOptions } from '@shared/utils'
+import { getPerPageMessage } from '@shared/constants'
+import { DEFAULT_PER_PAGE_OPTIONS } from '@shared/constants'
 import { useListContext } from '../context/list-context'
+import { Slot } from './slot'
+import { ListPerPageProps } from '../types'
 
-type ListPerPageProps = PerPageComponentOptions & {
-  children?: ReactNode | ((scope: PerPageScope) => ReactNode)
-}
+export const ListPerPage = memo(
+  ({ children, options = DEFAULT_PER_PAGE_OPTIONS }: ListPerPageProps) => {
+    const context = useListContext()
+    const { rows, error, perPage, setPerPage, isInitialLoading, isEmpty } = context
 
-export const ListPerPage = memo(({ children, options = [10, 25, 50, 100] }: ListPerPageProps) => {
-  const { listState } = useListContext()
-  const { rows, pagination, setPerPage, loader, error } = listState
-  const { perPage } = pagination
-  const { initialLoading } = loader
+    const serializedOptions = useMemo(() => {
+      return normalizePerPageOptions(options)
+    }, [options])
 
-  const serializedOptions = useMemo(() => {
-    return options.map((item) => {
-      if (typeof item !== 'object') {
-        return {
-          value: item,
-          label: item,
-        }
-      }
-      return item
-    })
-  }, [options])
+    const scope = useMemo((): PerPageScope => {
+      return { context, options: serializedOptions }
+    }, [context, serializedOptions])
 
-  const handlePerPageChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setPerPage(Number(e.target.value))
-    },
-    [setPerPage],
-  )
+    if (isInitialLoading || isEmpty || error) {
+      return null
+    }
 
-  const scope = useMemo(
-    (): PerPageScope => ({
-      perPage,
-      setPerPage,
-      options: serializedOptions,
-    }),
-    [perPage, setPerPage, serializedOptions],
-  )
-
-  if (initialLoading) return null
-
-  if (!rows || rows.length === 0) {
-    return null
-  }
-
-  if (error) {
-    return null
-  }
-
-  return (
-    <div className="react-list__per-page">
-      {typeof children === 'function' ? (
-        children(scope)
-      ) : children ? (
-        children
-      ) : (
-        <select value={perPage} onChange={handlePerPageChange}>
-          {serializedOptions.map((option) => (
-            <option key={`option-${option.value}`} value={option.value}>
-              {option.label} items per page
-            </option>
-          ))}
-        </select>
-      )}
-    </div>
-  )
-})
+    return (
+      <Slot
+        className="shilp-list__per-page"
+        scope={scope}
+        children={children}
+        fallback={(scope) => (
+          <select value={perPage} onChange={(e) => setPerPage(Number(e.target.value))}>
+            {scope.options.map((option) => {
+              return (
+                <option key={`option-${option.value}`} value={option.value}>
+                  {getPerPageMessage(option)}
+                </option>
+              )
+            })}
+          </select>
+        )}
+      />
+    )
+  },
+)

@@ -74,33 +74,39 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { ListLoader, useListContext } from '@shilp.dev/vue-list'
-import type { ListSort, SerializedListRow } from '@shilp.dev/vue-list'
+import type { SortOrder } from '@shilp.dev/vue-list'
 import type { Skill } from '@/types/skill'
 
 const props = defineProps<{
-  rows: SerializedListRow<Skill>[]
-  sort: ListSort
-  setSort: (next: { by: string; order: 'asc' | 'desc' }) => void
+  rows: Skill[]
+  sortBy: string
+  sortOrder: SortOrder
+  setSortBy: (sortBy: string) => void
+  setSortOrder: (sortOrder: SortOrder) => void
 }>()
 
-const { listState } = useListContext<Skill>()
-const columnSettings = computed(() => listState.columnSettings)
-
+const listContext = useListContext<Skill>()
 function isVisible(name: string) {
-  return columnSettings.value?.[name]?.visible ?? true
+  return listContext.columns.find((column) => column.name === name)?.visibility ?? true
 }
 
 function toggleSort(by: string) {
-  const currentOrder = props.sort.sortBy === by ? props.sort.sortOrder : ''
-  const sorting: 'asc' | 'desc' = currentOrder === 'asc' ? 'desc' : 'asc'
-  props.setSort({ by, order: sorting })
+  const currentOrder = props.sortBy === by ? props.sortOrder : ''
+  const sorting: SortOrder = currentOrder === 'asc' ? 'desc' : 'asc'
+  props.setSortBy(by)
+  props.setSortOrder(sorting)
 }
 
 function sortIconName(by: string) {
-  if (props.sort.sortBy !== by || props.sort.sortOrder === '') return 'i-mdi-sort'
-  if (props.sort.sortOrder === 'asc') return 'i-mdi-sort-ascending'
+  if (props.sortBy !== by || props.sortOrder === '') {
+    return 'i-mdi-sort'
+  }
+
+  if (props.sortOrder === 'asc') {
+    return 'i-mdi-sort-ascending'
+  }
+
   return 'i-mdi-sort-descending'
 }
 

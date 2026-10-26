@@ -1,13 +1,7 @@
-import type { Filters, ListOptions, ListProviderConfig, ListResponse } from '../../../shared'
+import type { Filter, ListPropsBase } from '@shared'
 
-/** Props for the ShilpList root component. */
-export interface ShilpListProps<T = unknown> extends ListOptions<T>, ListProviderConfig<T> {}
-
-/** Emits for the ShilpList root component. */
-export interface ShilpListEmits<T = unknown> {
-  response: [response: ListResponse<T>]
-  afterPageChange: [response: ListResponse<T>]
-  afterLoadMore: [response: ListResponse<T>]
-  rowSelect: [selection: T[], previous: T[]]
-  filtersChange: [filters: Filters]
+// The callbacks are emits (`Events`), so Vue only adds `filters`.
+export interface ListProps<T = unknown> extends ListPropsBase<T> {
+  /** Initial filters, one per column. Read once at setup; change them later with `ListFilters`. */
+  filters?: Filter[]
 }

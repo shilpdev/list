@@ -1,62 +1,34 @@
-import { memo, useMemo, type ReactNode } from 'react'
-import type { RenderRowArgs, RowsScope } from '../../../../shared'
+import { memo, type ReactNode } from 'react'
+import { getKey, getRowScope } from '@shared/utils'
 import { useListContext } from '../context/list-context'
-import { getRowId } from '../utils'
-
-type ListRowsProps = {
-  children?: ReactNode | ((scope: RowsScope) => ReactNode)
-  row?: (args: RenderRowArgs) => ReactNode
-}
+import { Slot } from './slot'
+import { ListRowsProps } from '../types'
 
 function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
-  const { listState } = useListContext()
-  const { rows = [], loader, error, setSort, sort, pagination, idKey } = listState
-  const { initialLoading, isLoading } = loader
-  const { page, perPage } = pagination
+  const context = useListContext()
+  const { isInitialLoading, error, isEmpty, rows } = context
 
-  const serializedRows = useMemo(
-    () =>
-      rows.map((row: unknown, index: number) => ({
-        ...(row as object),
-        _index: (page - 1) * perPage + index + 1,
-      })),
-    [rows, page, perPage],
-  )
+  function renderRow(row: unknown, index: number): ReactNode {
+    const rowContent = rowFn ? (
+      rowFn(getRowScope(row, index, context))
+    ) : (
+      <pre>{JSON.stringify(row, null, 2)}</pre>
+    )
 
-  const scope = useMemo(
-    (): RowsScope => ({
-      rows: serializedRows,
-      isLoading,
-      setSort,
-      sort,
-    }),
-    [serializedRows, isLoading, setSort, sort],
-  )
+    return <div key={getKey(row)}>{rowContent}</div>
+  }
 
-  if (initialLoading) return null
-
-  if (!rows || rows.length === 0) {
+  if (isInitialLoading || error || isEmpty) {
     return null
   }
 
-  if (error) return null
-
   return (
-    <div className="react-list__rows">
-      {children
-        ? typeof children === 'function'
-          ? children(scope)
-          : children
-        : rowFn
-          ? serializedRows.map((row, index) => (
-              <div key={getRowId(row, idKey) ?? index}>{rowFn({ row, index })}</div>
-            ))
-          : serializedRows.map((row, index) => (
-              <div key={getRowId(row, idKey) ?? index}>
-                <pre>{JSON.stringify(row, null, 2)}</pre>
-              </div>
-            ))}
-    </div>
+    <Slot
+      className="shilp-list__rows"
+      scope={{ context }}
+      children={children}
+      fallback={() => rows.map(renderRow)}
+    />
   )
 }
 

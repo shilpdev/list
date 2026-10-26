@@ -1,12 +1,9 @@
 import type {
-  Filters,
-  ListProviderConfig,
-  SavedListState,
+  FilterState,
   SortOrder,
-  StateManagerContext,
+  StateManager,
+  State,
 } from '@shilp.dev/vue-list'
-import type { Skill } from '@/types/skill'
-import requestHandler from './request-handler'
 
 const LIST_PARAM_KEYS = ['page', 'perPage', 'search', 'sortBy', 'sortOrder'] as const
 const LIST_PARAM_KEY_SET = new Set<string>(LIST_PARAM_KEYS)
@@ -20,8 +17,14 @@ function isEmptyValue(value: unknown): boolean {
 }
 
 function serializeParamValue(value: unknown): string {
-  if (typeof value === 'string') return value
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+
   return JSON.stringify(value)
 }
 
@@ -37,42 +40,68 @@ function parseParamValue(raw: string): unknown {
 }
 
 function parseNumber(raw: string | null): number | undefined {
-  if (raw == null || raw === '') return undefined
+  if (raw == null || raw === '') {
+    return undefined
+  }
+
   const value = Number(raw)
-  return Number.isFinite(value) ? value : undefined
+  if (Number.isFinite(value)) {
+    return value
+  }
+
+  return undefined
 }
 
-export function getStateFromSearchParams(): SavedListState | null {
-  if (typeof window === 'undefined') return null
+export function getStateFromSearchParams(): Partial<State> | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
 
   const params = new URLSearchParams(window.location.search)
-  const state: SavedListState = {}
+  const state: Partial<State> = {}
 
   const page = parseNumber(params.get('page'))
-  if (page != null) state.page = page
+  if (page != null) {
+    state.page = page
+  }
 
   const perPage = parseNumber(params.get('perPage'))
-  if (perPage != null) state.perPage = perPage
+  if (perPage != null) {
+    state.perPage = perPage
+  }
 
   const search = params.get('search')
-  if (search) state.search = search
+  if (search) {
+    state.search = search
+  }
 
   const sortBy = params.get('sortBy')
-  if (sortBy) state.sortBy = sortBy
+  if (sortBy) {
+    state.sortBy = sortBy
+  }
 
   const sortOrder = params.get('sortOrder')
   if (sortOrder === 'asc' || sortOrder === 'desc' || sortOrder === '') {
     state.sortOrder = sortOrder
   }
 
-  const filters: Filters = {}
-  for (const [key, value] of params.entries()) {
-    if (LIST_PARAM_KEY_SET.has(key)) continue
-    filters[key] = parseParamValue(value)
-  }
-  if (Object.keys(filters).length > 0) state.filters = filters
+  const filters: FilterState[] = []
+  for (const [column, value] of params.entries()) {
+    if (LIST_PARAM_KEY_SET.has(column)) {
+      continue
+    }
 
-  return Object.keys(state).length > 0 ? state : null
+    filters.push({ column, value: parseParamValue(value), isDirty: false })
+  }
+  if (filters.length > 0) {
+    state.filters = filters
+  }
+
+  if (Object.keys(state).length > 0) {
+    return state
+  }
+
+  return null
 }
 
 function setStateInSearchParams(state: {
@@ -81,9 +110,11 @@ function setStateInSearchParams(state: {
   search: string
   sortBy: string
   sortOrder: SortOrder
-  filters: Filters
+  filters: FilterState[]
 }): void {
-  if (typeof window === 'undefined') return
+  if (typeof window === 'undefined') {
+    return
+  }
 
   const url = new URL(window.location.href)
   const params = url.searchParams
@@ -91,22 +122,32 @@ function setStateInSearchParams(state: {
   params.set('page', String(state.page))
   params.set('perPage', String(state.perPage))
 
-  if (isEmptyValue(state.search)) params.delete('search')
-  else params.set('search', state.search)
+  if (isEmptyValue(state.search)) {
+    params.delete('search')
+  } else {
+    params.set('search', state.search)
+  }
 
   if (isEmptyValue(state.sortBy)) {
     params.delete('sortBy')
     params.delete('sortOrder')
   } else {
     params.set('sortBy', state.sortBy)
-    if (isEmptyValue(state.sortOrder)) params.delete('sortOrder')
-    else params.set('sortOrder', state.sortOrder)
+    if (isEmptyValue(state.sortOrder)) {
+      params.delete('sortOrder')
+    } else {
+      params.set('sortOrder', state.sortOrder)
+    }
   }
 
   const nextFilterKeys = new Set(
-    Object.entries(state.filters)
-      .filter(([, value]) => !isEmptyValue(value))
-      .map(([key]) => key),
+    state.filters
+      .filter(({ value }) => {
+        return !isEmptyValue(value)
+      })
+      .map(({ column }) => {
+        return column
+      }),
   )
 
   for (const key of [...params.keys()]) {
@@ -115,87 +156,129 @@ function setStateInSearchParams(state: {
     }
   }
 
-  for (const [key, value] of Object.entries(state.filters)) {
-    if (LIST_PARAM_KEY_SET.has(key) || isEmptyValue(value)) continue
-    params.set(key, serializeParamValue(value))
+  for (const { column, value } of state.filters) {
+    if (LIST_PARAM_KEY_SET.has(column) || isEmptyValue(value)) {
+      continue
+    }
+
+    params.set(column, serializeParamValue(value))
   }
 
   const next = `${url.pathname}${url.search}${url.hash}`
   const current = `${window.location.pathname}${window.location.search}${window.location.hash}`
-  if (next === current) return
+  if (next === current) {
+    return
+  }
 
   window.history.pushState({}, '', url)
 }
 
-const vueListConfig: ListProviderConfig<Skill> = {
-  stateManager: {
-    init(context: StateManagerContext) {
-      const { endpoint, version } = context
-      const allKeys = `vue-list--${endpoint}--`
-      const latestKey = stateManagerKey(endpoint, version)
-      const staleKeys = Object.keys(localStorage).filter(
-        (key) => key.startsWith(allKeys) && key !== latestKey,
-      )
-      staleKeys.forEach((key) => localStorage.removeItem(key))
-    },
+// `clearState` runs the list's `init` again, so a request is made and `set` would save the state
+// right back. After a clear nothing is saved until the page reloads.
+let isCleared = false
 
-    set(context: StateManagerContext) {
-      const {
-        endpoint,
-        version,
-        search,
-        page,
-        perPage,
-        sortBy,
-        sortOrder,
-        filters,
-        columnSettings,
-      } = context
-      const key = stateManagerKey(endpoint, version)
-      localStorage.setItem(
-        key,
-        JSON.stringify({
-          search,
-          page,
-          perPage,
-          sortBy,
-          sortOrder,
-          filters,
-          columnSettings,
-        }),
-      )
-      setStateInSearchParams({
-        page,
-        perPage,
-        search,
-        sortBy,
-        sortOrder,
-        filters,
-      })
-    },
-
-    get(context: StateManagerContext): SavedListState | null {
-      const { endpoint, version } = context
-      const key = stateManagerKey(endpoint, version)
-      const urlState = getStateFromSearchParams()
-
-      try {
-        const saved = localStorage.getItem(key)
-        const parsed = saved ? (JSON.parse(saved) as SavedListState) : null
-
-        if (urlState == null && parsed == null) return null
-
-        return {
-          ...parsed,
-          ...urlState,
-        }
-      } catch {
-        return urlState
-      }
-    },
+export const stateManager: StateManager = {
+  init(context: State) {
+    const { endpoint, version } = context
+    const allKeys = `vue-list--${endpoint}--`
+    const latestKey = stateManagerKey(endpoint, version)
+    const staleKeys = Object.keys(localStorage).filter(
+      (key) => {
+        return key.startsWith(allKeys) && key !== latestKey
+      },
+    )
+    staleKeys.forEach((key) => {
+      localStorage.removeItem(key)
+    })
   },
 
-  requestHandler,
-}
+  set(context: State) {
+    if (isCleared) {
+      return
+    }
 
-export default vueListConfig
+    const {
+      endpoint,
+      version,
+      search,
+      page,
+      perPage,
+      sortBy,
+      sortOrder,
+      filters,
+      columns,
+    } = context
+    const key = stateManagerKey(endpoint, version)
+    localStorage.setItem(
+      key,
+      JSON.stringify({
+        search,
+        page,
+        perPage,
+        sortBy,
+        sortOrder,
+        filters,
+        columns,
+      }),
+    )
+    setStateInSearchParams({
+      page,
+      perPage,
+      search,
+      sortBy,
+      sortOrder,
+      filters,
+    })
+  },
+
+  clear(context: State) {
+    const { endpoint, version } = context
+    isCleared = true
+    localStorage.removeItem(stateManagerKey(endpoint, version))
+  },
+
+  get(context: State): Partial<State> | null {
+    const { endpoint, version } = context
+    const key = stateManagerKey(endpoint, version)
+    const urlState = getStateFromSearchParams()
+
+    try {
+      const saved = localStorage.getItem(key)
+      let parsed: Partial<State> | null = null
+
+      if (saved) {
+        parsed = JSON.parse(saved) as Partial<State>
+      }
+
+      if (urlState == null && parsed == null) {
+        return null
+      }
+
+      // The list uses the filters as they are, so return all of them, with `isDirty` set against the
+      // initial values in `context.filters`.
+      const urlFilters = urlState?.filters ?? []
+      const filters = (parsed?.filters ?? context.filters).map((filter) => {
+        const fromUrl = urlFilters.find((urlFilter) => {
+          return urlFilter.column === filter.column
+        })
+        const initial = context.filters.find((item) => {
+          return item.column === filter.column
+        })
+
+        if (!fromUrl) {
+          return filter
+        }
+
+        return { ...filter, value: fromUrl.value, isDirty: fromUrl.value !== initial?.value }
+      })
+
+      return {
+        ...parsed,
+        ...urlState,
+        filters,
+      }
+    } catch {
+      return urlState
+    }
+  },
+}

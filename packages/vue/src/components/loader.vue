@@ -1,28 +1,18 @@
 <template>
-  <div
-    v-if="listState.loader.isLoading && !listState.loader.initialLoading"
-    class="vue-list__loader"
-  >
-    <slot v-bind="scope">
-      <p>Loading...</p>
+  <div v-if="context.isLoading && !context.isInitialLoading" class="shilp-list__loader">
+    <slot :context="context">
+      <p>{{ MESSAGES.loading }}</p>
     </slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { LoaderScope } from '../../../../shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListLoader',
 })
 
-const { listState } = useListContext()
-
-const scope = computed(
-  (): LoaderScope => ({
-    isLoading: listState.loader.isLoading,
-  }),
-)
+const context = useListContext()
 </script>

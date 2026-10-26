@@ -1,13 +1,14 @@
 <template>
-  <div v-if="showEmpty" class="vue-list__empty">
+  <div v-if="showEmpty" class="shilp-list__empty">
     <slot>
-      <p>No data found!</p>
+      <p>{{ MESSAGES.empty }}</p>
     </slot>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
@@ -18,10 +19,9 @@ defineSlots<{
   default(): unknown
 }>()
 
-const { listState } = useListContext()
+const { error, isLoading, isInitialLoading, isEmpty } = useListContext()
 
 const showEmpty = computed(() => {
-  const state = listState
-  return !state.loader.initialLoading && !state.loader.isLoading && state.isEmpty && !state.error
+  return !isInitialLoading && !isLoading && isEmpty && !error
 })
 </script>

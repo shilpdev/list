@@ -1,36 +1,25 @@
-import { type ReactNode } from 'react'
-import type { RefreshScope } from '../../../../shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
-
-type ListRefreshProps = {
-  children?: ReactNode | ((scope: RefreshScope) => ReactNode)
-}
+import { Slot } from './slot'
+import { ListRefreshProps } from '../types'
 
 export const ListRefresh = ({ children }: ListRefreshProps) => {
-  const { listState } = useListContext()
-  const { loader, refresh } = listState
-  const { isLoading, initialLoading } = loader
+  const context = useListContext()
 
-  const handleRefresh = () => {
-    refresh({ isRefresh: true })
+  if (context.isInitialLoading) {
+    return null
   }
-
-  const scope: RefreshScope = {
-    isLoading,
-    refresh: handleRefresh,
-  }
-
-  if (initialLoading) return null
 
   return (
-    <div className="react-list__refresh">
-      {typeof children === 'function'
-        ? children(scope)
-        : children || (
-            <button type="button" onClick={handleRefresh} disabled={isLoading}>
-              {isLoading ? 'Loading...' : 'Refresh'}
-            </button>
-          )}
-    </div>
+    <Slot
+      className="shilp-list__refresh"
+      scope={{ context }}
+      children={children}
+      fallback={() => (
+        <button type="button" onClick={() => context.refresh()} disabled={context.isLoading}>
+          {context.isLoading ? MESSAGES.loading : MESSAGES.refresh}
+        </button>
+      )}
+    />
   )
 }

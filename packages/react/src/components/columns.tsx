@@ -1,64 +1,37 @@
-import { Fragment, memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { ColumnsScope, ListColumn, RenderColumnArgs } from '../../../../shared'
+import { Fragment, type ReactNode } from 'react'
+import type { Column, ColumnScope } from '@shared'
 import { useListContext } from '../context/list-context'
+import { Slot } from './slot'
+import { ListColumnsProps } from '../types'
+import { getColumnScope } from '@shared/utils'
 
-type ListColumnsProps = {
-  children?: ReactNode | ((scope: ColumnsScope) => ReactNode)
-  column?: (args: RenderColumnArgs) => ReactNode
-}
+export const ListColumns = ({ children, column: columnFn }: ListColumnsProps) => {
+  const context = useListContext()
+  const { columns, setColumn } = context
 
-export const ListColumns = memo(({ children, column: columnFn }: ListColumnsProps) => {
-  const { listState } = useListContext()
-  const { columns, columnSettings, updateColumn } = listState
+  function renderColumn(column: Column): ReactNode {
+    if (columnFn) {
+      return <Fragment key={column.name}>{columnFn(getColumnScope(column, context))}</Fragment>
+    }
 
-  const normalizedColumns = columns as ListColumn[]
-
-  const handleColumnChange = useCallback(
-    (columnName: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      updateColumn?.(columnName, 'visible', e.target.checked)
-    },
-    [updateColumn],
-  )
-
-  const scope = useMemo(
-    (): ColumnsScope => ({
-      columns: normalizedColumns,
-      columnSettings: columnSettings ?? {},
-      updateColumn: updateColumn ?? (() => {}),
-    }),
-    [normalizedColumns, columnSettings, updateColumn],
-  )
+    return (
+      <label key={column.name}>
+        <span>{column.label ?? column.name}</span>
+        <input
+          type="checkbox"
+          checked={column.visibility}
+          onChange={(e) => setColumn(column.name, 'visibility', e.target.checked)}
+        />
+      </label>
+    )
+  }
 
   return (
-    <div className="react-list__columns">
-      {typeof children === 'function'
-        ? children(scope)
-        : children
-          ? children
-          : normalizedColumns.map((column, index) => {
-              if (columnFn) {
-                return (
-                  <Fragment key={`column-${index}`}>
-                    {columnFn({
-                      column,
-                      updateColumn: updateColumn ?? (() => {}),
-                      columnSettings: columnSettings ?? {},
-                    })}
-                  </Fragment>
-                )
-              }
-
-              return (
-                <label key={`column-${index}`}>
-                  <span>{column.label}</span>
-                  <input
-                    type="checkbox"
-                    checked={columnSettings?.[column.name]?.visible ?? true}
-                    onChange={handleColumnChange(column.name)}
-                  />
-                </label>
-              )
-            })}
-    </div>
+    <Slot
+      className="shilp-list__columns"
+      scope={{ context, setColumn }}
+      children={children}
+      fallback={() => columns.map(renderColumn)}
+    />
   )
-})
+}

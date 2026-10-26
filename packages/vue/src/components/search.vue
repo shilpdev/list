@@ -1,5 +1,5 @@
 <template>
-  <div class="vue-list__search">
+  <div class="shilp-list__search">
     <slot v-bind="scope">
       <input
         type="text"
@@ -13,22 +13,25 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
-import type { SearchComponentOptions, SearchScope } from '../../../../shared'
+import type { SearchProps, SearchScope } from '@shared'
+import { DEFAULT_DEBOUNCE_TIME } from '@shared/constants'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListSearch',
 })
 
-const props = withDefaults(defineProps<SearchComponentOptions>(), {
-  debounceTime: 500,
-})
+const { debounceTime = DEFAULT_DEBOUNCE_TIME } = defineProps<SearchProps>()
 
-const { listState } = useListContext()
-const localSearch = ref(listState.search)
+const context = useListContext()
+const { search, setSearch } = context
+
+const localSearch = ref(search)
 
 watch(
-  () => listState.search,
+  () => {
+    return search
+  },
   (value) => {
     if (value !== localSearch.value) {
       localSearch.value = value
@@ -46,8 +49,8 @@ function handleInput(value: string) {
   }
 
   debounceTimer = setTimeout(() => {
-    listState.setSearch(value)
-  }, props.debounceTime)
+    setSearch(value)
+  }, debounceTime)
 }
 
 onUnmounted(() => {
@@ -56,10 +59,11 @@ onUnmounted(() => {
   }
 })
 
-const scope = computed(
-  (): SearchScope => ({
+const scope = computed((): SearchScope => {
+  return {
+    context,
     search: localSearch.value,
     setSearch: handleInput,
-  }),
-)
+  }
+})
 </script>

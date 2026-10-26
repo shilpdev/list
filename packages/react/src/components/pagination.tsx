@@ -1,154 +1,66 @@
-import { Fragment, memo, useMemo, type ReactNode } from 'react'
-import type {
-  PaginationComponentOptions,
-  PaginationScope,
-  RenderPageArgs,
-} from '../../../../shared'
+import { memo, useMemo } from 'react'
+import type { PaginationScope } from '@shared'
+import { getPagination } from '@shared/utils'
+import { DEFAULT_PAGE_LINKS } from '@shared/constants'
 import { useListContext } from '../context/list-context'
-
-type ListPaginationProps = PaginationComponentOptions & {
-  children?: ReactNode | ((scope: PaginationScope) => ReactNode)
-  renderFirst?: (scope: PaginationScope) => ReactNode
-  renderPrev?: (scope: PaginationScope) => ReactNode
-  renderPages?: (scope: PaginationScope) => ReactNode
-  renderPage?: (scope: RenderPageArgs) => ReactNode
-  renderNext?: (scope: PaginationScope) => ReactNode
-  renderLast?: (scope: PaginationScope) => ReactNode
-}
+import { Slot } from './slot'
+import { ListPaginationProps } from '../types'
 
 export const ListPagination = memo(
-  ({
-    children,
-    pageLinks = 5,
-    renderFirst,
-    renderPrev,
-    renderPages,
-    renderPage,
-    renderNext,
-    renderLast,
-  }: ListPaginationProps) => {
-    const { listState } = useListContext()
-    const { rows, count, pagination, setPage, loader, error } = listState
-    const { page, perPage } = pagination
-    const { initialLoading } = loader
+  ({ children, pageLinks = DEFAULT_PAGE_LINKS }: ListPaginationProps) => {
+    const context = useListContext()
+    const { rows, count, setPage, error, page, perPage, isInitialLoading, hasMore, isEmpty } =
+      context
 
-    const paginationState = useMemo(() => {
-      const pagesCount = Math.ceil(count / perPage)
-      const halfWay = Math.floor(pageLinks / 2)
-      const hasNext = page * perPage < count
-      const hasPrev = page !== 1
-      return { pagesCount, halfWay, hasNext, hasPrev }
-    }, [count, perPage, page, pageLinks])
+    const scope = useMemo((): PaginationScope => {
+      const pagination = getPagination(page, perPage, count, pageLinks)
 
-    const pagesToDisplay = useMemo(() => {
-      const { pagesCount, halfWay } = paginationState
-      const pages = Array.from({ length: Math.min(pageLinks, pagesCount) })
-
-      if (page <= halfWay) {
-        return pages.map((_, index) => index + 1)
-      } else if (pagesCount - page < halfWay) {
-        return pages.map((_, index) => pagesCount - index).reverse()
-      } else {
-        return pages.map((_, index) => page - halfWay + index)
-      }
-    }, [page, pageLinks, paginationState])
-
-    const navigation = useMemo(
-      () => ({
+      return {
+        context,
+        ...pagination,
+        hasNext: hasMore,
         prev: () => setPage(page - 1),
         next: () => setPage(page + 1),
         first: () => setPage(1),
-        last: () => setPage(paginationState.pagesCount),
-        setPage: (newPage: number) => setPage(newPage),
-      }),
-      [setPage, page, paginationState.pagesCount],
-    )
+        last: () => setPage(pagination.pagesCount),
+      }
+    }, [context, setPage, page, perPage, count, pageLinks, hasMore])
 
-    const scope = useMemo(
-      (): PaginationScope => ({
-        page,
-        perPage,
-        count,
-        ...paginationState,
-        pagesToDisplay,
-        ...navigation,
-      }),
-      [page, perPage, count, paginationState, pagesToDisplay, navigation],
-    )
-
-    if (initialLoading) return null
-
-    if (!rows || rows.length === 0) {
+    if (isInitialLoading || isEmpty || error) {
       return null
-    }
-
-    if (error) {
-      return null
-    }
-
-    if (typeof children === 'function') {
-      return <div className="react-list__pagination">{children(scope)}</div>
-    }
-
-    if (children) {
-      return <div className="react-list__pagination">{children}</div>
     }
 
     return (
-      <div className="react-list__pagination">
-        {renderFirst ? (
-          renderFirst(scope)
-        ) : (
-          <button type="button" disabled={!paginationState.hasPrev} onClick={navigation.first}>
-            First
-          </button>
-        )}
-
-        {renderPrev ? (
-          renderPrev(scope)
-        ) : (
-          <button type="button" disabled={!paginationState.hasPrev} onClick={navigation.prev}>
-            Prev
-          </button>
-        )}
-
-        {renderPages
-          ? renderPages(scope)
-          : pagesToDisplay.map((pageNum) => {
-              const isActive = pageNum === page
-              const pageScope: RenderPageArgs = { ...scope, page: pageNum, isActive }
-
-              return renderPage ? (
-                <Fragment key={`page-${pageNum}`}>{renderPage(pageScope)}</Fragment>
-              ) : isActive ? (
-                <span key={`page-${pageNum}`}>{pageNum}</span>
+      <Slot
+        className="shilp-list__pagination"
+        scope={scope}
+        children={children}
+        fallback={() => (
+          <>
+            <button type="button" disabled={!scope.hasPrev} onClick={scope.first}>
+              First
+            </button>
+            <button type="button" disabled={!scope.hasPrev} onClick={scope.prev}>
+              Prev
+            </button>
+            {scope.pagesToDisplay.map((item) =>
+              item === page ? (
+                <span key={`page-${item}`}>{item}</span>
               ) : (
-                <button
-                  key={`page-${pageNum}`}
-                  type="button"
-                  onClick={() => navigation.setPage(pageNum)}
-                >
-                  {pageNum}
+                <button key={`page-${item}`} type="button" onClick={() => setPage(item)}>
+                  {item}
                 </button>
-              )
-            })}
-
-        {renderNext ? (
-          renderNext(scope)
-        ) : (
-          <button type="button" disabled={!paginationState.hasNext} onClick={navigation.next}>
-            Next
-          </button>
+              ),
+            )}
+            <button type="button" disabled={!scope.hasNext} onClick={scope.next}>
+              Next
+            </button>
+            <button type="button" disabled={!scope.hasNext} onClick={scope.last}>
+              Last
+            </button>
+          </>
         )}
-
-        {renderLast ? (
-          renderLast(scope)
-        ) : (
-          <button type="button" disabled={!paginationState.hasNext} onClick={navigation.last}>
-            Last
-          </button>
-        )}
-      </div>
+      />
     )
   },
 )

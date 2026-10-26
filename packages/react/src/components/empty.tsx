@@ -1,18 +1,21 @@
-import { type ReactNode } from 'react'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
-
-type ListEmptyProps = {
-  children?: ReactNode
-}
+import { Slot } from './slot'
+import { ListEmptyProps } from '../types'
 
 export const ListEmpty = ({ children }: ListEmptyProps) => {
-  const { listState } = useListContext()
-  const { rows, loader, error } = listState
-  const { isLoading, initialLoading } = loader
+  const { error, isLoading, isInitialLoading, isEmpty } = useListContext()
 
-  if (rows?.length > 0 || initialLoading || isLoading || error) {
+  if (!isEmpty || isInitialLoading || isLoading || error) {
     return null
   }
 
-  return <div className="react-list__empty">{children || <p>No data found!</p>}</div>
+  return (
+    <Slot
+      className="shilp-list__empty"
+      scope={null}
+      children={children}
+      fallback={() => <p>{MESSAGES.empty}</p>}
+    />
+  )
 }

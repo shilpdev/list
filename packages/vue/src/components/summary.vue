@@ -1,43 +1,34 @@
 <template>
-  <div v-if="showSummary" class="vue-list__summary">
+  <div v-if="showSummary" class="shilp-list__summary">
     <slot v-bind="scope">
-      <span>
-        Showing <span>{{ scope.visibleCount }}</span> rows (
-        <span>{{ scope.from }} - {{ scope.to }}</span
-        >) out of
-        <span>{{ scope.count }}</span>
-      </span>
+      <span>{{ getSummaryMessage(scope) }}</span>
     </slot>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { SummaryScope } from '../../../../shared'
+import { getSummaryMessage } from '@shared/constants'
+import { getSummaryRange } from '@shared/utils'
+import type { SummaryScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListSummary',
 })
 
-const { listState } = useListContext()
+const context = useListContext()
+const { rows, isEmpty, count, error, page, perPage, isInitialLoading } = context
 
 const showSummary = computed(() => {
-  const state = listState
-  return !state.loader.initialLoading && state.rows.length > 0 && !state.error
+  return !isInitialLoading && !isEmpty && !error
 })
 
 const scope = computed((): SummaryScope => {
-  const state = listState
-  const { page, perPage } = state.pagination
-  const from = page * perPage - perPage + 1
-  const to = Math.min(page * perPage, state.count)
-
   return {
-    from,
-    to,
-    visibleCount: state.rows.length,
-    count: state.count,
+    context,
+    ...getSummaryRange(page, perPage, count),
+    visibleCount: rows.length,
   }
 })
 </script>
