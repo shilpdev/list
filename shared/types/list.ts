@@ -6,7 +6,7 @@ import type {
   SortOrder,
   StateManager,
 } from './common'
-import type { Columns } from './columns'
+import type { Column } from './columns'
 
 /**
  * Props both packages accept. `filters` and the callbacks are framework specific, so they live in
@@ -21,7 +21,7 @@ export interface ListPropsBase<T = unknown> {
   sortBy?: string
   sortOrder?: SortOrder
   search?: string
-  columns: Columns
+  columns: Column[]
   version?: number | string
   paginationMode?: PaginationMode
   /** Passed through to `requestHandler` and `stateManager`; the list never reads it. */

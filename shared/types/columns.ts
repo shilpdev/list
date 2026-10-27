@@ -11,9 +11,6 @@ export interface Column {
   [key: string]: unknown
 }
 
-/** Column definitions for a list. */
-export type Columns = Column[]
-
 /** Scope for the `columns` slot. */
 export interface ColumnsScope extends ListScope {
   setColumn: (column: string, key: string, value: unknown) => void

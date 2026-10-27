@@ -1,5 +1,5 @@
 import type {
-  Columns,
+  Column,
   Context,
   EventProps,
   FilterState,
@@ -80,7 +80,7 @@ function List<T = unknown>(props: ListProps<T>) {
   const [localFilters, setLocalFilters] = useState<FilterState[]>(() => {
     return [...defaultFilters]
   })
-  const [localColumns, setLocalColumns] = useState<Columns>(() => {
+  const [localColumns, setLocalColumns] = useState<Column[]>(() => {
     return createColumns(columns)
   })
 

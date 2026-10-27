@@ -2,7 +2,6 @@ import equal from 'fast-deep-equal'
 import { DEFAULT_COLUMN_VISIBILITY } from './constants'
 import type {
   Column,
-  Columns,
   ColumnScope,
   Context,
   Filter,
@@ -113,7 +112,7 @@ export const patchRowById = <T>(
 }
 
 /** Columns with `visibility` filled in where it is missing. */
-export const createColumns = (columns: Columns): Columns => {
+export const createColumns = (columns: Column[]): Column[] => {
   return columns.map((column) => {
     return { ...column, visibility: column.visibility ?? DEFAULT_COLUMN_VISIBILITY }
   })
@@ -121,11 +120,11 @@ export const createColumns = (columns: Columns): Columns => {
 
 /** Returns `columns` with `key` of the column named `column` set to `value`; an unknown name changes nothing. */
 export const computeColumns = (
-  columns: Columns,
+  columns: Column[],
   column: string,
   key: string,
   value: unknown,
-): Columns => {
+): Column[] => {
   return createColumns(
     columns.map((item) => {
       if (item.name === column) {

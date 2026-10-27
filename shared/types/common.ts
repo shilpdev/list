@@ -1,4 +1,4 @@
-import type { Columns } from './columns'
+import type { Column } from './columns'
 import type { FilterState, FilterValues } from './filters'
 
 /** Types shared across the list root and its components that do not belong to a single component. */
@@ -97,7 +97,7 @@ export interface State<T = unknown> {
   sortOrder: SortOrder
   search: string
   filters: FilterState[]
-  columns: Columns
+  columns: Column[]
   isEmpty: boolean
   idKey: string
 }

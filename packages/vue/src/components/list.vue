@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import type {
-  Columns,
+  Column,
   Context,
   Events,
   FilterState,
@@ -84,7 +84,7 @@ const localSortBy = ref<string>(sortBy)
 const localSortOrder = ref<SortOrder>(sortOrder)
 const localSearch = ref<string>(search)
 const localFilters = ref<FilterState[]>([...defaultFilters])
-const localColumns = ref<Columns>(createColumns(columns))
+const localColumns = ref<Column[]>(createColumns(columns))
 
 const rows = ref<unknown[]>([])
 const selection = ref<RowId[]>([])
