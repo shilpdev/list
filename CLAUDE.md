@@ -23,8 +23,7 @@ Treat the code and the `shared/` types as the source of truth for the current AP
 
 - `packages/react`, `packages/vue` — the published libraries (built with Vite lib mode, output to `dist/`).
 - `shared/` — code both libraries use. `shared/types/` holds the TypeScript types (`ListPropsBase`, `RequestHandlerResponse`, etc.) `shared/constants.ts` holds every default (`DEFAULT_PER_PAGE`, `DEFAULT_PAGE_LINKS`, ...), and `shared/utils.ts` holds the framework-agnostic logic (equality, row indexing, pagination maths, query-change detection, ...). Not a workspace package: both libraries import types from `@shared`, and logic and defaults from `@shared/utils` and `@shared/constants` (the `@shared` alias is set in each package's `vite.config.ts` and `tsconfig.json`; keep them separate so utils are not re-exported as public API); `shared/` resolves npm packages from the repo root, so a package it imports (such as `fast-deep-equal`) must be a root dependency. Vite bundles the utils into each library and its `dts` plugin inlines the types (`rollupTypes: true`) into the emitted `.d.ts`. When changing the list API, update `shared/` first, then keep both React and Vue implementations in sync. Put logic that is the same in both frameworks in `shared/utils.ts`, not in each package.
-- `apps/{react,vue}/playground` — Vite apps for manual testing against the packages.
-- `apps/{react,vue}/story` — Storybook apps; their stories double as the test suite (Vitest + Playwright browser via `@storybook/addon-vitest`). There are no unit tests inside `packages/`.
+- `apps/react-demo`, `apps/vue-demo` (Vite), `apps/next-demo`, `apps/nuxt-demo` — demo apps for manual testing against the packages. There are no automated tests.
 - `.cursor/skills/react-list/` — usage documentation for the public API (props, slots, `requestHandler` contract).
 
 ## Architecture
@@ -97,17 +96,12 @@ Run from repo root:
 
 ```bash
 pnpm install
-pnpm build:packages          # build both libs (required before typecheck/lint/apps/tests; CI caches dist/)
+pnpm build:packages          # build both libs (required before typecheck/lint/apps)
 pnpm build:react-list        # or build:vue-list
-pnpm typecheck               # tsc --noEmit for both packages
+pnpm typecheck               # typecheck both packages
 pnpm lint                    # eslint for both packages
 pnpm format                  # prettier --write src/ in both packages
-pnpm dev:react:playground    # also dev:vue:playground, dev:react:docs, dev:vue:docs
-pnpm dev:react:story         # Storybook on :6007 (dev:vue:story for Vue)
-pnpm test:react:story        # installs Playwright chromium, then vitest run (test:vue:story for Vue)
-pnpm build:react:playground  # also build:vue:playground, build:{react,vue}:story
+pnpm dev:react               # also dev:vue, dev:next, dev:nuxt (dev runs all apps in parallel)
+pnpm build:react             # also build:vue, build:next, build:nuxt (build:apps builds all; build = packages + apps)
+pnpm start:react             # serve a built app; also start:vue, start:next, start:nuxt
 ```
-
-Run a single story test file: `pnpm --filter react-story exec vitest run <path-or-name-filter>` (Playwright chromium must be installed via `pnpm test:setup`).
-
-CI (`.github/workflows/ci.yml`) order: build packages → typecheck / lint / story tests → build playgrounds and storybooks.
