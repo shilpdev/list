@@ -1,61 +1,66 @@
-import type { RequestHandler } from '@shilp.dev/react-list'
-import type { Skill } from '../types/skill'
+import type { Filter, RequestHandler } from '@shilp.dev/react-list'
 
-const requestHandler: RequestHandler<Skill> = async (context) => {
-  const { endpoint, page, perPage, search, sortBy, sortOrder, filters } = context
-  console.log(context)
-  const params = new URLSearchParams()
+import type { Row } from '@/types/list'
 
-  if (page && perPage) {
-    params.append('page', String(page))
-    params.append('limit', String(perPage))
+const API_URL = 'https://dummyjson.com'
+
+function isActive(filter: Filter): boolean {
+  return filter.value != null && filter.value !== ''
+}
+
+// dummyjson can only do one of search, category or filter per request, so search wins, then the
+// first filter that has a value. Products are filtered by category through their own route; every
+// other resource uses `/:resource/filter?key=&value=`.
+function getPath(endpoint: string, search: string, filter: Filter | undefined): string {
+  if (search) {
+    return `${endpoint}/search`
   }
 
+  if (!filter) {
+    return endpoint
+  }
+
+  if (endpoint === 'products' && filter.column === 'category') {
+    return `products/category/${encodeURIComponent(String(filter.value))}`
+  }
+
+  return `${endpoint}/filter`
+}
+
+const requestHandler: RequestHandler<Row> = async (state) => {
+  const { endpoint, page, perPage, search, sortBy, sortOrder, filters } = state
+  const filter = filters.find(isActive)
+  const path = getPath(endpoint, search, filter)
+
+  const params = new URLSearchParams()
+  params.set('limit', String(perPage))
+  params.set('skip', String((page - 1) * perPage))
+
   if (search) {
-    params.append('search', search)
+    params.set('q', search)
+  } else if (filter && path.endsWith('/filter')) {
+    params.set('key', filter.column)
+    params.set('value', String(filter.value))
   }
 
   if (sortBy) {
-    params.append('sort', sortOrder === 'desc' ? `-${sortBy}` : sortBy)
+    params.set('sortBy', sortBy)
+    params.set('order', sortOrder || 'asc')
   }
 
-  filters.forEach(({ column, value }) => {
-    if (value !== undefined && value !== '') {
-      if (typeof value === 'object' && value !== null) {
-        Object.entries(value as Record<string, unknown>).forEach(([operator, operatorValue]) => {
-          params.append(`filter[${column}][${operator}]`, String(operatorValue))
-        })
-      } else {
-        params.append(`filter[${column}][_eq]`, String(value))
-      }
-    }
-  })
+  const response = await fetch(`${API_URL}/${path}?${params}`)
 
-  params.append('meta', '*')
+  if (!response.ok) {
+    throw new Error(`API request failed with status ${response.status}`)
+  }
 
-  const queryString = params.toString()
-  const url = `https://everest.7span.in/items/${endpoint}${queryString ? `?${queryString}` : ''}`
+  // dummyjson returns the rows under the resource name, e.g. `{ products: [...], total, skip, limit }`.
+  const data = await response.json()
 
-  try {
-    const response = await fetch(url)
-
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`)
-    }
-
-    const data = await response.json()
-
-    return {
-      rows: data.data as Skill[],
-      count: data.meta?.total_count || data.meta?.filter_count || 0,
-      meta: data.meta || {},
-    }
-  } catch (error) {
-    console.error('API request failed:', error)
-    return {
-      rows: [],
-      count: 0,
-    }
+  return {
+    rows: data[endpoint] ?? [],
+    count: data.total ?? 0,
+    meta: { skip: data.skip, limit: data.limit },
   }
 }
 

@@ -6,3 +6,5 @@ packages:
 allowBuilds:
   esbuild: false
   vue-demi: true
+  sharp: false
+  unrs-resolver: false

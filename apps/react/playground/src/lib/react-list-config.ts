@@ -15,8 +15,14 @@ const LIST_PARAM_KEYS = [
 
 const LIST_PARAM_KEY_SET = new Set<string>(LIST_PARAM_KEYS);
 
+// The pathname is part of the key so each playground page keeps its own saved state, even when
+// both pages list the same endpoint.
+function stateManagerPrefix(endpoint: string): string {
+  return `react-list--${window.location.pathname}--${endpoint}--`;
+}
+
 function stateManagerKey(endpoint: string, version?: number | string): string {
-  return `react-list--${endpoint}--${version}`;
+  return `${stateManagerPrefix(endpoint)}${version}`;
 }
 
 function isEmptyValue(value: unknown): boolean {
@@ -186,7 +192,7 @@ let isCleared = false;
 export const stateManager: StateManager = {
   init(context: State) {
     const { endpoint, version } = context;
-    const allKeys = `react-list--${endpoint}--`;
+    const allKeys = stateManagerPrefix(endpoint);
     const latestKey = stateManagerKey(endpoint, version);
     const staleKeys = Object.keys(localStorage).filter(
       (key) => {

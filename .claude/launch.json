@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "react-playground",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "react-playground", "run", "dev"],
+      "port": 3000
+    }
+  ]
+}
