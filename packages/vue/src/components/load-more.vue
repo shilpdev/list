@@ -1,36 +1,21 @@
 <template>
-  <div v-if="showContent" class="vue-list__load-more">
-    <slot v-bind="scope">
-      <button v-if="scope.hasMoreItems" type="button" @click="scope.loadMore">Load More</button>
-      <p v-else>— That's all —</p>
+  <div v-if="!context.isEmpty && !context.error" class="shilp-list__load-more">
+    <slot :context="context">
+      <button v-if="context.hasMore" type="button" @click="context.loadMore()">
+        {{ MESSAGES.loadMore }}
+      </button>
+      <p v-else>{{ MESSAGES.loadMoreEnd }}</p>
     </slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { LoadMoreScope } from '../../../../shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
   name: 'ListLoadMore',
 })
 
-const { listState } = useListContext()
-
-const showContent = computed(() => {
-  const state = listState.value
-  return state.data.length > 0 && !state.error
-})
-
-const scope = computed((): LoadMoreScope => {
-  const state = listState.value
-  const { page, perPage } = state.pagination
-
-  return {
-    isLoading: state.loader.isLoading,
-    loadMore: state.loadMore,
-    hasMoreItems: page * perPage < state.count,
-  }
-})
+const context = useListContext()
 </script>

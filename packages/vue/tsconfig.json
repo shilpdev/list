@@ -7,9 +7,10 @@
     "jsx": "preserve",
     "allowJs": true,
     "checkJs": false,
-    "types": ["vite/client"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@shared": ["../../shared"],
+      "@shared/*": ["../../shared/*"]
     },
     "strict": true,
     "skipLibCheck": true,

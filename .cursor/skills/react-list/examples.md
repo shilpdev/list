@@ -4,13 +4,13 @@
 
 ```tsx
 import { useState } from 'react'
-import ReactList, {
+import List, {
   ListEmpty,
   ListError,
-  ListInitialLoader,
-  ListItems,
+  ListLoaderInitial,
   ListLoader,
   ListPagination,
+  ListRows,
   ListSearch,
   ListSummary,
 } from '@shilp.dev/react-list'
@@ -41,14 +41,20 @@ const requestHandler: RequestHandler<Skill> = async ({
   const res = await fetch(`/api/${endpoint}?${params}`)
   if (!res.ok) throw new Error(`Request failed (${res.status})`)
   const body = await res.json()
-  return { items: body.data ?? [], count: body.total ?? 0 }
+  return { rows: body.data ?? [], count: body.total ?? 0 }
 }
 
 export function SkillList() {
   const [filters, setFilters] = useState<Record<string, string | undefined>>({})
 
   return (
-    <ReactList endpoint="skills" perPage={10} requestHandler={requestHandler} filters={filters}>
+    <List
+      endpoint="skills"
+      perPage={10}
+      requestHandler={requestHandler}
+      filters={filters}
+      onFiltersChange={setFilters}
+    >
       <ListSearch>
         {({ search, setSearch }) => (
           <input
@@ -72,18 +78,18 @@ export function SkillList() {
         <option value="published">Published</option>
       </select>
 
-      <ListInitialLoader>
+      <ListLoaderInitial>
         <p>Loading...</p>
-      </ListInitialLoader>
+      </ListLoaderInitial>
 
       <ListEmpty>
         <p>No skills found.</p>
       </ListEmpty>
 
-      <ListError>{({ error }) => <p>{error.message}</p>}</ListError>
+      <ListError>{({ context }) => <p>{context.error?.message}</p>}</ListError>
 
-      <ListItems>
-        {({ items, sort, setSort }) => (
+      <ListRows>
+        {({ context: { rows, sortBy, sortOrder, setSortBy, setSortOrder } }) => (
           <div>
             <ListLoader>
               <p>Updating...</p>
@@ -95,11 +101,10 @@ export function SkillList() {
                     <button
                       type="button"
                       onClick={() =>
-                        setSort({
-                          by: 'name',
-                          order:
-                            sort.sortBy === 'name' && sort.sortOrder === 'asc' ? 'desc' : 'asc',
-                        })
+                        {
+                          setSortBy('name')
+                          setSortOrder(sortBy === 'name' && sortOrder === 'asc' ? 'desc' : 'asc')
+                        }
                       }
                     >
                       Name
@@ -109,20 +114,20 @@ export function SkillList() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.name}</td>
-                    <td>{item.status}</td>
+                {rows.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.name}</td>
+                    <td>{row.status}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-      </ListItems>
+      </ListRows>
 
       <ListSummary>
-        {({ from, to, count }) => (
+        {({ from, to, context: { count } }) => (
           <span>
             {from} - {to} of {count}
           </span>
@@ -130,7 +135,7 @@ export function SkillList() {
       </ListSummary>
 
       <ListPagination>
-        {({ page, pagesToDisplay, hasNext, hasPrev, prev, next, setPage }) => (
+        {({ context: { page, setPage }, pagesToDisplay, hasNext, hasPrev, prev, next }) => (
           <div>
             <button type="button" disabled={!hasPrev} onClick={prev}>
               Prev
@@ -146,7 +151,7 @@ export function SkillList() {
           </div>
         )}
       </ListPagination>
-    </ReactList>
+    </List>
   )
 }
 ```
@@ -154,34 +159,34 @@ export function SkillList() {
 ## Load more
 
 ```tsx
-<ReactList endpoint="skills" paginationMode="loadMore" requestHandler={requestHandler}>
-  <ListItems>{({ items }) => /* ... */ null}</ListItems>
+<List endpoint="skills" paginationMode="loadMore" requestHandler={requestHandler}>
+  <ListRows>{({ context: { rows } }) => /* ... */ null}</ListRows>
   <ListLoadMore>
-    {({ loadMore, hasMoreItems, isLoading }) => (
-      <button type="button" disabled={!hasMoreItems || isLoading} onClick={loadMore}>
-        {hasMoreItems ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded'}
+    {({ context: { loadMore, hasMore, isLoading } }) => (
+      <button type="button" disabled={!hasMore || isLoading} onClick={loadMore}>
+        {hasMore ? (isLoading ? 'Loading...' : 'Load more') : 'All loaded'}
       </button>
     )}
   </ListLoadMore>
-</ReactList>
+</List>
 ```
 
 ## Patch one row
 
 ```tsx
-import { ListItems, useListContext } from '@shilp.dev/react-list'
+import { ListRows, useListContext } from '@shilp.dev/react-list'
 
-function SkillRow({ item }: { item: Skill }) {
-  const { listState } = useListContext<Skill>()
+function SkillRow({ row }: { row: Skill }) {
+  const context = useListContext<Skill>()
 
   async function onRename(name: string) {
-    const saved = await api.updateSkill(item.id, { name })
-    listState.updateItemById(saved, item.id)
+    const saved = await api.updateSkill(row.id, { name })
+    context.updateRowById(saved, row.id)
   }
 
   return (
     <div>
-      {item.name}
+      {row.name}
       <button type="button" onClick={() => onRename('Updated')}>
         Save
       </button>
@@ -189,7 +194,7 @@ function SkillRow({ item }: { item: Skill }) {
   )
 }
 
-;<ListItems renderItem={({ item }) => <SkillRow item={item} />} />
+;<ListRows row={({ row }) => <SkillRow row={row} />} />
 ```
 
 ## Persist UI state
@@ -205,7 +210,7 @@ const stateManager = {
   },
 }
 
-<ReactList endpoint="skills" requestHandler={requestHandler} stateManager={stateManager}>
+<List endpoint="skills" requestHandler={requestHandler} stateManager={stateManager}>
   {/* ... */}
-</ReactList>
+</List>
 ```

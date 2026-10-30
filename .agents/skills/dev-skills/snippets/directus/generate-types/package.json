@@ -1,0 +1,3 @@
+{
+  "generate:types": "node --env-file=.env --env-file-if-exists=.env.local scripts/generate-directus-types.ts"
+}

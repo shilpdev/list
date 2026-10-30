@@ -1,32 +1,29 @@
-import { memo, type ReactNode } from 'react'
-import type { ErrorScope } from '../../../../shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
+import { Slot } from './slot'
+import { ListErrorProps } from '../types'
 
-type ListErrorProps = {
-  children?: ReactNode | ((scope: ErrorScope) => ReactNode)
-}
-
-export const ListError = memo(({ children }: ListErrorProps) => {
-  const { listState } = useListContext()
-  const { error, loader } = listState
-  const { isLoading } = loader
+export const ListError = ({ children }: ListErrorProps) => {
+  const context = useListContext()
+  const { error, isLoading } = context
 
   if (!error || isLoading) {
     return null
   }
 
   return (
-    <div className="react-list-error">
-      {typeof children === 'function'
-        ? children({ error })
-        : children || (
-            <div>
-              <h3>Error occurred</h3>
-              <pre>
-                {error.name}: {error.message}
-              </pre>
-            </div>
-          )}
-    </div>
+    <Slot
+      className="shilp-list__error"
+      scope={{ context }}
+      children={children}
+      fallback={() => (
+        <div>
+          <h3>{MESSAGES.error}</h3>
+          <pre>
+            {error.name}: {error.message}
+          </pre>
+        </div>
+      )}
+    />
   )
-})
+}

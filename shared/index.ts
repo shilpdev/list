@@ -1,12 +1,5 @@
 /**
- * Shared TypeScript types for @shilp.dev/react-list and @shilp.dev/vue-list.
+ * Types shared by @shilp.dev/react-list and @shilp.dev/vue-list.
+ * Runtime logic lives in `./utils` and is imported from there, so it is never re-exported with the types.
  */
-export type * from './core';
-export type * from './context';
-export type * from './config';
-export type * from './response';
-export type * from './state';
-export type * from './handlers';
-export type * from './attributes';
-export type * from './scopes';
-export type * from './options';
+export type * from './types'

@@ -1,59 +1,29 @@
-import { memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { LoadMoreScope } from '../../../../shared'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
+import { Slot } from './slot'
+import { ListLoadMoreProps } from '../types'
 
-type ListLoadMoreProps = {
-  children?: (scope: LoadMoreScope) => ReactNode
-}
+export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
+  const context = useListContext()
 
-export const ListLoadMore = memo(({ children }: ListLoadMoreProps) => {
-  const { listState } = useListContext()
-  const { data, count, pagination, setPage, loader, error } = listState
-  const { page, perPage } = pagination
-  const { isLoading } = loader
-
-  const hasMoreItems = useMemo(() => page * perPage < count, [page, perPage, count])
-
-  const loadMore = useCallback(() => {
-    if (hasMoreItems && !isLoading) {
-      setPage(page + 1)
-    }
-  }, [hasMoreItems, isLoading, setPage, page])
-
-  const scope = useMemo(
-    (): LoadMoreScope => ({
-      isLoading,
-      loadMore,
-      hasMoreItems,
-    }),
-    [isLoading, loadMore, hasMoreItems],
-  )
-
-  if (!data || data.length === 0) {
+  if (context.isEmpty || context.error) {
     return null
-  }
-
-  if (error) {
-    return null
-  }
-
-  if (typeof children === 'function') {
-    return <div className="react-list-load-more">{children(scope)}</div>
-  }
-
-  if (children) {
-    return <div className="react-list-load-more">{children}</div>
   }
 
   return (
-    <div className="react-list-load-more">
-      {hasMoreItems ? (
-        <button type="button" onClick={loadMore} disabled={isLoading}>
-          Load More
-        </button>
-      ) : (
-        <p>— That&apos;s all —</p>
-      )}
-    </div>
+    <Slot
+      className="shilp-list__load-more"
+      scope={{ context }}
+      children={children}
+      fallback={() =>
+        context.hasMore ? (
+          <button type="button" onClick={context.loadMore}>
+            {MESSAGES.loadMore}
+          </button>
+        ) : (
+          <p>{MESSAGES.loadMoreEnd}</p>
+        )
+      }
+    />
   )
-})
+}

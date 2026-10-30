@@ -1,443 +1,534 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type {
-  AttrSettings,
-  Filters,
-  InternalListState,
-  ListAttribute,
-  ListOptions,
-  ListProviderConfig,
-  ListRenderScope,
-  ListState,
-  RequestContextPatch,
-  SavedListState,
-  StateManagerContext,
-} from '../../../../shared'
+  Column,
+  Context,
+  EventProps,
+  FilterState,
+  FilterValues,
+  RequestHandlerResponse,
+  RequestTrigger,
+  RowId,
+  SortOrder,
+  State,
+} from '@shared'
+import {
+  DEFAULT_FILTERS,
+  DEFAULT_ID_KEY,
+  DEFAULT_META,
+  DEFAULT_PAGE,
+  DEFAULT_PAGINATION_MODE,
+  DEFAULT_PER_PAGE,
+  DEFAULT_SEARCH,
+  DEFAULT_SORT_BY,
+  DEFAULT_SORT_ORDER,
+  DEFAULT_VERSION,
+  rowNotFoundMessage,
+} from '@shared/constants'
+import {
+  computeColumns,
+  computeHasMore,
+  computeSelectionState,
+  createColumns,
+  hasSelectionChanged,
+  mergeRows,
+  patchRowById,
+  toError,
+  toggleAllIds,
+  toggleId,
+  computeFilters,
+  computeDefaultFilters,
+  hasSavedState,
+} from '@shared/utils'
+import equal from 'fast-deep-equal'
+import { useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ListContextProvider } from '../context/list-context'
-import { hasActiveFilters } from './utils'
-import { DEFAULT_ID_KEY, getItemId, isEqual } from '../utils'
+import type { ListProps } from '../types'
 
-type LocalInternalListState<T> = Omit<InternalListState<T>, 'page'> & {
-  page: number | string
-}
-
-export type ReactListProps<T = unknown> = ListOptions<T> &
-  ListProviderConfig<T> & {
-    children?: ReactNode | ((state: ListRenderScope<T>) => ReactNode)
-    onFiltersChange?: (filters: Filters) => void
-  }
-
-const toError = (err: unknown): Error => (err instanceof Error ? err : new Error(String(err)))
-
-function buildDefaultAttrSettings(
-  attrSource: ListAttribute[] | string[] | undefined,
-  firstItem?: unknown,
-): AttrSettings {
-  const names = attrSource?.length
-    ? attrSource.map((attr) => (typeof attr === 'string' ? attr : attr.name))
-    : firstItem
-      ? Object.keys(firstItem as Record<string, unknown>)
-      : []
-
-  return names.reduce<AttrSettings>((settings, name) => {
-    settings[name] = { visible: true }
-    return settings
-  }, {})
-}
-
-/**
- * ReactList root component for data fetching, pagination, and state management.
- * Provides list context to child components (`ListSearch`, `ListPagination`, etc.).
- */
-function ReactList<T = unknown>({
-  children,
-  endpoint,
-  idKey = DEFAULT_ID_KEY,
-  page = 1,
-  perPage = 25,
-  sortBy = '',
-  sortOrder = 'desc',
-  search = '',
-  filters = {},
-  attrs,
-  version = 1,
-  paginationMode = 'pagination',
-  meta = {},
-  count: initialCount = 0,
-  requestHandler,
-  stateManager = {},
-  onResponse,
-  afterPageChange,
-  afterLoadMore,
-  onFiltersChange,
-}: ReactListProps<T>) {
-  if (!requestHandler) {
-    throw new Error('ReactList: requestHandler is required.')
-  }
-
-  const initRef = useRef(false)
-  const defaultFiltersRef = useRef<Filters>({ ...filters })
-  const prevFiltersPropRef = useRef<Filters>(filters)
-
+function List<T = unknown>(props: ListProps<T>) {
+  const {
+    endpoint,
+    idKey = DEFAULT_ID_KEY,
+    page = DEFAULT_PAGE,
+    perPage = DEFAULT_PER_PAGE,
+    sortBy = DEFAULT_SORT_BY,
+    sortOrder = DEFAULT_SORT_ORDER,
+    search = DEFAULT_SEARCH,
+    version = DEFAULT_VERSION,
+    paginationMode = DEFAULT_PAGINATION_MODE,
+    meta = DEFAULT_META,
+    filters = [...DEFAULT_FILTERS],
+    columns,
+    requestHandler,
+    initialResponse,
+    stateManager,
+    beforePageChange,
+    afterPageChange,
+    beforeLoadMore,
+    afterLoadMore,
+    onResponse,
+    onError,
+    onRowSelect,
+    onFiltersChange,
+    ref,
+    children,
+  } = props
   const isLoadMore = paginationMode === 'loadMore'
 
-  const getContext = useCallback(
-    (currentState?: LocalInternalListState<T>): StateManagerContext => {
-      return {
-        endpoint,
-        version,
-        meta,
-        search: currentState?.search ?? search,
-        page: (currentState?.page ?? page) as number,
-        perPage: currentState?.perPage ?? perPage,
-        sortBy: currentState?.sortBy ?? sortBy,
-        sortOrder: currentState?.sortOrder ?? sortOrder,
-        filters: currentState?.filters ?? filters,
-        attrSettings: currentState?.attrSettings ?? {},
-      }
-    },
-    [endpoint, version, meta, search, page, perPage, sortBy, sortOrder, filters],
+  const defaultFilters = computeDefaultFilters(filters)
+  const [localPage, setLocalPage] = useState<number>(page)
+  const [localPerPage, setLocalPerPage] = useState<number>(perPage)
+  const [localSortBy, setLocalSortBy] = useState<string>(sortBy)
+  const [localSortOrder, setLocalSortOrder] = useState<SortOrder>(sortOrder)
+  const [localSearch, setLocalSearch] = useState<string>(search)
+  const [localFilters, setLocalFilters] = useState<FilterState[]>(() => {
+    return [...defaultFilters]
+  })
+  const [localColumns, setLocalColumns] = useState<Column[]>(() => {
+    return createColumns(columns)
+  })
+
+  const [rows, setRows] = useState<T[]>(() => {
+    if (initialResponse == null) {
+      return []
+    }
+    return mergeRows<T>([], initialResponse.rows, { page, perPage, isLoadMore })
+  })
+  const [selection, setSelection] = useState<RowId[]>([])
+  const [error, setError] = useState<Error | null>(null)
+  const [response, setResponse] = useState<RequestHandlerResponse<T> | null>(
+    initialResponse ?? null,
   )
-
-  const getSavedState = useCallback((): SavedListState => {
-    try {
-      const context = getContext()
-      const oldState = stateManager?.get?.(context)
-
-      return {
-        page: oldState?.page,
-        perPage: oldState?.perPage,
-        sortBy: oldState?.sortBy,
-        sortOrder: oldState?.sortOrder,
-        search: oldState?.search,
-        attrSettings: oldState?.attrSettings,
-        filters: oldState?.filters,
-      }
-    } catch (err) {
-      console.error(err)
-      return {}
-    }
-  }, [getContext, stateManager])
-
-  const initializeState = useCallback((): LocalInternalListState<T> => {
-    const savedState = getSavedState()
-
-    let initialPage: number | string = page
-    if (isLoadMore) {
-      initialPage = 1
-    } else if (savedState.page != null) {
-      initialPage = savedState.page
-    }
-
-    return {
-      page: initialPage,
-      perPage: savedState.perPage != null ? savedState.perPage : perPage,
-      sortBy: savedState.sortBy != null ? savedState.sortBy : sortBy,
-      sortOrder: savedState.sortOrder != null ? savedState.sortOrder : sortOrder,
-      search: savedState.search != null ? savedState.search : search,
-      filters: savedState.filters != null ? savedState.filters : filters,
-      attrSettings: (savedState.attrSettings ?? {}) as AttrSettings,
-      items: [],
-      selection: [],
-      error: null,
-      response: null,
-      count: initialCount,
-      isLoading: true,
-      initializingState: true,
-      confirmedPage: null,
-    }
-  }, [getSavedState, search, page, perPage, sortBy, sortOrder, filters, isLoadMore, initialCount])
-
-  const [state, setState] = useState(initializeState)
-
-  const stateRef = useRef(state)
-  stateRef.current = state
-
+  const [count, setCount] = useState<number>(initialResponse?.count ?? 0)
+  const [isLoading, setIsLoading] = useState<boolean>(initialResponse == null)
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(initialResponse == null)
+  const [requestTrigger, setRequestTrigger] = useState<RequestTrigger>('mount')
+  const [isReady, setIsReady] = useState(false)
   const requestIdRef = useRef(0)
+  // Query effects wait for the first request, or for the decision to skip it (`initialResponse`).
+  const isStartedRef = useRef(false)
+  const isSeededRef = useRef(initialResponse != null)
 
-  const updateStateManager = useCallback(
-    (stateToSave: LocalInternalListState<T>) => {
-      if (stateManager) {
-        const context = getContext(stateToSave)
-        stateManager?.set?.(context)
-      }
-    },
-    [stateManager, getContext],
-  )
+  const previousSelectionRef = useRef(selection)
+  const previousFiltersRef = useRef(localFilters)
+  const previousColumnsRef = useRef(localColumns)
 
-  const fetchData = useCallback(
-    async (
-      addContext: RequestContextPatch = {},
-      newState: LocalInternalListState<T> | null = null,
-    ) => {
-      const currentRequestId = ++requestIdRef.current
-      setState((prev) => ({ ...prev, error: null, isLoading: true }))
+  const hasMore = computeHasMore(localPage, localPerPage, count)
+  const isEmpty = rows.length === 0
+  const selectionState = computeSelectionState(rows, selection, idKey)
 
-      try {
-        const currentState = newState ?? stateRef.current
-        const previousItems = newState?.items ?? stateRef.current.items
-        const res = await requestHandler({
-          endpoint,
-          version,
-          meta,
-          page: currentState.page as number,
-          perPage: currentState.perPage,
-          search: currentState.search,
-          sortBy: currentState.sortBy,
-          sortOrder: currentState.sortOrder,
-          filters: currentState.filters,
-          ...addContext,
-        })
+  // Read through a ref: an inline `stateManager` object is new on every parent render and would
+  // otherwise rebuild `actions` and `context` with nothing changed.
+  const stateManagerRef = useRef(stateManager)
+  stateManagerRef.current = stateManager
 
-        if (currentRequestId !== requestIdRef.current) return
+  const eventsRef = useRef<EventProps<T>>({})
+  eventsRef.current = {
+    beforePageChange,
+    afterPageChange,
+    beforeLoadMore,
+    afterLoadMore,
+    onResponse,
+    onError,
+    onRowSelect,
+    onFiltersChange,
+  }
 
-        if (onResponse) onResponse(res)
+  function clearState() {
+    stateManagerRef.current?.clear?.(snapshot())
+    getData()
+  }
 
-        if (isLoadMore) {
-          if (afterLoadMore) afterLoadMore(res)
-        } else {
-          if (afterPageChange) afterPageChange(res)
-        }
+  // Lifecycle 3 to 5, one request. Only the query effect below calls this, so `state` is the
+  // committed state of the render that changed the query.
+  // 3. Request: state shows isLoading (`requestTrigger` says what started it), `beforePageChange` /
+  //    `beforeLoadMore` get the State being requested, then `requestHandler` runs.
+  // 4. Response: rows are replaced (page mode) or appended (load-more) with their `_index` and
+  //    selection resets. The response effect then runs `stateManager.set`, `onResponse` and
+  //    `afterPageChange` / `afterLoadMore`.
+  // 5. Error: error is set, rows and count are cleared and `onError` fires.
+  function getData() {
+    setError(null)
+    setIsLoading(true)
 
-        const updatedState: LocalInternalListState<T> = {
-          ...currentState,
-          response: res,
-          selection: [],
-          items:
-            isLoadMore && (currentState.page as number) > 1
-              ? [...previousItems, ...res.items]
-              : res.items,
-          count: res.count,
-          initializingState: false,
-          isLoading: false,
-        }
+    const currentRequestId = ++requestIdRef.current
+    const requestState: State<T> = {
+      ...state,
+      error: null,
+      isLoading: true,
+    }
 
-        updateStateManager(updatedState)
+    if (isLoadMore) {
+      eventsRef.current?.beforeLoadMore?.(requestState)
+    } else {
+      eventsRef.current?.beforePageChange?.(requestState)
+    }
 
-        setState(updatedState)
-      } catch (err) {
-        if (currentRequestId !== requestIdRef.current) return
-        setState((prev) => ({
-          ...prev,
-          error: toError(err),
-          items: [],
-          count: 0,
-          initializingState: false,
-          isLoading: false,
-        }))
-        // The list UI already surfaces the error via `state.error`.
-        // Re-throwing here creates unhandled promise rejections that break
-      }
-    },
-    [
-      endpoint,
-      version,
-      isLoadMore,
-      meta,
-      requestHandler,
-      onResponse,
-      afterLoadMore,
-      afterPageChange,
-      updateStateManager,
-    ],
-  )
-
-  const handlers = useMemo(
-    () => ({
-      setPage: (value: number | string, addContext?: RequestContextPatch) => {
-        let newPage: number | string = value
-        if (value === 0) {
-          newPage = ''
-        }
-        const newState = { ...stateRef.current, page: newPage }
-        setState(newState)
-        if (newPage) fetchData(addContext, newState)
-      },
-
-      setPerPage: (value: number) => {
-        const newState = { ...stateRef.current, perPage: value, page: 1 }
-        setState(newState)
-        fetchData({}, newState)
-      },
-
-      setSearch: (value: string) => {
-        if (value !== stateRef.current.search) {
-          const newState = { ...stateRef.current, search: value, page: 1 }
-          setState(newState)
-          fetchData({}, newState)
-        }
-      },
-
-      setSort: ({ by, order }: { by: string; order: 'asc' | 'desc' }) => {
-        const newState = { ...stateRef.current, sortBy: by, sortOrder: order, page: 1 }
-        setState(newState)
-        fetchData({}, newState)
-      },
-
-      loadMore: () => {
-        const newState = { ...stateRef.current, page: (stateRef.current.page as number) + 1 }
-        setState(newState)
-        fetchData({}, newState)
-      },
-
-      clearFilters: () => {
-        const nextFilters = { ...defaultFiltersRef.current }
-        const newState = { ...stateRef.current, filters: nextFilters, page: 1 }
-        setState(newState)
-        fetchData({}, newState)
-        onFiltersChange?.(nextFilters)
-      },
-
-      refresh: (addContext: RequestContextPatch = { isRefresh: true }) => {
-        if (isLoadMore) {
-          const newState = { ...stateRef.current, page: 1, items: [] }
-          setState(newState)
-          fetchData(addContext, newState)
-        } else {
-          fetchData(addContext)
-        }
-      },
-
-      setFilters: (nextFilters: typeof filters) => {
-        const newState = { ...stateRef.current, filters: nextFilters, page: 1 }
-        setState(newState)
-        fetchData({}, newState)
-        onFiltersChange?.(nextFilters)
-      },
-
-      updateItemById: (item: Partial<T>, id: string | number) => {
-        let matched = false
-
-        const newItems = stateRef.current.items.map((entry) => {
-          if (getItemId(entry, idKey) !== id) return entry
-          matched = true
-          return { ...entry, ...item }
-        })
-
-        if (!matched) {
-          console.warn(
-            `ReactList: updateItemById did not find an item where ${idKey} === ${JSON.stringify(id)}. ` +
-              `Verify your items expose "${idKey}" and that the id type matches exactly.`,
-          )
+    requestHandler(requestState)
+      .then((res) => {
+        if (currentRequestId !== requestIdRef.current) {
           return
         }
 
-        setState((prev) => ({ ...prev, items: newItems }))
-      },
+        setResponse(res)
+        // Keep the same array when nothing was selected, so the reset does not re-render.
+        setSelection((previousSelection) => {
+          if (previousSelection.length === 0) {
+            return previousSelection
+          }
+          return []
+        })
+        setRows((previousRows) => {
+          return mergeRows(previousRows, res.rows, {
+            page: requestState.page,
+            perPage: requestState.perPage,
+            isLoadMore,
+          })
+        })
+        setCount(res.count)
+        stateManagerRef.current?.set?.(state)
+        eventsRef.current?.onResponse?.(res)
 
-      updateAttr: (attrName: string, settingKey: string, value: boolean | unknown) => {
-        const nextAttrSettings = { ...(stateRef.current.attrSettings ?? {}) }
-        if (!nextAttrSettings[attrName]) {
-          nextAttrSettings[attrName] = {}
+        if (isLoadMore) {
+          eventsRef.current?.afterLoadMore?.(res)
+        } else {
+          eventsRef.current?.afterPageChange?.(res)
         }
-        nextAttrSettings[attrName] = {
-          ...nextAttrSettings[attrName],
-          [settingKey]: value,
+      })
+      .catch((err: unknown) => {
+        if (currentRequestId !== requestIdRef.current) {
+          return
         }
-        const newState = { ...stateRef.current, attrSettings: nextAttrSettings }
-        setState(newState)
-        updateStateManager(newState)
-      },
 
-      setSelection: (selection: T[]) => setState((prev) => ({ ...prev, selection })),
-    }),
-    [fetchData, isLoadMore, onFiltersChange, updateStateManager, idKey],
-  )
+        const nextError = toError(err)
+        setError(nextError)
+        setRows([])
+        setCount(0)
+        eventsRef.current?.onError?.(nextError)
+      })
+      .finally(() => {
+        if (currentRequestId !== requestIdRef.current) {
+          return
+        }
+        isStartedRef.current = true
+        setIsLoading(false)
+        setIsInitialLoading(false)
+      })
+  }
 
-  const memoizedState = useMemo(
-    (): ListState<T> => ({
-      data: state.items,
-      response: state.response,
-      error: state.error,
-      count: state.count,
-      selection: state.selection,
-      pagination: {
-        page: state.page as number,
-        perPage: state.perPage,
-        hasMore: state.items.length < state.count,
-      },
-      loader: {
-        isLoading: state.isLoading,
-        initialLoading: state.initializingState,
-      },
-      sort: { sortBy: state.sortBy, sortOrder: state.sortOrder },
-      hasActiveFilters: hasActiveFilters(state.filters, defaultFiltersRef.current),
-      search: state.search,
-      filters: state.filters,
-      attrs: attrs || Object.keys((state.items[0] as Record<string, unknown>) || {}),
-      attrSettings: state.attrSettings,
-      isEmpty: state.items.length === 0,
-      isInitializing: state.initializingState,
-      idKey,
-      ...handlers,
-    }),
-    [
-      state.items,
-      state.response,
-      state.error,
-      state.count,
-      state.selection,
-      state.page,
-      state.perPage,
-      state.isLoading,
-      state.initializingState,
-      state.sortBy,
-      state.sortOrder,
-      state.search,
-      state.filters,
-      state.attrSettings,
-      handlers,
-      attrs,
-      idKey,
-    ],
-  )
+  // Lifecycle 6, actions. Query-changing actions only update local state; the query effect below
+  // performs one request after React commits the combined changes. `requestTrigger` is set by the
+  // caller so `requestHandler` and the `before*` events read it. They close over the current
+  // `state`; `context` below is rebuilt only when `state` changes, so their identity is stable
+  // between renders that change nothing.
 
-  const contextValue = useMemo(() => ({ listState: memoizedState }), [memoizedState])
+  function setPage(value: number) {
+    if (!value) {
+      return
+    }
+    setRequestTrigger('page')
+    setLocalPage(value)
+  }
+
+  function setPerPage(value: number) {
+    if (value === localPerPage) {
+      return
+    }
+    setLocalPerPage(value)
+    setRequestTrigger('perPage')
+    setLocalPage(1)
+  }
+
+  function setSearch(value: string) {
+    if (value === localSearch) {
+      return
+    }
+    setLocalSearch(value)
+    setRequestTrigger('search')
+    setLocalPage(1)
+  }
+
+  function setSortBy(value: string) {
+    if (value === localSortBy) {
+      return
+    }
+    setLocalSortBy(value)
+    setRequestTrigger('sortBy')
+    setLocalPage(1)
+  }
+
+  function setSortOrder(value: SortOrder) {
+    if (value === localSortOrder) {
+      return
+    }
+    setLocalSortOrder(value)
+    setRequestTrigger('sortOrder')
+    setLocalPage(1)
+  }
+
+  function changeFilters(next: FilterState[]) {
+    if (equal(localFilters, next)) {
+      return
+    }
+    setLocalFilters(next)
+    setRequestTrigger('filters')
+    eventsRef.current?.onFiltersChange?.(next)
+  }
+
+  function setFilters(values: FilterValues) {
+    const next = computeFilters(localFilters, defaultFilters, values)
+    changeFilters(next)
+  }
+
+  function setFilter(column: string, value: unknown) {
+    setFilters({ [column]: value })
+  }
+
+  function clearFilters() {
+    changeFilters([...defaultFilters])
+  }
+
+  function toggleRowSelection(id: RowId) {
+    setSelection((prev) => {
+      return toggleId(prev, id)
+    })
+  }
+
+  function toggleAllRowsSelection() {
+    setSelection((prev) => {
+      return toggleAllIds(rows, prev, idKey)
+    })
+  }
+
+  function refresh() {
+    setRequestTrigger('refresh')
+
+    if (isLoadMore) {
+      setRows([])
+      setLocalPage(1)
+    } else {
+      getData()
+    }
+  }
+
+  function loadMore() {
+    if (hasMore || !isLoading) {
+      setRequestTrigger('loadMore')
+      setLocalPage((currentPage) => {
+        return currentPage + 1
+      })
+    }
+  }
+
+  function updateRowById(row: Partial<T>, id: RowId) {
+    const next = patchRowById(rows, row, id, idKey)
+
+    if (!next) {
+      console.warn(rowNotFoundMessage(idKey, id))
+      return
+    }
+
+    setRows(next)
+  }
+
+  function setColumn(column: string, key: string, value: unknown) {
+    const next = computeColumns(localColumns, column, key, value)
+
+    if (equal(localColumns, next)) {
+      return
+    }
+
+    setLocalColumns(next)
+    setRequestTrigger('columns')
+    stateManagerRef.current?.set?.({ ...state, columns: next })
+  }
+
+  const state = {
+    endpoint,
+    version,
+    meta,
+    idKey,
+    page: localPage,
+    perPage: localPerPage,
+    sortBy: localSortBy,
+    sortOrder: localSortOrder,
+    search: localSearch,
+    columns: localColumns,
+    filters: localFilters,
+    rows,
+    response,
+    error,
+    count,
+    selection,
+    selectionState,
+    hasMore,
+    isLoading,
+    isInitialLoading,
+    requestTrigger,
+    isEmpty,
+  }
+
+  const context = useMemo((): Context<T> => {
+    return {
+      ...state,
+      setPage,
+      setPerPage,
+      setSearch,
+      setSortBy,
+      setSortOrder,
+      setFilter,
+      setFilters,
+      clearFilters,
+      loadMore,
+      refresh,
+      clearState,
+      toggleRowSelection,
+      toggleAllRowsSelection,
+      updateRowById,
+      setColumn,
+    }
+  }, [state, isLoadMore, defaultFilters])
+
+  useImperativeHandle(ref, () => context, [context])
+
+  const snapshot = (): State => {
+    return { ...state }
+  }
 
   useEffect(() => {
-    if (Object.keys(state.attrSettings).length > 0) {
+    if (!isStartedRef.current) {
       return
     }
+    getData()
 
-    const settings = buildDefaultAttrSettings(attrs, state.items[0])
-    if (Object.keys(settings).length === 0) {
-      return
+    // Invalidate a pending request when its query changes or this list unmounts.
+    return () => {
+      requestIdRef.current += 1
     }
-
-    setState((prev) => ({ ...prev, attrSettings: settings }))
-  }, [attrs, state.items, state.attrSettings])
+  }, [localPage, localPerPage, localSearch, localSortBy, localSortOrder, localFilters])
 
   useEffect(() => {
-    if (!state.initializingState) {
+    const previousFilters = previousFiltersRef.current
+    previousFiltersRef.current = localFilters
+
+    if (!isStartedRef.current) {
       return
     }
-    if (!initRef.current) {
-      initRef.current = true
 
-      if (stateManager?.init) {
-        const context = getContext(state)
-        stateManager.init(context)
-      }
+    if (equal(localFilters, previousFilters)) {
+      return
+    }
 
-      handlers.setPage(state.page as number)
+    setLocalPage(1)
+  }, [localFilters])
+
+  useEffect(() => {
+    const previousColumns = previousColumnsRef.current
+    previousColumnsRef.current = localColumns
+
+    if (!isStartedRef.current) {
+      return
+    }
+
+    if (equal(localColumns, previousColumns)) {
+      return
+    }
+
+    getData()
+  }, [localColumns])
+
+  useEffect(() => {
+    const previousSelection = previousSelectionRef.current
+    previousSelectionRef.current = selection
+
+    if (hasSelectionChanged(selection, previousSelection)) {
+      eventsRef.current?.onRowSelect?.(selection, previousSelection)
+    }
+  }, [selection])
+
+  // Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the saved filters differ from
+  // the prop, then the first request (skipped for a seeded list).
+  useEffect(() => {
+    if (isReady) return
+
+    const saved = stateManagerRef.current?.get?.(snapshot()) ?? {}
+
+    // A seeded list keeps its response only when nothing was restored (see `initialResponse`).
+    if (isSeededRef.current && hasSavedState(saved)) {
+      isSeededRef.current = false
+    }
+
+    if (saved.page != null && !isLoadMore) {
+      setLocalPage(saved.page)
+    }
+
+    if (saved.perPage != null) {
+      setLocalPerPage(saved.perPage)
+    }
+
+    if (saved.sortBy != null) {
+      setLocalSortBy(saved.sortBy)
+    }
+
+    if (saved.sortOrder != null) {
+      setLocalSortOrder(saved.sortOrder)
+    }
+
+    if (saved.search != null) {
+      setLocalSearch(saved.search)
+    }
+
+    // Saved columns and filters replace the ones from the props as they are, so `get` returns the
+    // complete lists, with `isDirty` already worked out.
+    if (saved.columns != null) {
+      setLocalColumns(saved.columns)
+    }
+
+    if (saved.filters != null) {
+      setLocalFilters(saved.filters)
+    }
+
+    if (saved.filters != null && !equal(localFilters, defaultFilters)) {
+      eventsRef.current?.onFiltersChange?.(localFilters)
+    }
+
+    stateManagerRef.current?.init?.(state)
+
+    if (isSeededRef.current) {
+      isStartedRef.current = true
+    }
+
+    setIsReady(true)
+
+    // Lifecycle 8, unmount: invalidate the request in flight so its late response or error does not
+    // update state, call `stateManager.set` or emit events on a list that no longer exists.
+    return () => {
+      requestIdRef.current += 1
     }
   }, [])
 
   useEffect(() => {
-    if (!initRef.current) return
+    if (!isReady) return
 
-    if (!isEqual(filters, prevFiltersPropRef.current)) {
-      prevFiltersPropRef.current = filters
-      const newState = { ...stateRef.current, filters, page: 1 }
-      setState(newState)
-      fetchData({}, newState)
+    if (isSeededRef.current) {
+      isSeededRef.current = false
+      return
     }
-  }, [filters])
+
+    getData()
+  }, [isReady])
+
+  let content: ReactNode
+
+  if (typeof children === 'function') {
+    content = children(context)
+  } else {
+    content = children
+  }
 
   return (
-    <ListContextProvider value={contextValue}>
-      {typeof children === 'function' ? children(memoizedState) : children}
+    <ListContextProvider value={context}>
+      <div className="shilp-list">{content}</div>
     </ListContextProvider>
   )
 }
 
-export default ReactList as <T = unknown>(props: ReactListProps<T>) => ReactNode
+export default List

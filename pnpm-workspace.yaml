@@ -1,8 +1,8 @@
 packages:
   - 'packages/*'
-  - 'apps/react/*'
-  - 'apps/vue/*'
+  - 'apps/*'
 
 allowBuilds:
   esbuild: false
+  unrs-resolver: false
   vue-demi: true

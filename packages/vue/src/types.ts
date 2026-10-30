@@ -1,16 +1,7 @@
-import type { ListOptions, ListProviderConfig, ListResponse } from '../../../shared'
+import type { Filter, ListPropsBase } from '@shared'
 
-type OmittedListOptions = 'onResponse' | 'afterPageChange' | 'afterLoadMore'
-
-/** Props for the VueList root component. */
-export interface VueListProps<T = unknown>
-  extends Omit<ListOptions<T>, OmittedListOptions>,
-    ListProviderConfig<T> {}
-
-/** Emits for the VueList root component. */
-export interface VueListEmits<T = unknown> {
-  onResponse: [response: ListResponse<T>]
-  afterPageChange: [response: ListResponse<T>]
-  afterLoadMore: [response: ListResponse<T>]
-  onItemSelect: [selection: T[], previous: T[]]
+// The callbacks are emits (`Events`), so Vue only adds `filters`.
+export interface ListProps<T = unknown> extends ListPropsBase<T> {
+  /** Initial filters, one per column. Read once at setup; change them later with `ListFilters`. */
+  filters?: Filter[]
 }

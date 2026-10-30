@@ -20,13 +20,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@shared': fileURLToPath(new URL('../../shared', import.meta.url)),
     },
   },
   build: {
     lib: {
       entry: path.resolve(__dirname, 'src/main.ts'),
       fileName: 'index',
-      name: 'VueList',
+      name: 'ShilpList',
       formats: ['es', 'cjs'],
     },
     rollupOptions: {

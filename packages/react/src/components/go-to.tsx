@@ -1,63 +1,48 @@
-import { memo, useCallback, useMemo, type ReactNode } from 'react'
-import type { GoToScope } from '../../../../shared'
+import { memo, useCallback, useMemo } from 'react'
+import type { GoToScope } from '@shared'
+import { getPagesCount } from '@shared/utils'
+import { MESSAGES } from '@shared/constants'
 import { useListContext } from '../context/list-context'
-
-type ListGoToProps = {
-  children?: (scope: GoToScope) => ReactNode
-}
+import { Slot } from './slot'
+import { ListGoToProps } from '../types'
 
 export const ListGoTo = memo(({ children }: ListGoToProps) => {
-  const { listState } = useListContext()
-  const { data, count, pagination, setPage, loader, error } = listState
-  const { page, perPage } = pagination
-  const { initialLoading } = loader
+  const context = useListContext()
+  const { rows, count, setPage, error, page, perPage, isInitialLoading, isEmpty } = context
 
-  const { pages, pagesCount } = useMemo(() => {
-    const pagesCount = Math.ceil(count / perPage)
-    const pages = Array.from({ length: pagesCount }, (_, i) => i + 1)
-    return { pages, pagesCount }
-  }, [count, perPage])
+  const scope = useMemo((): GoToScope => {
+    const pagesCount = getPagesCount(count, perPage)
+    const pages = Array.from({ length: pagesCount }, (_, index) => {
+      return index + 1
+    })
 
-  const handlePageChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setPage(Number(e.target.value))
-    },
-    [setPage],
-  )
-
-  const scope = useMemo(
-    (): GoToScope => ({
-      setPage,
-      page,
+    return {
+      context,
       pages,
       pagesCount,
-    }),
-    [setPage, page, pages, pagesCount],
-  )
+    }
+  }, [count, perPage, context])
 
-  if (initialLoading) return null
-
-  if (!data || data.length === 0) {
-    return null
-  }
-
-  if (error) {
+  if (isInitialLoading || isEmpty || error) {
     return null
   }
 
   return (
-    <div className="react-list-go-to">
-      {children ? (
-        children(scope)
-      ) : (
-        <select value={page} onChange={handlePageChange}>
-          {pages.map((pageNum) => (
-            <option key={`page-${pageNum}`} value={pageNum}>
-              Page {pageNum}
-            </option>
-          ))}
+    <Slot
+      className="shilp-list__go-to"
+      scope={scope}
+      children={children}
+      fallback={(scope) => (
+        <select value={page} onChange={(e) => setPage(Number(e.target.value))}>
+          {scope.pages.map((pageNum) => {
+            return (
+              <option key={`page-${pageNum}`} value={pageNum}>
+                {MESSAGES.pageOptionPrefix} {pageNum}
+              </option>
+            )
+          })}
         </select>
       )}
-    </div>
+    />
   )
 })
