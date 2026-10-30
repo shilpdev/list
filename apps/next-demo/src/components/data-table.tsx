@@ -27,7 +27,6 @@ import {
 } from '@/components/ui/table'
 import type { CellFormat, ColumnConfig, Row } from '@/types/list'
 
-// Features live at module scope so TanStack Table gets a stable input.
 const features = tableFeatures({ columnVisibilityFeature, rowSortingFeature })
 
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
