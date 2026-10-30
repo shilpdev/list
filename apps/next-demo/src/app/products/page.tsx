@@ -1,5 +1,7 @@
-'use client'
-import { ListWrapper } from '@/components/list-wrapper'
+import { Suspense } from 'react'
+
+import { fetchInitialResponse } from '@/api/request-handler'
+import { ListWrapper, ListWrapperSkeleton } from '@/components/list-wrapper'
 import type { ColumnConfig, FilterConfig } from '@/types/list'
 
 const COLUMNS: ColumnConfig[] = [
@@ -34,7 +36,13 @@ const FILTERS: FilterConfig[] = [
   },
 ]
 
-export default function Page() {
+// The dummyjson fetch is uncached runtime data. Under Cache Components it cannot run in the
+// prerendered shell, so it lives in an async child wrapped in <Suspense>: the shell (header, card,
+// toolbar) prerenders and the first page streams in at request time.
+async function ProductsList() {
+  // Fetch the first page on the server. `perPage` matches the ListWrapper default (10).
+  const initialResponse = await fetchInitialResponse({ endpoint: 'products', perPage: 10 })
+
   return (
     <ListWrapper
       title="Products"
@@ -44,6 +52,15 @@ export default function Page() {
       filters={FILTERS}
       searchPlaceholder="Search products..."
       paginationMode="loadMore"
+      initialResponse={initialResponse}
     />
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<ListWrapperSkeleton title="Products" columnsCount={COLUMNS.length} />}>
+      <ProductsList />
+    </Suspense>
   )
 }

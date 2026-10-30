@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "dev-skills": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "dev-skills/SKILL.md",
+      "computedHash": "659b406f3d333d201f13e586ad571d8c1b0f76b182ec680b79a6cb58d004578a"
+    }
+  }
+}

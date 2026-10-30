@@ -15,7 +15,13 @@ import List, {
   ListSearch,
   ListSummary,
 } from '@shilp.dev/react-list'
-import type { Context, Filter, FilterScope, PaginationMode } from '@shilp.dev/react-list'
+import type {
+  Context,
+  Filter,
+  FilterScope,
+  PaginationMode,
+  RequestHandlerResponse,
+} from '@shilp.dev/react-list'
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -62,6 +68,126 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { getStateFromSearchParams, stateManager } from '@/lib/react-list-config'
 import type { ColumnConfig, FilterConfig, Row } from '@/types/list'
+
+export type ListWrapperProps = {
+  title: string
+  description?: string
+  /** The dummyjson resource to list, such as `products` or `users`. */
+  endpoint: string
+  columns: ColumnConfig[]
+  filters?: FilterConfig[]
+  searchPlaceholder?: string
+  /** `pagination` shows page buttons; `loadMore` appends the next page below the rows. */
+  paginationMode?: PaginationMode
+  /** The page the list starts on when nothing is saved for this route. */
+  page?: number
+  perPage?: number
+  /** First page fetched on the server, so the list paints without a client request. */
+  initialResponse?: RequestHandlerResponse<Row>
+}
+
+export function ListWrapper({
+  title,
+  description,
+  endpoint,
+  columns,
+  filters = [],
+  searchPlaceholder = 'Search...',
+  paginationMode = 'pagination',
+  page = 1,
+  perPage = 10,
+  initialResponse,
+}: ListWrapperProps) {
+  let footer = <PaginationFooter />
+  if (paginationMode === 'loadMore') {
+    footer = <LoadMoreFooter />
+  }
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-2xl">{title}</CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+
+      <CardContent>
+        <List
+          endpoint={endpoint}
+          search=""
+          page={page}
+          perPage={perPage}
+          idKey="id"
+          columns={columns}
+          filters={getInitialFilters(filters)}
+          paginationMode={paginationMode}
+          requestHandler={requestHandler}
+          initialResponse={initialResponse}
+        >
+          {({ clearState }) => {
+            return (
+              <div className="flex flex-col gap-6">
+                <Toolbar
+                  clearState={clearState}
+                  filters={filters}
+                  searchPlaceholder={searchPlaceholder}
+                />
+
+                <ListLoaderInitial>
+                  <InitialLoader columnsCount={columns.length} />
+                </ListLoaderInitial>
+
+                <ListEmpty>
+                  <Empty className="border">
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <SearchXIcon />
+                      </EmptyMedia>
+                      <EmptyTitle>No Data Found</EmptyTitle>
+                      <EmptyDescription>
+                        We couldn&apos;t find any matching records. Try adjusting your search or
+                        filters.
+                      </EmptyDescription>
+                    </EmptyHeader>
+                    <EmptyContent>
+                      <RefreshButton label="Refresh" />
+                    </EmptyContent>
+                  </Empty>
+                </ListEmpty>
+
+                <ListError>
+                  {({ context: { error } }) => {
+                    return (
+                      <Empty className="border border-destructive/30">
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon" className="text-destructive">
+                            <CircleAlertIcon />
+                          </EmptyMedia>
+                          <EmptyTitle>Something went wrong</EmptyTitle>
+                          <EmptyDescription>
+                            {error?.message || 'An unexpected error occurred while fetching data.'}
+                          </EmptyDescription>
+                        </EmptyHeader>
+                        <EmptyContent>
+                          <RefreshButton label="Try Again" />
+                        </EmptyContent>
+                      </Empty>
+                    )
+                  }}
+                </ListError>
+
+                <ListRows>
+                  <DataTable columns={columns} />
+                </ListRows>
+
+                {footer}
+              </div>
+            )
+          }}
+        </List>
+      </CardContent>
+    </Card>
+  )
+}
 
 const ALL = 'all'
 
@@ -229,6 +355,33 @@ function InitialLoader({ columnsCount }: { columnsCount: number }) {
   )
 }
 
+/**
+ * The static shell shown while the server fetches the first page. It renders the same Card chrome
+ * and table skeleton as the list's own initial loader, so the `<Suspense>` fallback matches what
+ * the list paints once its data arrives.
+ */
+export function ListWrapperSkeleton({
+  title,
+  description,
+  columnsCount,
+}: {
+  title: string
+  description?: string
+  columnsCount: number
+}) {
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-2xl">{title}</CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+      <CardContent>
+        <InitialLoader columnsCount={columnsCount} />
+      </CardContent>
+    </Card>
+  )
+}
+
 function LoadMoreFooter() {
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg border bg-muted/50 px-4 py-4 text-sm">
@@ -342,13 +495,34 @@ function PaginationFooter() {
       </div>
 
       <ListPagination>
-        {({ context: { page, setPage }, pagesToDisplay, hasNext, hasPrev, prev, next, first, last }) => {
+        {({
+          context: { page, setPage },
+          pagesToDisplay,
+          hasNext,
+          hasPrev,
+          prev,
+          next,
+          first,
+          last,
+        }) => {
           return (
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="icon-sm" onClick={first} disabled={!hasPrev} title="First Page">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={first}
+                disabled={!hasPrev}
+                title="First Page"
+              >
                 <ChevronsLeftIcon />
               </Button>
-              <Button variant="outline" size="icon-sm" onClick={prev} disabled={!hasPrev} title="Previous Page">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={prev}
+                disabled={!hasPrev}
+                title="Previous Page"
+              >
                 <ChevronLeftIcon />
               </Button>
 
@@ -365,10 +539,22 @@ function PaginationFooter() {
                 )
               })}
 
-              <Button variant="outline" size="icon-sm" onClick={next} disabled={!hasNext} title="Next Page">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={next}
+                disabled={!hasNext}
+                title="Next Page"
+              >
                 <ChevronRightIcon />
               </Button>
-              <Button variant="outline" size="icon-sm" onClick={last} disabled={!hasNext} title="Last Page">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={last}
+                disabled={!hasNext}
+                title="Last Page"
+              >
                 <ChevronsRightIcon />
               </Button>
             </div>
@@ -376,122 +562,5 @@ function PaginationFooter() {
         }}
       </ListPagination>
     </div>
-  )
-}
-
-export type ListWrapperProps = {
-  title: string
-  description?: string
-  /** The dummyjson resource to list, such as `products` or `users`. */
-  endpoint: string
-  columns: ColumnConfig[]
-  filters?: FilterConfig[]
-  searchPlaceholder?: string
-  /** `pagination` shows page buttons; `loadMore` appends the next page below the rows. */
-  paginationMode?: PaginationMode
-  /** The page the list starts on when nothing is saved for this route. */
-  page?: number
-  perPage?: number
-}
-
-export function ListWrapper({
-  title,
-  description,
-  endpoint,
-  columns,
-  filters = [],
-  searchPlaceholder = 'Search...',
-  paginationMode = 'pagination',
-  page = 1,
-  perPage = 10,
-}: ListWrapperProps) {
-  let footer = <PaginationFooter />
-  if (paginationMode === 'loadMore') {
-    footer = <LoadMoreFooter />
-  }
-
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-2xl">{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-
-      <CardContent>
-        <List<Row>
-          endpoint={endpoint}
-          search=""
-          page={page}
-          perPage={perPage}
-          idKey="id"
-          columns={columns}
-          filters={getInitialFilters(filters)}
-          paginationMode={paginationMode}
-          requestHandler={requestHandler}
-          stateManager={stateManager}
-        >
-          {({ clearState }) => {
-            return (
-              <div className="flex flex-col gap-6">
-                <Toolbar
-                  clearState={clearState}
-                  filters={filters}
-                  searchPlaceholder={searchPlaceholder}
-                />
-
-                <ListLoaderInitial>
-                  <InitialLoader columnsCount={columns.length} />
-                </ListLoaderInitial>
-
-                <ListEmpty>
-                  <Empty className="border">
-                    <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <SearchXIcon />
-                      </EmptyMedia>
-                      <EmptyTitle>No Data Found</EmptyTitle>
-                      <EmptyDescription>
-                        We couldn&apos;t find any matching records. Try adjusting your search or
-                        filters.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                    <EmptyContent>
-                      <RefreshButton label="Refresh" />
-                    </EmptyContent>
-                  </Empty>
-                </ListEmpty>
-
-                <ListError>
-                  {({ context: { error } }) => {
-                    return (
-                      <Empty className="border border-destructive/30">
-                        <EmptyHeader>
-                          <EmptyMedia variant="icon" className="text-destructive">
-                            <CircleAlertIcon />
-                          </EmptyMedia>
-                          <EmptyTitle>Something went wrong</EmptyTitle>
-                          <EmptyDescription>
-                            {error?.message || 'An unexpected error occurred while fetching data.'}
-                          </EmptyDescription>
-                        </EmptyHeader>
-                        <EmptyContent>
-                          <RefreshButton label="Try Again" />
-                        </EmptyContent>
-                      </Empty>
-                    )
-                  }}
-                </ListError>
-
-                <ListRows>
-                  <DataTable columns={columns} />
-                </ListRows>
-
-                {footer}
-              </div>
-            )
-          }}
-        </List>
-      </CardContent>
-    </Card>
   )
 }

@@ -15,6 +15,7 @@ import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Spinner } from '@/components/ui/spinner'
 import {
   Table,
@@ -98,11 +99,47 @@ export function DataTable({ columns }: DataTableProps) {
     setSortBy,
     setSortOrder,
     columns: listColumns,
+    selection,
+    selectionState,
+    toggleRowSelection,
+    toggleAllRowsSelection,
   } = useListContext<Row>()
 
-  const tableColumns = useMemo(() => {
+  // The select column is not derived from `ColumnConfig`: its header and cells read the list
+  // selection (`selectionState` drives the header, `selection` drives each row) and flip it
+  // through `toggleAllRowsSelection` / `toggleRowSelection`.
+  const selectColumn: ColumnDef<typeof features, Row> = {
+    id: 'select',
+    enableSorting: false,
+    header: () => {
+      return (
+        <Checkbox
+          aria-label="Select all rows"
+          checked={selectionState === 'all'}
+          indeterminate={selectionState === 'partial'}
+          onCheckedChange={() => toggleAllRowsSelection()}
+        />
+      )
+    },
+    cell: ({ row }) => {
+      const id = row.original.id
+      return (
+        <Checkbox
+          aria-label="Select row"
+          checked={selection.includes(id)}
+          onCheckedChange={() => toggleRowSelection(id)}
+        />
+      )
+    },
+  }
+
+  // Only the config-derived columns are memoized (they change with `columns`). The select column
+  // is rebuilt every render because it closes over the current selection, then prepended here.
+  const configColumns = useMemo(() => {
     return toTableColumns(columns)
   }, [columns])
+
+  const tableColumns = [selectColumn, ...configColumns]
 
   const sorting: SortingState = []
   if (sortBy && sortOrder) {

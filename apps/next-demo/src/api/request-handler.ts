@@ -1,4 +1,11 @@
-import type { Filter, RequestHandler } from '@shilp.dev/react-list'
+import type {
+  Filter,
+  FilterState,
+  RequestHandler,
+  RequestHandlerResponse,
+  SortOrder,
+  State,
+} from '@shilp.dev/react-list'
 
 import type { Row } from '@/types/list'
 
@@ -65,3 +72,40 @@ const requestHandler: RequestHandler<Row> = async (state) => {
 }
 
 export default requestHandler
+
+/** The query a list makes on mount, before any saved state is restored. */
+export type InitialQuery = {
+  endpoint: string
+  page?: number
+  perPage?: number
+  search?: string
+  sortBy?: string
+  sortOrder?: SortOrder
+  filters?: Filter[]
+}
+
+/**
+ * Fetches the first page on the server with the same `requestHandler` the client uses, so the
+ * seeded `initialResponse` matches the list's first query exactly. The list refetches on the
+ * client only if `stateManager` restores a different query (saved state in the URL / storage).
+ */
+export async function fetchInitialResponse(
+  query: InitialQuery,
+): Promise<RequestHandlerResponse<Row>> {
+  const filters: FilterState[] = (query.filters ?? []).map(({ column, value }) => {
+    return { column, value, isDirty: false }
+  })
+
+  // Only the fields the handler reads need real values; the rest satisfy the `State` type.
+  const state = {
+    endpoint: query.endpoint,
+    page: query.page ?? 1,
+    perPage: query.perPage ?? 10,
+    search: query.search ?? '',
+    sortBy: query.sortBy ?? '',
+    sortOrder: query.sortOrder ?? '',
+    filters,
+  } as unknown as State<Row>
+
+  return requestHandler(state)
+}

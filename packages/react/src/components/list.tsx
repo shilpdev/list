@@ -26,11 +26,13 @@ import {
 import {
   computeColumns,
   computeHasMore,
+  computeSelectionState,
   createColumns,
   hasSelectionChanged,
   mergeRows,
   patchRowById,
   toError,
+  toggleAllIds,
   toggleId,
   computeFilters,
   computeDefaultFilters,
@@ -111,6 +113,7 @@ function List<T = unknown>(props: ListProps<T>) {
 
   const hasMore = computeHasMore(localPage, localPerPage, count)
   const isEmpty = rows.length === 0
+  const selectionState = computeSelectionState(rows, selection, idKey)
 
   // Read through a ref: an inline `stateManager` object is new on every parent render and would
   // otherwise rebuild `actions` and `context` with nothing changed.
@@ -289,6 +292,12 @@ function List<T = unknown>(props: ListProps<T>) {
     })
   }
 
+  function toggleAllRowsSelection() {
+    setSelection((prev) => {
+      return toggleAllIds(rows, prev, idKey)
+    })
+  }
+
   function refresh() {
     setRequestTrigger('refresh')
 
@@ -349,6 +358,7 @@ function List<T = unknown>(props: ListProps<T>) {
     error,
     count,
     selection,
+    selectionState,
     hasMore,
     isLoading,
     isInitialLoading,
@@ -371,6 +381,7 @@ function List<T = unknown>(props: ListProps<T>) {
       refresh,
       clearState,
       toggleRowSelection,
+      toggleAllRowsSelection,
       updateRowById,
       setColumn,
     }

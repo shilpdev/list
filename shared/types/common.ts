@@ -22,6 +22,12 @@ export type RequestTrigger =
 /** The value of a row's `idKey` field. */
 export type RowId = string | number
 
+/**
+ * Selection state across the loaded rows: `none` when nothing is selected,
+ * `all` when every loaded row is selected, `partial` otherwise.
+ */
+export type SelectionState = 'none' | 'partial' | 'all'
+
 /** How the list loads additional pages. */
 export type PaginationMode = 'pagination' | 'loadMore'
 
@@ -69,6 +75,8 @@ export interface Actions<T = unknown> {
   clearState: () => void
   /** Adds the row with this id (its `idKey` field) to the selection, or removes it when it is already there. */
   toggleRowSelection: (id: RowId) => void
+  /** Selects every loaded row, or clears the selection when all loaded rows are already selected. */
+  toggleAllRowsSelection: () => void
   updateRowById: (row: Partial<T>, id: RowId) => void
   /** Sets one key of one column, such as `visibility` or a key of your own. Unknown columns are ignored. */
   setColumn: (column: string, key: string, value: unknown) => void
@@ -86,6 +94,8 @@ export interface State<T = unknown> {
   count: number
   /** Ids of the selected rows. */
   selection: RowId[]
+  /** Whether `none`, `partial`, or `all` of the loaded rows are selected. */
+  selectionState: SelectionState
   page: number
   perPage: number
   hasMore: boolean

@@ -12,7 +12,7 @@ import {
   ListSearch,
   ListSummary,
 } from '@shilp.dev/vue-list'
-import type { Column, Context } from '@shilp.dev/vue-list'
+import type { Column, Context, State } from '@shilp.dev/vue-list'
 
 /*
  * Users list with numbered pagination.
@@ -41,6 +41,23 @@ const filters = [{ column: 'gender', value: [] as string[] }]
 const genders = ['male', 'female']
 
 /*
+ * First page fetched on the server with the same `requestHandler` the list uses, so the markup
+ * ships with data (no loading flash) and the list skips its first client request. `perPage` matches
+ * the `:per-page` below. `useAsyncData` runs on the server during SSR and hydrates the client.
+ */
+const perPage = 10
+
+const { data: initialResponse } = await useAsyncData('users-initial', () => {
+  return requestHandler({
+    endpoint: 'users',
+    page: 1,
+    perPage,
+    search: '',
+    filters: filters.map(({ column, value }) => ({ column, value, isDirty: false })),
+  } as unknown as State)
+})
+
+/*
  * UTable columns: a checkbox column and the row number (`_index`, added by the list and counted
  * across pages) always come first, then only the columns left visible in <ListColumns>.
  */
@@ -57,27 +74,22 @@ function getTableColumns(all: Column[]) {
 }
 
 /*
- * Row selection lives in the list (`context.selection` holds the selected ids and
- * `toggleRowSelection` flips one id). It resets whenever new data arrives.
+ * Row selection lives in the list. `context.selection` holds the selected ids,
+ * `toggleRowSelection` flips one id, `toggleAllRowsSelection` selects or clears every loaded row,
+ * and `context.selectionState` is `'none' | 'partial' | 'all'`. Selection resets when new data arrives.
+ *
+ * UCheckbox wants `false | true | 'indeterminate'`, so map `selectionState` to that.
  */
 function getAllSelectedState(context: Context) {
-  const selected = context.rows.filter((row) => {
-    return context.selection.includes(getRowId(row))
-  })
-
-  if (selected.length === 0) {
-    return false
+  if (context.selectionState === 'all') {
+    return true
   }
 
-  return selected.length === context.rows.length ? true : 'indeterminate'
-}
+  if (context.selectionState === 'partial') {
+    return 'indeterminate'
+  }
 
-function toggleAll(context: Context, checked: boolean | 'indeterminate') {
-  context.rows.forEach((row) => {
-    if (context.selection.includes(getRowId(row)) !== Boolean(checked)) {
-      context.toggleRowSelection(getRowId(row))
-    }
-  })
+  return false
 }
 
 function getRowId(row: unknown) {
@@ -91,7 +103,8 @@ function getRowId(row: unknown) {
     :request-handler="requestHandler"
     :columns="columns"
     :filters="filters"
-    :per-page="10"
+    :per-page="perPage"
+    :initial-response="initialResponse ?? undefined"
     class="flex flex-col gap-4"
   >
     <h1 class="text-2xl font-semibold">Users</h1>
@@ -177,7 +190,7 @@ function getRowId(row: unknown) {
         <template #select-header>
           <UCheckbox
             :model-value="getAllSelectedState(context)"
-            @update:model-value="toggleAll(context, $event)"
+            @update:model-value="context.toggleAllRowsSelection()"
           />
         </template>
         <template #select-cell="{ row }">

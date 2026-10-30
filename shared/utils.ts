@@ -11,6 +11,7 @@ import type {
   PerPageOption,
   RowId,
   RowScope,
+  SelectionState,
   SortOrder,
   State,
 } from './types'
@@ -203,6 +204,46 @@ export const toggleId = (ids: RowId[], id: RowId): RowId[] => {
 
 export const hasSelectionChanged = (selection: RowId[], previous: RowId[]): boolean => {
   return !equal(selection, previous)
+}
+
+/** The ids (`idKey` field) of every loaded row. */
+export const getRowIds = (rows: unknown[], idKey: string): RowId[] => {
+  return rows.map((row) => {
+    return getRowId(row, idKey)
+  })
+}
+
+/**
+ * Selection state across the loaded rows: `none` with no rows or an empty selection, `all` when
+ * every loaded row is selected, `partial` otherwise.
+ */
+export const computeSelectionState = (
+  rows: unknown[],
+  selection: RowId[],
+  idKey: string,
+): SelectionState => {
+  if (rows.length === 0 || selection.length === 0) {
+    return 'none'
+  }
+
+  const selected = new Set(selection)
+  const allSelected = rows.every((row) => {
+    return selected.has(getRowId(row, idKey))
+  })
+
+  return allSelected ? 'all' : 'partial'
+}
+
+/**
+ * The selection after a "select all" toggle: clears it when every loaded row is already selected,
+ * otherwise selects every loaded row.
+ */
+export const toggleAllIds = (rows: unknown[], selection: RowId[], idKey: string): RowId[] => {
+  if (computeSelectionState(rows, selection, idKey) === 'all') {
+    return []
+  }
+
+  return getRowIds(rows, idKey)
 }
 
 export const computeDefaultFilters = (filters: Filter[]): FilterState[] => {

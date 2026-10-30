@@ -33,11 +33,13 @@ import {
 import {
   computeColumns,
   computeHasMore,
+  computeSelectionState,
   createColumns,
   hasSelectionChanged,
   mergeRows,
   patchRowById,
   toError,
+  toggleAllIds,
   toggleId,
   computeFilters,
   computeDefaultFilters,
@@ -102,6 +104,10 @@ const isEmpty = computed(() => {
 
 const hasMore = computed(() => {
   return computeHasMore(localPage.value, localPerPage.value, count.value)
+})
+
+const selectionState = computed(() => {
+  return computeSelectionState(rows.value, selection.value, idKey)
 })
 
 function updateStateManager() {
@@ -259,6 +265,10 @@ function toggleRowSelection(id: RowId) {
   selection.value = toggleId(selection.value, id)
 }
 
+function toggleAllRowsSelection() {
+  selection.value = toggleAllIds(rows.value, selection.value, idKey)
+}
+
 function refresh() {
   requestTrigger.value = 'refresh'
 
@@ -317,6 +327,7 @@ const state = reactive({
   error,
   count,
   selection,
+  selectionState,
   hasMore,
   isLoading,
   isInitialLoading,
@@ -338,6 +349,7 @@ const context = reactive({
   refresh,
   clearState,
   toggleRowSelection,
+  toggleAllRowsSelection,
   updateRowById,
   setColumn,
 }) as Context
