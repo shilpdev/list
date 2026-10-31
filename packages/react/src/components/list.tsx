@@ -74,7 +74,10 @@ function List<T = unknown>(props: ListProps<T>) {
   } = props
   const isLoadMore = paginationMode === 'loadMore'
 
-  const defaultFilters = computeDefaultFilters(filters)
+  // Read once at setup, like Vue: `isDirty` and `clearFilters` compare with the initial filters.
+  const [defaultFilters] = useState<FilterState[]>(() => {
+    return computeDefaultFilters(filters)
+  })
   const [localPage, setLocalPage] = useState<number>(page)
   const [localPerPage, setLocalPerPage] = useState<number>(perPage)
   const [localSortBy, setLocalSortBy] = useState<string>(sortBy)
