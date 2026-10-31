@@ -13,12 +13,12 @@ const PAGES = [
   {
     href: '/products',
     title: 'Products',
-    description: 'dummyjson products with search, category filter, sorting and pagination.',
+    description: 'Search, filter by category, sort, choose columns and paginate.',
   },
   {
     href: '/users',
     title: 'Users',
-    description: 'dummyjson users through the same list wrapper, filtered by role.',
+    description: 'Search, filter by role and gender, sort, choose columns and paginate.',
   },
 ]
 

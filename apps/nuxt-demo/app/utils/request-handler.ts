@@ -1,66 +1,79 @@
-import type { RequestHandler } from '@shilp.dev/vue-list'
+import type { State } from '@shilp.dev/vue-list'
 
 /*
- * The one place that talks to the API (https://dummyjson.com).
+ * The one place that talks to the API (https://dummyjson.com). The list calls it every time page,
+ * perPage, search, sort or filters change, and pages call it on the server for the first page.
  *
- * The list calls this function every time page, perPage, search or filters change. It receives
- * the current list state and must return `{ rows, count }`. Nuxt auto-imports everything in
- * `utils/`, so both pages share this handler.
+ * `endpoint` is the list's `endpoint` prop ('users' or 'products'). It is also the key that holds
+ * the rows in the dummyjson response.
  *
- * `endpoint` is the list's `endpoint` prop ('products' or 'users'). It is also the key that
- * holds the rows in the dummyjson response.
- *
- * dummyjson cannot combine search and filters in one request, so a search wins over a filter.
+ * dummyjson applies one of: a search, or a single filter. Search wins; any other active filter is
+ * applied here on the full result, and the page is cut out afterwards.
  */
-const API = 'https://dummyjson.com'
+const API_URL = 'https://dummyjson.com'
 
-type ApiResponse = Record<string, unknown>
+type Query = Pick<State, 'endpoint' | 'page' | 'perPage' | 'search' | 'sortBy' | 'sortOrder' | 'filters'>
 
-export const requestHandler: RequestHandler = async (state) => {
-  const { endpoint, page, perPage, search, filters } = state
+async function get(path: string, params: Record<string, string | number>) {
+  const url = `${API_URL}/${path}?${new URLSearchParams(params as Record<string, string>)}`
+  const response = await fetch(url)
 
-  // Pagination: dummyjson uses `limit` and `skip` instead of a page number.
-  const skip = (page - 1) * perPage
+  if (!response.ok) {
+    throw new Error(`API request failed with status ${response.status}`)
+  }
 
+  return response.json()
+}
+
+export const requestHandler = async (query: Query) => {
+  const { endpoint, page, perPage, search, sortBy, sortOrder } = query
+  const filters = query.filters.filter((filter) => {
+    return filter.value != null && filter.value !== ''
+  })
+
+  let apiFilter: Query['filters'][number] | undefined = filters[0]
+  let narrowing = filters.slice(1)
   if (search) {
-    const response = await $fetch<ApiResponse>(`${API}/${endpoint}/search`, {
-      query: { q: search, limit: perPage, skip },
-    })
-
-    return { rows: response[endpoint] as unknown[], count: response.total as number }
+    apiFilter = undefined
+    narrowing = filters
   }
 
-  // Filters: the filter selects are multiple, so a filter value is an array of choices. An empty
-  // array means "not filtering".
-  const filter = filters.find((item) => {
-    return Array.isArray(item.value) && item.value.length > 0
-  })
-
-  if (!filter) {
-    const response = await $fetch<ApiResponse>(`${API}/${endpoint}`, {
-      query: { limit: perPage, skip },
-    })
-
-    return { rows: response[endpoint] as unknown[], count: response.total as number }
+  const params: Record<string, string | number> = { limit: perPage, skip: (page - 1) * perPage }
+  if (narrowing.length > 0) {
+    params.limit = 0
+    params.skip = 0
   }
 
-  // dummyjson filters by one value per request, so for several choices we fetch each one
-  // (`limit: 0` returns everything), merge them and cut the requested page out ourselves.
-  const responses = await Promise.all(
-    (filter.value as string[]).map((value) => {
-      if (endpoint === 'products') {
-        return $fetch<ApiResponse>(`${API}/products/category/${value}`, { query: { limit: 0 } })
-      }
+  if (sortBy) {
+    params.sortBy = sortBy
+    params.order = sortOrder || 'asc'
+  }
 
-      return $fetch<ApiResponse>(`${API}/${endpoint}/filter`, {
-        query: { key: filter.column, value, limit: 0 },
+  let path = endpoint
+  if (search) {
+    path = `${endpoint}/search`
+    params.q = search
+  } else if (apiFilter && endpoint === 'products' && apiFilter.column === 'category') {
+    path = `products/category/${apiFilter.value}`
+  } else if (apiFilter) {
+    path = `${endpoint}/filter`
+    params.key = apiFilter.column
+    params.value = String(apiFilter.value)
+  }
+
+  const data = await get(path, params)
+  let rows: Record<string, unknown>[] = data[endpoint]
+  let count: number = data.total
+
+  if (narrowing.length > 0) {
+    rows = rows.filter((row) => {
+      return narrowing.every((filter) => {
+        return String(row[filter.column]) === String(filter.value)
       })
-    }),
-  )
+    })
+    count = rows.length
+    rows = rows.slice((page - 1) * perPage, page * perPage)
+  }
 
-  const rows = responses.flatMap((response) => {
-    return response[endpoint] as unknown[]
-  })
-
-  return { rows: rows.slice(skip, skip + perPage), count: rows.length }
+  return { rows, count }
 }

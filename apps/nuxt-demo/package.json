@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --port 3007",
     "build": "nuxt build",
     "generate": "nuxt generate",
-    "preview": "nuxt preview",
+    "preview": "nuxt preview --port 3007",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck"
   },
@@ -19,6 +19,7 @@
     "vue": "^3.5.13"
   },
   "devDependencies": {
+    "@iconify-json/mdi": "^1.2.3",
     "typescript": "^5.8.3",
     "vue-tsc": "^3.3.10"
   }

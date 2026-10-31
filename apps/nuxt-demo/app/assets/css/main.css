@@ -1,6 +1,12 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
+@theme {
+  --font-sans: 'Google Sans Flex', sans-serif;
+  --font-display: 'Google Sans Flex', sans-serif;
+  --font-mono: 'Google Sans Code', monospace;
+}
+
 /*
  * Mono theme: Nuxt UI has no built-in "mono" preset, so we make the primary color solid
  * black (white in dark mode) and keep every other color neutral (see app.config.ts).

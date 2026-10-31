@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /*
- * Layout shared by every page: header (navigation + links), page content and footer.
+ * Layout shared by every page: header (navigation + links) and page content.
  * Only Nuxt UI components are used. UApp is required by Nuxt UI for overlays and tooltips.
  */
 const navItems = [
@@ -12,7 +12,7 @@ const navItems = [
 
 <template>
   <UApp>
-    <UHeader title="Shilp List Demo">
+    <UHeader title="Shilp List - Vue Demo">
       <UNavigationMenu :items="navItems" />
 
       <template #right>
@@ -20,7 +20,7 @@ const navItems = [
         <UButton
           to="https://github.com/shilpdev/list"
           target="_blank"
-          icon="i-simple-icons-github"
+          icon="i-mdi-github"
           color="neutral"
           variant="ghost"
           label="GitHub"
@@ -28,10 +28,18 @@ const navItems = [
         <UButton
           to="https://7span.com/open-source/vue-list/"
           target="_blank"
-          icon="i-lucide-book-open"
+          icon="i-mdi-book-open-page-variant-outline"
           color="neutral"
           variant="ghost"
           label="Docs"
+        />
+        <UButton
+          to="https://www.npmjs.com/package/@shilp.dev/vue-list"
+          target="_blank"
+          icon="i-mdi-npm"
+          color="neutral"
+          variant="ghost"
+          aria-label="npm"
         />
       </template>
     </UHeader>
@@ -41,26 +49,5 @@ const navItems = [
         <NuxtPage />
       </UContainer>
     </UMain>
-
-    <USeparator />
-
-    <UFooter>
-      <template #left>
-        <p class="text-sm text-muted">
-          <strong>@shilp.dev/vue-list</strong> - headless list component for Vue and Nuxt: fetch,
-          paginate, search, filter and show or hide columns. You own the UI.
-        </p>
-      </template>
-      <template #right>
-        <UButton
-          to="https://www.npmjs.com/package/@shilp.dev/vue-list"
-          target="_blank"
-          icon="i-simple-icons-npm"
-          color="neutral"
-          variant="ghost"
-          aria-label="npm"
-        />
-      </template>
-    </UFooter>
   </UApp>
 </template>

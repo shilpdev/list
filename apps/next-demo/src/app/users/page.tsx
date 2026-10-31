@@ -1,18 +1,14 @@
-import { Suspense } from 'react'
-
-import { fetchInitialResponse } from '@/api/request-handler'
-import { ListWrapper, ListWrapperSkeleton } from '@/components/list-wrapper'
+import { requestHandler } from '@/api/request-handler'
+import { ListWrapper } from '@/components/list/list-wrapper'
 import type { ColumnConfig, FilterConfig } from '@/types/list'
 
 const COLUMNS: ColumnConfig[] = [
-  { name: 'image', label: 'Avatar', format: 'image' },
-  { name: 'id', label: 'ID', isSortable: true },
   { name: 'firstName', label: 'First Name', isSortable: true },
   { name: 'lastName', label: 'Last Name', isSortable: true },
-  { name: 'email', label: 'Email', isSortable: true },
+  { name: 'email', label: 'Email' },
   { name: 'age', label: 'Age', isSortable: true },
-  { name: 'gender', label: 'Gender', format: 'badge' },
-  { name: 'role', label: 'Role', format: 'badge' },
+  { name: 'gender', label: 'Gender', isSortable: true },
+  { name: 'role', label: 'Role', isSortable: true },
 ]
 
 const FILTERS: FilterConfig[] = [
@@ -25,32 +21,43 @@ const FILTERS: FilterConfig[] = [
       { value: 'user', label: 'User' },
     ],
   },
+  {
+    column: 'gender',
+    label: 'Genders',
+    options: [
+      { value: 'male', label: 'Male' },
+      { value: 'female', label: 'Female' },
+    ],
+  },
 ]
 
-// The dummyjson fetch is uncached runtime data. Under Cache Components it cannot run in the
-// prerendered shell, so it lives in an async child wrapped in <Suspense>: the shell (header, card,
-// toolbar) prerenders and the first page streams in at request time.
-async function UsersList() {
-  // Fetch the first page on the server. `perPage` matches the ListWrapper default (10).
-  const initialResponse = await fetchInitialResponse({ endpoint: 'users', perPage: 10 })
+const PER_PAGE = 10
+
+// Fetched on every request so the HTML ships with the first page and the list skips its first
+// client request.
+export const dynamic = 'force-dynamic'
+
+export default async function Page() {
+  const initialResponse = await requestHandler({
+    endpoint: 'users',
+    page: 1,
+    perPage: PER_PAGE,
+    search: '',
+    sortBy: '',
+    sortOrder: '',
+    filters: [],
+  })
 
   return (
     <ListWrapper
       title="Users"
-      description="https://dummyjson.com/users"
       endpoint="users"
+      perPage={PER_PAGE}
+      paginationMode="pagination"
       columns={COLUMNS}
       filters={FILTERS}
       searchPlaceholder="Search users..."
       initialResponse={initialResponse}
     />
-  )
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<ListWrapperSkeleton title="Users" columnsCount={COLUMNS.length} />}>
-      <UsersList />
-    </Suspense>
   )
 }

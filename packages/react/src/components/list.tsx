@@ -310,7 +310,7 @@ function List<T = unknown>(props: ListProps<T>) {
   }
 
   function loadMore() {
-    if (hasMore || !isLoading) {
+    if (hasMore && !isLoading) {
       setRequestTrigger('loadMore')
       setLocalPage((currentPage) => {
         return currentPage + 1
@@ -499,9 +499,12 @@ function List<T = unknown>(props: ListProps<T>) {
     setIsReady(true)
 
     // Lifecycle 8, unmount: invalidate the request in flight so its late response or error does not
-    // update state, call `stateManager.set` or emit events on a list that no longer exists.
+    // update state, call `stateManager.set` or emit events on a list that no longer exists. Also
+    // clears `isStartedRef`: StrictMode replays the effects of a mount, and the query effect would
+    // otherwise run in that replay with the flag still set and refetch a seeded list.
     return () => {
       requestIdRef.current += 1
+      isStartedRef.current = false
     }
   }, [])
 

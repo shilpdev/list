@@ -1,19 +1,12 @@
-import type { Column, RowId } from '@shilp.dev/react-list'
+import type { Column } from '@shilp.dev/react-list'
 
 /** A row from any dummyjson resource. Only `id` is read by the playground itself. */
-export type Row = { id: RowId; [key: string]: unknown }
+export type Row = Record<string, unknown>
 
-/** How a table cell shows its value. */
-export type CellFormat = 'text' | 'image' | 'badge' | 'currency'
-
-/**
- * A list column plus how the table renders it. Pages pass these as plain data (a server page cannot
- * pass functions to a client component), and the list keeps the extra keys on its own columns.
- */
+/** A list column plus whether its header sorts. The list keeps the extra key on its own columns. */
 export interface ColumnConfig extends Column {
   label: string
   isSortable?: boolean
-  format?: CellFormat
 }
 
 export interface FilterOption {
@@ -21,7 +14,7 @@ export interface FilterOption {
   label: string
 }
 
-/** A select filter shown in the toolbar. */
+/** A select filter shown in the table header. */
 export interface FilterConfig {
   column: string
   label: string
