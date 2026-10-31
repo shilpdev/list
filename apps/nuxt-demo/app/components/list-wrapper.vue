@@ -198,7 +198,7 @@ function getRowId(row: unknown) {
         </ListFilters>
 
         <ListColumns>
-          <template #columns="{ context }">
+          <template #default="{ context }">
             <UDropdownMenu :items="getColumnItems(context)">
               <UButton
                 color="neutral"

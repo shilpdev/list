@@ -1,14 +1,14 @@
-import { memo, useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import type { GoToScope } from '@shared'
 import { getPagesCount } from '@shared/utils'
-import { MESSAGES } from '@shared/constants'
+import { getGoToMessage } from '@shared/messages'
 import { useListContext } from '../context/list-context'
 import { Slot } from './slot'
 import { ListGoToProps } from '../types'
 
-export const ListGoTo = memo(({ children }: ListGoToProps) => {
+export const ListGoTo = ({ children }: ListGoToProps) => {
   const context = useListContext()
-  const { rows, count, setPage, error, page, perPage, isInitialLoading, isEmpty } = context
+  const { count, setPage, error, page, perPage, isInitialLoading, isEmpty } = context
 
   const scope = useMemo((): GoToScope => {
     const pagesCount = getPagesCount(count, perPage)
@@ -37,7 +37,7 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
           {scope.pages.map((pageNum) => {
             return (
               <option key={`page-${pageNum}`} value={pageNum}>
-                {MESSAGES.pageOptionPrefix} {pageNum}
+                {getGoToMessage(pageNum)}
               </option>
             )
           })}
@@ -45,4 +45,4 @@ export const ListGoTo = memo(({ children }: ListGoToProps) => {
       )}
     />
   )
-})
+}

@@ -3,7 +3,7 @@
     <slot v-bind="scope">
       <select :value="context.page" @change="context.setPage(Number(($event.target as HTMLSelectElement).value))">
         <option v-for="pageNum in scope.pages" :key="`page-${pageNum}`" :value="pageNum">
-          {{ MESSAGES.pageOptionPrefix }} {{ pageNum }}
+          {{ getGoToMessage(pageNum) }}
         </option>
       </select>
     </slot>
@@ -13,7 +13,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { getPagesCount } from '@shared/utils'
-import { MESSAGES } from '@shared/constants'
+import { getGoToMessage } from '@shared/messages'
 import type { GoToScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 

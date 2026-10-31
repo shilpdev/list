@@ -2,15 +2,15 @@
   <div v-if="context.error && !context.isLoading" class="shilp-list__error">
     <slot :context="context">
       <div>
-        <h3>{{ MESSAGES.error }}</h3>
-        <pre>{{ context.error.name }}: {{ context.error.message }}</pre>
+        <h3>{{ ERROR_MESSAGE }}</h3>
+        <pre>{{ getErrorMessage(context.error) }}</pre>
       </div>
     </slot>
   </div>
 </template>
 
 <script setup lang="ts">
-import { MESSAGES } from '@shared/constants'
+import { ERROR_MESSAGE, getErrorMessage } from '@shared/messages'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

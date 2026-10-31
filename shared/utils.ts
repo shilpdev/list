@@ -8,6 +8,8 @@ import type {
   FilterScope,
   FilterState,
   FilterValues,
+  PaginationItemScope,
+  PaginationScope,
   PerPageOption,
   RowId,
   RowScope,
@@ -288,4 +290,12 @@ export function getRowScope(row: unknown, index: number, context: Context): RowS
 
 export function getKey(row: unknown): number {
   return (row as { _index: number })._index
+}
+
+export function getPaginationItemScope(scope: PaginationScope, item: number): PaginationItemScope {
+  return {
+    ...scope,
+    page: item,
+    isActive: item === scope.context.page,
+  }
 }

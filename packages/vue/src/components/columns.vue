@@ -1,6 +1,6 @@
 <template>
   <div class="shilp-list__columns">
-    <slot name="columns" v-bind="scope">
+    <slot v-bind="scope">
       <template v-for="column in context.columns" :key="column.name">
         <slot :name="column.name" v-bind="getColumnScope(column, context)">
           <label>
@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Column, ColumnScope, ColumnsScope } from '@shared'
+import type { ColumnsScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 import { getColumnScope } from '@shared/utils'
 

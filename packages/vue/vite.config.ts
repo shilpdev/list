@@ -2,7 +2,6 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
 import dts from 'vite-plugin-dts'
 import * as path from 'path'
 
@@ -10,7 +9,6 @@ import * as path from 'path'
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
     dts({
       include: ['src', '../../shared'],
       rollupTypes: true,

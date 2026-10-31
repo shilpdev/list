@@ -1,14 +1,14 @@
 <template>
   <div v-if="showEmpty" class="shilp-list__empty">
     <slot>
-      <p>{{ MESSAGES.empty }}</p>
+      <p>{{ EMPTY_MESSAGE }}</p>
     </slot>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { MESSAGES } from '@shared/constants'
+import { EMPTY_MESSAGE } from '@shared/messages'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

@@ -1,37 +1,43 @@
-import { Fragment, type ReactNode } from 'react'
-import type { FilterState } from '@shared'
+import type { ReactNode } from 'react'
+import type { FilterScope } from '@shared'
+import { getFilterScope } from '@shared/utils'
 import { useListContext } from '../context/list-context'
 import { Slot } from './slot'
 import { ListFiltersProps } from '../types'
-import { getFilterScope } from '@shared/utils'
 
-export const ListFilters = ({ children, filter: filterFn }: ListFiltersProps) => {
+export const ListFilters = ({ children, ...filterSlots }: ListFiltersProps) => {
   const context = useListContext()
   const { filters, setFilter, setFilters } = context
 
-  function renderFilter(filter: FilterState): ReactNode {
-    if (filterFn) {
-      return <Fragment key={filter.column}>{filterFn(getFilterScope(filter, context))}</Fragment>
-    }
-
-    return (
-      <label key={filter.column}>
-        <span>{filter.column}</span>
-        <input
-          type="text"
-          value={String(filter.value ?? '')}
-          onChange={(e) => setFilter(filter.column, e.target.value)}
-        />
-      </label>
-    )
-  }
-
+  // `children` is the whole control; each filter is a nested slot named after its column.
   return (
     <Slot
       className="shilp-list__filters"
       scope={{ context, setFilter, setFilters }}
       children={children}
-      fallback={() => filters.map(renderFilter)}
+      fallback={() => {
+        return filters.map((filter) => {
+          return (
+            <Slot
+              key={filter.column}
+              scope={getFilterScope(filter, context)}
+              children={
+                filterSlots[filter.column] as ((scope: FilterScope) => ReactNode) | undefined
+              }
+              fallback={() => (
+                <label>
+                  <span>{filter.column}</span>
+                  <input
+                    type="text"
+                    value={String(filter.value ?? '')}
+                    onChange={(e) => setFilter(filter.column, e.target.value)}
+                  />
+                </label>
+              )}
+            />
+          )
+        })
+      }}
     />
   )
 }

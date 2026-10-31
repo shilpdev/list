@@ -1,4 +1,4 @@
-import { MESSAGES } from '@shared/constants'
+import { ERROR_MESSAGE, getErrorMessage } from '@shared/messages'
 import { useListContext } from '../context/list-context'
 import { Slot } from './slot'
 import { ListErrorProps } from '../types'
@@ -18,10 +18,8 @@ export const ListError = ({ children }: ListErrorProps) => {
       children={children}
       fallback={() => (
         <div>
-          <h3>{MESSAGES.error}</h3>
-          <pre>
-            {error.name}: {error.message}
-          </pre>
+          <h3>{ERROR_MESSAGE}</h3>
+          <pre>{getErrorMessage(error)}</pre>
         </div>
       )}
     />

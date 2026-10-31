@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import type { Context } from '@shared'
+import { CONTEXT_OUTSIDE_LIST_MESSAGE } from '@shared/messages'
 
 const ListContext = createContext<Context<unknown> | null>(null)
 
@@ -16,7 +17,7 @@ export function ListContextProvider<T>({
 export function useListContext<T>(): Context<T> {
   const context = useContext(ListContext)
   if (!context) {
-    throw new Error('useListContext must be used within a List')
+    throw new Error(CONTEXT_OUTSIDE_LIST_MESSAGE)
   }
   return context as Context<T>
 }

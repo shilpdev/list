@@ -1,4 +1,4 @@
-import { MESSAGES } from '@shared/constants'
+import { INITIAL_LOADING_MESSAGE } from '@shared/messages'
 import { useListContext } from '../context/list-context'
 import { Slot } from './slot'
 import { ListLoaderInitialProps } from '../types'
@@ -15,7 +15,7 @@ export const ListLoaderInitial = ({ children }: ListLoaderInitialProps) => {
       className="shilp-list__initial-loader"
       scope={{ context }}
       children={children}
-      fallback={() => <p>{MESSAGES.initialLoading}</p>}
+      fallback={() => <p>{INITIAL_LOADING_MESSAGE}</p>}
     />
   )
 }

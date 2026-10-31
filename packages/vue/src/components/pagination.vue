@@ -2,16 +2,20 @@
   <div v-if="showContent" class="shilp-list__pagination">
     <slot v-bind="scope">
       <slot name="first" v-bind="scope">
-        <button type="button" :disabled="!scope.hasPrev" @click="scope.first">First</button>
+        <button type="button" :disabled="!scope.hasPrev" @click="scope.first">
+          {{ FIRST_MESSAGE }}
+        </button>
       </slot>
 
       <slot name="prev" v-bind="scope">
-        <button type="button" :disabled="!scope.hasPrev" @click="scope.prev">Prev</button>
+        <button type="button" :disabled="!scope.hasPrev" @click="scope.prev">
+          {{ PREV_MESSAGE }}
+        </button>
       </slot>
 
       <slot name="pages" v-bind="scope">
         <template v-for="item in scope.pagesToDisplay" :key="item">
-          <slot name="page" v-bind="itemScope(item)">
+          <slot name="page" v-bind="getPaginationItemScope(scope, item)">
             <span v-if="item === scope.context.page">{{ item }}</span>
             <button v-else type="button" @click="scope.context.setPage(item)">
               {{ item }}
@@ -21,11 +25,15 @@
       </slot>
 
       <slot name="next" v-bind="scope">
-        <button type="button" :disabled="!scope.hasNext" @click="scope.next">Next</button>
+        <button type="button" :disabled="!scope.hasNext" @click="scope.next">
+          {{ NEXT_MESSAGE }}
+        </button>
       </slot>
 
       <slot name="last" v-bind="scope">
-        <button type="button" :disabled="!scope.hasNext" @click="scope.last">Last</button>
+        <button type="button" :disabled="!scope.hasNext" @click="scope.last">
+          {{ LAST_MESSAGE }}
+        </button>
       </slot>
     </slot>
   </div>
@@ -34,8 +42,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { DEFAULT_PAGE_LINKS } from '@shared/constants'
-import { getPagination } from '@shared/utils'
-import type { PaginationProps, PaginationScope, PaginationItemScope } from '@shared'
+import { FIRST_MESSAGE, LAST_MESSAGE, NEXT_MESSAGE, PREV_MESSAGE } from '@shared/messages'
+import { getPagination, getPaginationItemScope } from '@shared/utils'
+import type { PaginationProps, PaginationScope } from '@shared'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({
@@ -63,12 +72,4 @@ const scope = computed((): PaginationScope => {
     last: () => context.setPage(pagination.pagesCount),
   }
 })
-
-const itemScope = (item: number): PaginationItemScope => {
-  return {
-    ...scope.value,
-    page: item,
-    isActive: item === context.page,
-  }
-}
 </script>

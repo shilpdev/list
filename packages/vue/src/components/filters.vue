@@ -1,6 +1,6 @@
 <template>
   <div class="shilp-list__filters">
-    <slot name="filters" v-bind="scope">
+    <slot v-bind="scope">
       <template v-for="filter in context.filters" :key="filter.column">
         <slot :name="filter.column" v-bind="getFilterScope(filter, context)">
           <label>

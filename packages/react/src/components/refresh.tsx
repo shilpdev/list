@@ -1,4 +1,4 @@
-import { MESSAGES } from '@shared/constants'
+import { LOADING_MESSAGE, REFRESH_MESSAGE } from '@shared/messages'
 import { useListContext } from '../context/list-context'
 import { Slot } from './slot'
 import { ListRefreshProps } from '../types'
@@ -17,7 +17,7 @@ export const ListRefresh = ({ children }: ListRefreshProps) => {
       children={children}
       fallback={() => (
         <button type="button" onClick={() => context.refresh()} disabled={context.isLoading}>
-          {context.isLoading ? MESSAGES.loading : MESSAGES.refresh}
+          {context.isLoading ? LOADING_MESSAGE : REFRESH_MESSAGE}
         </button>
       )}
     />

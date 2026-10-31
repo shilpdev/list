@@ -1,4 +1,4 @@
-import { MESSAGES } from '@shared/constants'
+import { LOAD_MORE_END_MESSAGE, LOAD_MORE_MESSAGE } from '@shared/messages'
 import { useListContext } from '../context/list-context'
 import { Slot } from './slot'
 import { ListLoadMoreProps } from '../types'
@@ -18,10 +18,10 @@ export const ListLoadMore = ({ children }: ListLoadMoreProps) => {
       fallback={() =>
         context.hasMore ? (
           <button type="button" onClick={context.loadMore}>
-            {MESSAGES.loadMore}
+            {LOAD_MORE_MESSAGE}
           </button>
         ) : (
-          <p>{MESSAGES.loadMoreEnd}</p>
+          <p>{LOAD_MORE_END_MESSAGE}</p>
         )
       }
     />

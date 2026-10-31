@@ -1,4 +1,4 @@
-import { MESSAGES } from '@shared/constants'
+import { EMPTY_MESSAGE } from '@shared/messages'
 import { useListContext } from '../context/list-context'
 import { Slot } from './slot'
 import { ListEmptyProps } from '../types'
@@ -15,7 +15,7 @@ export const ListEmpty = ({ children }: ListEmptyProps) => {
       className="shilp-list__empty"
       scope={null}
       children={children}
-      fallback={() => <p>{MESSAGES.empty}</p>}
+      fallback={() => <p>{EMPTY_MESSAGE}</p>}
     />
   )
 }

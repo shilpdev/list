@@ -5,7 +5,7 @@
         type="text"
         :value="localSearch"
         @input="handleInput(($event.target as HTMLInputElement).value)"
-        placeholder="Search..."
+        :placeholder="SEARCH_PLACEHOLDER_MESSAGE"
       />
     </slot>
   </div>
@@ -15,6 +15,7 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import type { SearchProps, SearchScope } from '@shared'
 import { DEFAULT_DEBOUNCE_TIME } from '@shared/constants'
+import { SEARCH_PLACEHOLDER_MESSAGE } from '@shared/messages'
 import { useListContext } from '../composables/use-list-context'
 
 defineOptions({

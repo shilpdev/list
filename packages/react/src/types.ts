@@ -9,6 +9,7 @@ import type {
   GoToScope,
   ListPropsBase,
   ListScope,
+  PaginationItemScope,
   PaginationProps,
   PaginationScope,
   PerPageProps,
@@ -29,11 +30,17 @@ export interface ListProps<T = unknown> extends ListPropsBase<T>, EventProps<T> 
   ref?: Ref<Context<T>>
 }
 
-export type ListColumnsProps = {
-  /** Replaces the whole list of columns. Gets `{ context, setColumn }`. */
-  children?: ReactNode | ((scope: ColumnsScope) => ReactNode)
-  /** Renders one column. Gets `{ context, name, label, visibility, ...your keys, setValue }`. */
-  column?: (scope: ColumnScope) => ReactNode
+type ColumnsSlot = (scope: ColumnsScope) => ReactNode
+type ColumnSlot = (scope: ColumnScope) => ReactNode
+
+// `children` is the whole control (the Vue default slot). The index signature holds one render prop
+// per column, named after it (the Vue slot of the same name), so it also has to allow the type of
+// `children`. Give such a render prop its scope type: `id={(scope: ColumnScope) => ...}`. A column
+// called `children` clashes.
+export interface ListColumnsProps {
+  /** Replaces the whole control. Gets `{ context, setColumn }`. */
+  children?: ReactNode | ColumnsSlot
+  [column: string]: ColumnSlot | ColumnsSlot | ReactNode | undefined
 }
 
 export type ListEmptyProps = {
@@ -44,11 +51,15 @@ export type ListErrorProps = {
   children?: ReactNode | ((scope: ListScope) => ReactNode)
 }
 
-export type ListFiltersProps = {
-  /** Replaces the whole set of filters. Gets `{ context, setFilter, setFilters }`. */
-  children?: ReactNode | ((scope: FiltersScope) => ReactNode)
-  /** Renders one filter. Gets `{ context, column, value, isDirty, setValue }`. */
-  filter?: (scope: FilterScope) => ReactNode
+type FiltersSlot = (scope: FiltersScope) => ReactNode
+type FilterSlot = (scope: FilterScope) => ReactNode
+
+// Same as `ListColumnsProps`: `children` is the whole control, and one render prop per filter is
+// named after its column (`status={(scope: FilterScope) => ...}`).
+export interface ListFiltersProps {
+  /** Replaces the whole control. Gets `{ context, setFilter, setFilters }`. */
+  children?: ReactNode | FiltersSlot
+  [column: string]: FilterSlot | FiltersSlot | ReactNode | undefined
 }
 
 export type ListGoToProps = {
@@ -89,15 +100,28 @@ export type ListSummaryProps = {
 }
 
 export type ListPaginationProps = PaginationProps & {
+  /** Replaces the whole control. Gets the pagination scope. */
   children?: ReactNode | ((scope: PaginationScope) => ReactNode)
+  /** Replaces the First button. */
+  first?: (scope: PaginationScope) => ReactNode
+  /** Replaces the Prev button. */
+  prev?: (scope: PaginationScope) => ReactNode
+  /** Replaces all the page buttons. */
+  pages?: (scope: PaginationScope) => ReactNode
+  /** Renders one page button. Gets the pagination scope plus `page` and `isActive`. */
+  page?: (scope: PaginationItemScope) => ReactNode
+  /** Replaces the Next button. */
+  next?: (scope: PaginationScope) => ReactNode
+  /** Replaces the Last button. */
+  last?: (scope: PaginationScope) => ReactNode
 }
 
 // SLOT
 type SlotChildren<Scope> = ReactNode | ((scope: Scope) => ReactNode)
 
 export type SlotProps<Scope> = {
-  /** The outer wrapper class, e.g. `shilp-list__pagination`. */
-  className: string
+  /** The outer wrapper class, e.g. `shilp-list__pagination`. Leave it out for a nested slot, which renders no wrapper. */
+  className?: string
   /** Scope passed to a render-prop `children`, and available to `fallback`. */
   scope: Scope
   /** Consumer override: a render function, or static nodes. */

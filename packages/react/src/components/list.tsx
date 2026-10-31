@@ -21,7 +21,6 @@ import {
   DEFAULT_SORT_BY,
   DEFAULT_SORT_ORDER,
   DEFAULT_VERSION,
-  rowNotFoundMessage,
 } from '@shared/constants'
 import {
   computeColumns,
@@ -38,6 +37,7 @@ import {
   computeDefaultFilters,
   hasSavedState,
 } from '@shared/utils'
+import { rowNotFoundMessage } from '@shared/messages'
 import equal from 'fast-deep-equal'
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ListContextProvider } from '../context/list-context'

@@ -1,37 +1,41 @@
-import { Fragment, type ReactNode } from 'react'
-import type { Column, ColumnScope } from '@shared'
+import type { ReactNode } from 'react'
+import type { ColumnScope } from '@shared'
+import { getColumnScope } from '@shared/utils'
 import { useListContext } from '../context/list-context'
 import { Slot } from './slot'
 import { ListColumnsProps } from '../types'
-import { getColumnScope } from '@shared/utils'
 
-export const ListColumns = ({ children, column: columnFn }: ListColumnsProps) => {
+export const ListColumns = ({ children, ...columnSlots }: ListColumnsProps) => {
   const context = useListContext()
   const { columns, setColumn } = context
 
-  function renderColumn(column: Column): ReactNode {
-    if (columnFn) {
-      return <Fragment key={column.name}>{columnFn(getColumnScope(column, context))}</Fragment>
-    }
-
-    return (
-      <label key={column.name}>
-        <span>{column.label ?? column.name}</span>
-        <input
-          type="checkbox"
-          checked={column.visibility}
-          onChange={(e) => setColumn(column.name, 'visibility', e.target.checked)}
-        />
-      </label>
-    )
-  }
-
+  // `children` is the whole control; each column is a nested slot named after it.
   return (
     <Slot
       className="shilp-list__columns"
       scope={{ context, setColumn }}
       children={children}
-      fallback={() => columns.map(renderColumn)}
+      fallback={() => {
+        return columns.map((column) => {
+          return (
+            <Slot
+              key={column.name}
+              scope={getColumnScope(column, context)}
+              children={columnSlots[column.name] as ((scope: ColumnScope) => ReactNode) | undefined}
+              fallback={() => (
+                <label>
+                  <span>{column.label ?? column.name}</span>
+                  <input
+                    type="checkbox"
+                    checked={column.visibility}
+                    onChange={(e) => setColumn(column.name, 'visibility', e.target.checked)}
+                  />
+                </label>
+              )}
+            />
+          )
+        })
+      }}
     />
   )
 }

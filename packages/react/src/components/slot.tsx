@@ -3,7 +3,8 @@ import { SlotProps } from '../types'
 
 /**
  * Resolves the "render-prop function / static children / default UI" choice that
- * every list part shares, and wraps the result in its BEM container.
+ * every list part shares, and wraps the result in its BEM container. A nested slot (no
+ * `className`) renders the result as it is, like a Vue named slot inside a component.
  *
  * - `children` is a function  -> called with `scope`
  * - `children` is nodes       -> rendered as-is
@@ -18,6 +19,10 @@ export function Slot<Scope>({ className, scope, children, fallback }: SlotProps<
     content = children
   } else {
     content = fallback(scope)
+  }
+
+  if (className == null) {
+    return <>{content}</>
   }
 
   return <div className={className}>{content}</div>

@@ -1,6 +1,6 @@
 import type { SummaryScope } from '@shared'
 import { getSummaryRange } from '@shared/utils'
-import { getSummaryMessage } from '@shared/constants'
+import { getSummaryMessage } from '@shared/messages'
 import { useListContext } from '../context/list-context'
 import { Slot } from './slot'
 import { ListSummaryProps } from '../types'

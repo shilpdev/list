@@ -1,10 +1,10 @@
-import { memo, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { getKey, getRowScope } from '@shared/utils'
 import { useListContext } from '../context/list-context'
 import { Slot } from './slot'
 import { ListRowsProps } from '../types'
 
-function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
+export function ListRows({ children, row: rowFn }: ListRowsProps) {
   const context = useListContext()
   const { isInitialLoading, error, isEmpty, rows } = context
 
@@ -31,5 +31,3 @@ function ListRowsInner({ children, row: rowFn }: ListRowsProps) {
     />
   )
 }
-
-export const ListRows = memo(ListRowsInner) as typeof ListRowsInner
