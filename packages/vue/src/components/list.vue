@@ -11,6 +11,7 @@ import type {
   Events,
   FilterState,
   FilterValues,
+  ListPropsBase,
   RequestHandlerResponse,
   RequestTrigger,
   RowId,
@@ -46,8 +47,7 @@ import {
 } from '@shared/utils'
 import { rowNotFoundMessage } from '@shared/messages'
 import equal from 'fast-deep-equal'
-import { computed, onMounted, onUnmounted, provide, reactive, ref, toRefs, watch } from 'vue'
-import type { ListProps } from '../types'
+import { computed, onMounted, onUnmounted, provide, reactive, ref, toRef, toRefs, watch } from 'vue'
 
 defineOptions({
   // eslint-disable-next-line vue/multi-word-component-names
@@ -70,7 +70,7 @@ const {
   requestHandler,
   initialResponse,
   stateManager,
-} = defineProps<ListProps>()
+} = defineProps<ListPropsBase>()
 
 const emit = defineEmits<Events>()
 
@@ -311,10 +311,12 @@ function setColumn(column: string, key: string, value: unknown) {
 }
 
 const state = reactive({
-  endpoint: endpoint,
-  version: version,
-  meta: meta,
-  idKey: idKey,
+  // props
+  endpoint: toRef(() => endpoint),
+  version: toRef(() => version),
+  meta: toRef(() => meta),
+  idKey: toRef(() => idKey),
+  //local copies
   page: localPage,
   perPage: localPerPage,
   sortBy: localSortBy,
@@ -322,6 +324,7 @@ const state = reactive({
   search: localSearch,
   columns: localColumns,
   filters: localFilters,
+  //local items
   rows,
   response,
   error,
@@ -418,10 +421,11 @@ if (initialResponse != null) {
   isSeeded = !hasSavedState(saved)
 }
 
-// Lifecycle 7, props changing after mount: none. `filters`, `columns` and the query props (page,
-// perPage, search, sortBy, sortOrder, endpoint) are read once; change them through the context
-// actions. A change of `localFilters` or `localColumns` (setFilter, setFilters, clearFilters,
-// setColumn) refetches, except before the first response has arrived.
+// Lifecycle 7, props changing after mount: `filters`, `columns` and the query props (page, perPage,
+// search, sortBy, sortOrder) are read once; change them through the context actions. `endpoint`,
+// `version`, `meta` and `idKey` follow the prop (`toRef` in `state`) but start no request. A change
+// of `localFilters` or `localColumns` (setFilter, setFilters, clearFilters, setColumn) refetches,
+// except before the first response has arrived.
 watch(localFilters, (newValue, oldValue) => {
   if (isInitialLoading.value) {
     return

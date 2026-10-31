@@ -39,8 +39,9 @@ import {
 } from '@shared/utils'
 import { rowNotFoundMessage } from '@shared/messages'
 import equal from 'fast-deep-equal'
-import { useEffect, useImperativeHandle, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { ListContextProvider } from '../context/list-context'
+import { Slot } from './slot'
 import type { ListProps } from '../types'
 
 function List<T = unknown>(props: ListProps<T>) {
@@ -342,10 +343,12 @@ function List<T = unknown>(props: ListProps<T>) {
   }
 
   const state = {
+    // props
     endpoint,
     version,
     meta,
     idKey,
+    // local copies
     page: localPage,
     perPage: localPerPage,
     sortBy: localSortBy,
@@ -353,6 +356,7 @@ function List<T = unknown>(props: ListProps<T>) {
     search: localSearch,
     columns: localColumns,
     filters: localFilters,
+    // local items
     rows,
     response,
     error,
@@ -366,26 +370,24 @@ function List<T = unknown>(props: ListProps<T>) {
     isEmpty,
   }
 
-  const context = useMemo((): Context<T> => {
-    return {
-      ...state,
-      setPage,
-      setPerPage,
-      setSearch,
-      setSortBy,
-      setSortOrder,
-      setFilter,
-      setFilters,
-      clearFilters,
-      loadMore,
-      refresh,
-      clearState,
-      toggleRowSelection,
-      toggleAllRowsSelection,
-      updateRowById,
-      setColumn,
-    }
-  }, [state, isLoadMore, defaultFilters])
+  const context: Context<T> = {
+    ...state,
+    setPage,
+    setPerPage,
+    setSearch,
+    setSortBy,
+    setSortOrder,
+    setFilter,
+    setFilters,
+    clearFilters,
+    loadMore,
+    refresh,
+    clearState,
+    toggleRowSelection,
+    toggleAllRowsSelection,
+    updateRowById,
+    setColumn,
+  }
 
   useImperativeHandle(ref, () => context, [context])
 
@@ -519,17 +521,9 @@ function List<T = unknown>(props: ListProps<T>) {
     getData()
   }, [isReady])
 
-  let content: ReactNode
-
-  if (typeof children === 'function') {
-    content = children(context)
-  } else {
-    content = children
-  }
-
   return (
     <ListContextProvider value={context}>
-      <div className="shilp-list">{content}</div>
+      <Slot className="shilp-list" scope={context} children={children} fallback={() => null} />
     </ListContextProvider>
   )
 }

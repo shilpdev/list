@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import type { PaginationScope } from '@shared'
 import { getPagination, getPaginationItemScope } from '@shared/utils'
 import { DEFAULT_PAGE_LINKS } from '@shared/constants'
@@ -20,22 +19,19 @@ export const ListPagination = ({
   const context = useListContext()
   const { count, setPage, error, page, perPage, isInitialLoading, hasMore, isEmpty } = context
 
-  const scope = useMemo((): PaginationScope => {
-    const pagination = getPagination(page, perPage, count, pageLinks)
-
-    return {
-      context,
-      ...pagination,
-      hasNext: hasMore,
-      prev: () => setPage(page - 1),
-      next: () => setPage(page + 1),
-      first: () => setPage(1),
-      last: () => setPage(pagination.pagesCount),
-    }
-  }, [context, setPage, page, perPage, count, pageLinks, hasMore])
-
   if (isInitialLoading || isEmpty || error) {
     return null
+  }
+
+  const pagination = getPagination(page, perPage, count, pageLinks)
+  const scope: PaginationScope = {
+    context,
+    ...pagination,
+    hasNext: hasMore,
+    prev: () => setPage(page - 1),
+    next: () => setPage(page + 1),
+    first: () => setPage(1),
+    last: () => setPage(pagination.pagesCount),
   }
 
   // Each part is a nested `Slot` named like the Vue slot: its render prop replaces the default.

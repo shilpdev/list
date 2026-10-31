@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import type { PerPageScope } from '@shared'
 import { normalizePerPageOptions } from '@shared/utils'
 import { DEFAULT_PER_PAGE_OPTIONS } from '@shared/constants'
@@ -11,17 +10,11 @@ export const ListPerPage = ({ children, options = DEFAULT_PER_PAGE_OPTIONS }: Li
   const context = useListContext()
   const { error, perPage, setPerPage, isInitialLoading, isEmpty } = context
 
-  const serializedOptions = useMemo(() => {
-    return normalizePerPageOptions(options)
-  }, [options])
-
-  const scope = useMemo((): PerPageScope => {
-    return { context, options: serializedOptions }
-  }, [context, serializedOptions])
-
   if (isInitialLoading || isEmpty || error) {
     return null
   }
+
+  const scope: PerPageScope = { context, options: normalizePerPageOptions(options) }
 
   return (
     <Slot

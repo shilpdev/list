@@ -7,10 +7,11 @@ import type {
   StateManager,
 } from './common'
 import type { Column } from './columns'
+import type { Filter } from './filters'
 
 /**
- * Props both packages accept. `filters` and the callbacks are framework specific, so they live in
- * `ListProps` and `ListProps` (Vue takes `filters` as initial values and uses emits).
+ * Props both packages accept. The callbacks are framework specific: React takes them as props
+ * (`EventProps`) and Vue emits them (`Events`).
  */
 export interface ListPropsBase<T = unknown> {
   /** Unique identifier for the data source (API route or key). */
@@ -22,6 +23,8 @@ export interface ListPropsBase<T = unknown> {
   sortOrder?: SortOrder
   search?: string
   columns: Column[]
+  /** Initial filters, one per column. Read once at setup; change them later with `setFilter`, `setFilters` or `clearFilters`. */
+  filters?: Filter[]
   version?: number | string
   paginationMode?: PaginationMode
   /** Passed through to `requestHandler` and `stateManager`; the list never reads it. */

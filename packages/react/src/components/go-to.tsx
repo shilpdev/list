@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import type { GoToScope } from '@shared'
 import { getPagesCount } from '@shared/utils'
 import { getGoToMessage } from '@shared/messages'
@@ -10,22 +9,15 @@ export const ListGoTo = ({ children }: ListGoToProps) => {
   const context = useListContext()
   const { count, setPage, error, page, perPage, isInitialLoading, isEmpty } = context
 
-  const scope = useMemo((): GoToScope => {
-    const pagesCount = getPagesCount(count, perPage)
-    const pages = Array.from({ length: pagesCount }, (_, index) => {
-      return index + 1
-    })
-
-    return {
-      context,
-      pages,
-      pagesCount,
-    }
-  }, [count, perPage, context])
-
   if (isInitialLoading || isEmpty || error) {
     return null
   }
+
+  const pagesCount = getPagesCount(count, perPage)
+  const pages = Array.from({ length: pagesCount }, (_, index) => {
+    return index + 1
+  })
+  const scope: GoToScope = { context, pages, pagesCount }
 
   return (
     <Slot
