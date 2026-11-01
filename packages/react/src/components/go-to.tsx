@@ -7,13 +7,13 @@ import { ListGoToProps } from '../types'
 
 export const ListGoTo = ({ children }: ListGoToProps) => {
   const context = useListContext()
-  const { count, setPage, error, page, perPage, isInitialLoading, isEmpty } = context
+  const { totalRows, setPage, error, page, perPage, isInitialLoading, isEmpty } = context
 
   if (isInitialLoading || isEmpty || error) {
     return null
   }
 
-  const pagesCount = getPagesCount(count, perPage)
+  const pagesCount = getPagesCount(totalRows, perPage)
   const pages = Array.from({ length: pagesCount }, (_, index) => {
     return index + 1
   })

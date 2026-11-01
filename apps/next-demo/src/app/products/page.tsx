@@ -25,8 +25,10 @@ const FILTERS: FilterConfig[] = [
 
 const PER_PAGE = 10
 
-// Fetched on every request so the HTML ships with the first page and the list skips its first
-// client request.
+/*
+ * Fetched on every request so the HTML ships with the first page and the list skips its first
+ * client request.
+ */
 export const dynamic = 'force-dynamic'
 
 export default async function Page() {

@@ -23,12 +23,16 @@ Treat the code and the `shared/` types as the source of truth for the current AP
 
 - `packages/react`, `packages/vue` — the published libraries (built with Vite lib mode, output to `dist/`).
 - `shared/` — code both libraries use. `shared/types/` holds the TypeScript types (`ListPropsBase`, `RequestHandlerResponse`, etc.) `shared/constants.ts` holds every default (`DEFAULT_PER_PAGE`, `DEFAULT_PAGE_LINKS`, ...), `shared/messages.ts` holds every message the packages show or throw (static text as `*_MESSAGE` constants, text built from values as `get*Message` functions), and `shared/utils.ts` holds the framework-agnostic logic (equality, row indexing, pagination maths, query-change detection, ...). Not a workspace package: both libraries import types from `@shared`, and logic and defaults from `@shared/utils` and `@shared/constants` (the `@shared` alias is set in each package's `vite.config.ts` and `tsconfig.json`; keep them separate so utils are not re-exported as public API); `shared/` resolves npm packages from the repo root, so a package it imports (such as `fast-deep-equal`) must be a root dependency. Vite bundles the utils into each library and its `dts` plugin inlines the types (`rollupTypes: true`) into the emitted `.d.ts`. When changing the list API, update `shared/` first, then keep both React and Vue implementations in sync. Put logic that is the same in both frameworks in `shared/utils.ts`, not in each package.
-- `apps/react-demo`, `apps/vue-demo` (Vite), `apps/next-demo`, `apps/nuxt-demo` — demo apps for manual testing against the packages. There are no automated tests.
+- `apps/next-demo`, `apps/nuxt-demo` — demo apps for manual testing against the packages. There are no automated tests.
 - `.cursor/skills/react-list/` — usage documentation for the public API (props, slots, `requestHandler` contract).
 
 ## Architecture
 
-A root component (`List` in `packages/react/src/components/list.tsx`, `list.vue` in Vue) owns all state, calls the user-supplied `requestHandler(state)` (must return `{ rows, count, meta? }`), and exposes state/actions through a context (`useListContext` in React, `use-list-context` composable in Vue). Slot components (`ListRows`, `ListPagination`, `ListSearch`, `ListLoadMore`, `ListEmpty`, `ListError`, loaders, etc.) read that context and throw if used outside the root. Every slot scope has a `context` key (the `Context`: state plus actions); `requestHandler` and `stateManager` get only the `State` (data, no methods); a component adds extra keys only for values it computes (for example `pagesToDisplay`). Both roots keep one piece of state per field: Vue uses a `ref` each, React a `useState` each. Vue actions set refs and call `getData` directly. React actions only set state; the query effect (which watches the page, per-page, search, sort and filter values) runs the request after that render, so `requestHandler` gets the committed values. Each root builds its `State` in one place: Vue's `reactive` state, where the props `endpoint`, `version`, `meta` and `idKey` are `toRef(() => prop)` getters so they follow the prop, and React's `state` object, rebuilt on every render from the props and the fields (nothing is memoized with `useMemo`). `stateManager.set` and the response hooks run inside the response handler, and `stateManager` and the hook callbacks are read through refs so a late response calls the latest callback. The component files mirror each other 1:1 between `packages/react/src/components/*.tsx` and `packages/vue/src/components/*.vue`.
+A root component (`List` in `packages/react/src/components/list.tsx`, `list.vue` in Vue) owns all state, calls the user-supplied `requestHandler(state)` (must return `{ rows, totalRows, meta? }`), and exposes state/actions through a context (`useListContext` in React, `use-list-context` composable in Vue). Slot components (`ListRows`, `ListPagination`, `ListSearch`, `ListLoadMore`, `ListEmpty`, `ListError`, loaders, etc.) read that context and throw if used outside the root. Every slot scope has a `context` key (the `Context`: state plus actions); `requestHandler` and `stateManager` get only the `State` (data, no methods); a component adds extra keys only for values it computes (for example `pagesToDisplay`). Both roots keep one piece of state per field: Vue uses a `ref` each, React a `useState` each. Vue actions set refs and call `getData` directly. React actions only set state; the query effect (which watches the page, per-page, search, sort and filter values) runs the request after that render, so `requestHandler` gets the committed values. Setup runs the same three shared steps in both roots (the initial state built from the props, `stateManager.get` called directly with it, `applySavedState`), and each piece of state then starts from the result, so there is no assign-then-overwrite. Each root builds its `State` in one place: Vue's `reactive` state, where the props `endpoint`, `version`, `meta` and `idKey` are `toRef(() => prop)` getters so they follow the prop, and React's `state` object, rebuilt on every render from the props and the fields (nothing is memoized with `useMemo`). `stateManager.set` and the response hooks run inside the response handler, and `stateManager` and the hook callbacks are read through refs so a late response calls the latest callback. The component files mirror each other 1:1 between `packages/react/src/components/*.tsx` and `packages/vue/src/components/*.vue`.
+
+## Dev skills
+
+Always follow the `dev-skills` skill (`dev-skills:dev-skills`) when writing or changing code here. It owns the general rules: comments, readable code, null checks, reusable functions, npm packages and file naming (kebab-case). Read the matching file before you write. The rules below only cover what is specific to this repo; do not repeat a `dev-skills` rule here.
 
 ## Engineering rules
 
@@ -64,7 +68,7 @@ These rules came out of the cleanup, renaming and reuse work on this repo. They 
 - Hooks should fire only for a real change (compare before and after), not on every internal reset.
 
 ### Naming and files
-- File names are kebab-case and have no prefix. An exported component is `List` plus the PascalCase file name (`loader-initial.tsx` exports `ListLoaderInitial`).
+- File names have no prefix. An exported component is `List` plus the PascalCase file name (`loader-initial.tsx` exports `ListLoaderInitial`).
 - Props types end in `Props`, slot scopes in `Scope`.
 - Internal state setters take a `_` prefix (`const [page, _setPage] = useState(...)`), never a `Value` suffix, so they cannot be confused with the public actions of the same name (`setPage`).
 - CSS classes use one shared prefix in every package, not a per-framework one.
@@ -78,8 +82,8 @@ These rules came out of the cleanup, renaming and reuse work on this repo. They 
 - A function that returns a value uses braces and an explicit `return`, including `map`/`filter` callbacks, `computed` and `useMemo` factories, and default-value factories. Single-expression arrows are only for functions that return nothing.
 - Build conditional markup with a `content` variable filled by `if` / `else if` / `else`, then render it once. Do not nest ternaries in markup.
 - Vue props declare their defaults by destructuring (`const { page = DEFAULT_PAGE } = defineProps<...>()`, Vue 3.5+), not with `withDefaults`. React does the same with destructured parameters.
-- Comments explain why, or describe the lifecycle step the code belongs to. Delete comments that repeat the code. Keep lifecycle comments numbered the same as the lifecycle document.
-- Prefer a well-known, small npm package over hand-writing a generic utility (for example deep equality). Add it where the importing code resolves it from, and note it in the docs.
+- Keep lifecycle comments numbered the same as the lifecycle document.
+- Add an npm package where the importing code resolves it from, and note it in the docs.
 
 ### Verification and process
 - After a change, run the type check, lint, the library builds, the type checks of every app, and the story tests. Fix everything before reporting done.
@@ -101,7 +105,7 @@ pnpm build:react-list        # or build:vue-list
 pnpm typecheck               # typecheck both packages
 pnpm lint                    # eslint for both packages
 pnpm format                  # prettier --write src/ in both packages
-pnpm dev:react               # also dev:vue, dev:next, dev:nuxt (dev runs all apps in parallel)
-pnpm build:react             # also build:vue, build:next, build:nuxt (build:apps builds all; build = packages + apps)
-pnpm start:react             # serve a built app; also start:vue, start:next, start:nuxt
+pnpm dev:next                # also dev:nuxt (dev runs all apps in parallel)
+pnpm build:next              # also build:nuxt (build:apps builds all; build = packages + apps)
+pnpm start:next              # serve a built app; also start:nuxt
 ```

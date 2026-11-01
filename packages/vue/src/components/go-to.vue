@@ -28,7 +28,7 @@ const showContent = computed(() => {
 })
 
 const scope = computed((): GoToScope => {
-  const pagesCount = getPagesCount(context.count, context.perPage)
+  const pagesCount = getPagesCount(context.totalRows, context.perPage)
   const pages = Array.from({ length: pagesCount }, (_, index) => {
     return index + 1
   })

@@ -293,7 +293,7 @@ function PaginationFooter() {
       </div>
 
       <ListSummary>
-        {({ context: { count, selection }, from, to }) => {
+        {({ context: { totalRows, selection }, from, to }) => {
           let selected = ''
           if (selection.length > 0) {
             selected = ` - ${selection.length} selected`
@@ -301,7 +301,7 @@ function PaginationFooter() {
 
           return (
             <p className="text-center text-sm text-muted-foreground">
-              Showing {from} - {to} of {count}
+              Showing {from} - {to} of {totalRows}
               {selected}
             </p>
           )
@@ -361,10 +361,10 @@ function LoadMoreFooter() {
       <div />
 
       <ListSummary>
-        {({ context: { count }, visibleCount }) => {
+        {({ context: { totalRows }, visibleCount }) => {
           return (
             <p className="text-center text-sm text-muted-foreground">
-              Showing {visibleCount} of {count}
+              Showing {visibleCount} of {totalRows}
             </p>
           )
         }}
@@ -490,8 +490,10 @@ function RowsTable({ context }: { context: Context<Row> }) {
     allChecked = true
   }
 
-  // Sorting is done by the API. A header click goes asc, then desc, then off. The list starts with
-  // `sortOrder="asc"`, so the first click on a column is a single request.
+  /*
+   * Sorting is done by the API. A header click goes asc, then desc, then off. The list starts with
+   * `sortOrder="asc"`, so the first click on a column is a single request.
+   */
   function sort(name: string) {
     if (context.sortBy !== name) {
       context.setSortBy(name)

@@ -17,13 +17,13 @@ export const ListPagination = ({
   last,
 }: ListPaginationProps) => {
   const context = useListContext()
-  const { count, setPage, error, page, perPage, isInitialLoading, hasMore, isEmpty } = context
+  const { totalRows, setPage, error, page, perPage, isInitialLoading, hasMore, isEmpty } = context
 
   if (isInitialLoading || isEmpty || error) {
     return null
   }
 
-  const pagination = getPagination(page, perPage, count, pageLinks)
+  const pagination = getPagination(page, perPage, totalRows, pageLinks)
   const scope: PaginationScope = {
     context,
     ...pagination,

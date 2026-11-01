@@ -26,7 +26,7 @@ const showSummary = computed(() => {
 const scope = computed((): SummaryScope => {
   return {
     context,
-    ...getSummaryRange(context.page, context.perPage, context.count),
+    ...getSummaryRange(context.page, context.perPage, context.totalRows),
     visibleCount: context.rows.length,
   }
 })

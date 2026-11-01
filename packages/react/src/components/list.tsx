@@ -4,6 +4,7 @@ import type {
   EventProps,
   FilterState,
   FilterValues,
+  InitialState,
   RequestHandlerResponse,
   RequestTrigger,
   RowId,
@@ -26,18 +27,17 @@ import {
   computeColumns,
   computeHasMore,
   computeSelectionState,
-  createColumns,
   hasSelectionChanged,
   mergeRows,
-  patchRowById,
   toError,
   toggleAllIds,
   toggleId,
   computeFilters,
   computeDefaultFilters,
+  createColumns,
   hasSavedState,
+  applySavedState,
 } from '@shared/utils'
-import { rowNotFoundMessage } from '@shared/messages'
 import equal from 'fast-deep-equal'
 import { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { ListContextProvider } from '../context/list-context'
@@ -78,30 +78,55 @@ function List<T = unknown>(props: ListProps<T>) {
   const [defaultFilters] = useState<FilterState[]>(() => {
     return computeDefaultFilters(filters)
   })
-  const [localPage, setLocalPage] = useState<number>(page)
-  const [localPerPage, setLocalPerPage] = useState<number>(perPage)
-  const [localSortBy, setLocalSortBy] = useState<string>(sortBy)
-  const [localSortOrder, setLocalSortOrder] = useState<SortOrder>(sortOrder)
-  const [localSearch, setLocalSearch] = useState<string>(search)
-  const [localFilters, setLocalFilters] = useState<FilterState[]>(() => {
-    return [...defaultFilters]
+
+  /*
+   * Lifecycle 1, setup. `stateManager.get` runs here, in the first render, so the list never
+   * commits the values from before the restore. A load-more list ignores a saved page because it
+   * always starts on page 1.
+   */
+  const [{ saved, start }] = useState(() => {
+    const initial: InitialState = {
+      endpoint,
+      version,
+      meta,
+      idKey,
+      page,
+      perPage,
+      sortBy,
+      sortOrder,
+      search,
+      filters: defaultFilters,
+      columns: createColumns(columns),
+    }
+    const saved = stateManager?.get?.(initial) ?? {}
+
+    return { saved, start: applySavedState(initial, saved, isLoadMore) }
   })
-  const [localColumns, setLocalColumns] = useState<Column[]>(() => {
-    return createColumns(columns)
-  })
+
+  const [localPage, setLocalPage] = useState<number>(start.page)
+  const [localPerPage, setLocalPerPage] = useState<number>(start.perPage)
+  const [localSortBy, setLocalSortBy] = useState<string>(start.sortBy)
+  const [localSortOrder, setLocalSortOrder] = useState<SortOrder>(start.sortOrder)
+  const [localSearch, setLocalSearch] = useState<string>(start.search)
+  const [localFilters, setLocalFilters] = useState<FilterState[]>(start.filters)
+  const [localColumns, setLocalColumns] = useState<Column[]>(start.columns)
 
   const [rows, setRows] = useState<T[]>(() => {
     if (initialResponse == null) {
       return []
     }
-    return mergeRows<T>([], initialResponse.rows, { page, perPage, isLoadMore })
+    return mergeRows<T>([], initialResponse.rows, {
+      page: start.page,
+      perPage: start.perPage,
+      isLoadMore,
+    })
   })
   const [selection, setSelection] = useState<RowId[]>([])
   const [error, setError] = useState<Error | null>(null)
   const [response, setResponse] = useState<RequestHandlerResponse<T> | null>(
     initialResponse ?? null,
   )
-  const [count, setCount] = useState<number>(initialResponse?.count ?? 0)
+  const [totalRows, setTotalRows] = useState<number>(initialResponse?.totalRows ?? 0)
   const [isLoading, setIsLoading] = useState<boolean>(initialResponse == null)
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(initialResponse == null)
   const [requestTrigger, setRequestTrigger] = useState<RequestTrigger>('mount')
@@ -109,18 +134,21 @@ function List<T = unknown>(props: ListProps<T>) {
   const requestIdRef = useRef(0)
   // Query effects wait for the first request, or for the decision to skip it (`initialResponse`).
   const isStartedRef = useRef(false)
-  const isSeededRef = useRef(initialResponse != null)
+  // A seeded list keeps its response only when nothing was restored (see `initialResponse`).
+  const isSeededRef = useRef(initialResponse != null && !hasSavedState(saved))
 
   const previousSelectionRef = useRef(selection)
   const previousFiltersRef = useRef(localFilters)
   const previousColumnsRef = useRef(localColumns)
 
-  const hasMore = computeHasMore(localPage, localPerPage, count)
+  const hasMore = computeHasMore(localPage, localPerPage, totalRows)
   const isEmpty = rows.length === 0
   const selectionState = computeSelectionState(rows, selection, idKey)
 
-  // Read through a ref: an inline `stateManager` object is new on every parent render and would
-  // otherwise rebuild `actions` and `context` with nothing changed.
+  /*
+   * Read through a ref: an inline `stateManager` object is new on every parent render, and a late
+   * response must call the latest one, not the one from the render that started the request.
+   */
   const stateManagerRef = useRef(stateManager)
   stateManagerRef.current = stateManager
 
@@ -141,14 +169,14 @@ function List<T = unknown>(props: ListProps<T>) {
     getData()
   }
 
-  // Lifecycle 3 to 5, one request. Only the query effect below calls this, so `state` is the
-  // committed state of the render that changed the query.
-  // 3. Request: state shows isLoading (`requestTrigger` says what started it), `beforePageChange` /
-  //    `beforeLoadMore` get the State being requested, then `requestHandler` runs.
-  // 4. Response: rows are replaced (page mode) or appended (load-more) with their `_index` and
-  //    selection resets. The response effect then runs `stateManager.set`, `onResponse` and
-  //    `afterPageChange` / `afterLoadMore`.
-  // 5. Error: error is set, rows and count are cleared and `onError` fires.
+  /*
+   * Lifecycle 3 to 5, one request. Only the query effect calls this, so `state` is what React
+   * committed for the query that just changed.
+   * 3. Request: the `before*` hook gets the State being requested, then `requestHandler` runs.
+   * 4. Response: rows are replaced (page mode) or appended (load-more), selection resets, then
+   *    `stateManager.set`, `onResponse` and the `after*` hook run.
+   * 5. Error: `error` is set, rows and totalRows are cleared and `onError` fires.
+   */
   function getData() {
     setError(null)
     setIsLoading(true)
@@ -187,7 +215,7 @@ function List<T = unknown>(props: ListProps<T>) {
             isLoadMore,
           })
         })
-        setCount(res.count)
+        setTotalRows(res.totalRows)
         stateManagerRef.current?.set?.(state)
         eventsRef.current?.onResponse?.(res)
 
@@ -205,7 +233,7 @@ function List<T = unknown>(props: ListProps<T>) {
         const nextError = toError(err)
         setError(nextError)
         setRows([])
-        setCount(0)
+        setTotalRows(0)
         eventsRef.current?.onError?.(nextError)
       })
       .finally(() => {
@@ -218,11 +246,12 @@ function List<T = unknown>(props: ListProps<T>) {
       })
   }
 
-  // Lifecycle 6, actions. Query-changing actions only update local state; the query effect below
-  // performs one request after React commits the combined changes. `requestTrigger` is set by the
-  // caller so `requestHandler` and the `before*` events read it. They close over the current
-  // `state`; `context` below is rebuilt only when `state` changes, so their identity is stable
-  // between renders that change nothing.
+  /*
+   * Lifecycle 6, actions. A query-changing action only sets state; the query effect sends one
+   * request after React commits all of it, so two calls in the same event (for example two
+   * `loadMore()`) cost one request. The action sets `requestTrigger` so `requestHandler` and the
+   * `before*` hook can read what started the request.
+   */
 
   function setPage(value: number) {
     if (!value) {
@@ -322,17 +351,6 @@ function List<T = unknown>(props: ListProps<T>) {
     }
   }
 
-  function updateRowById(row: Partial<T>, id: RowId) {
-    const next = patchRowById(rows, row, id, idKey)
-
-    if (!next) {
-      console.warn(rowNotFoundMessage(idKey, id))
-      return
-    }
-
-    setRows(next)
-  }
-
   function setColumn(column: string, key: string, value: unknown) {
     const next = computeColumns(localColumns, column, key, value)
 
@@ -363,7 +381,7 @@ function List<T = unknown>(props: ListProps<T>) {
     rows,
     response,
     error,
-    count,
+    totalRows,
     selection,
     selectionState,
     hasMore,
@@ -388,7 +406,6 @@ function List<T = unknown>(props: ListProps<T>) {
     clearState,
     toggleRowSelection,
     toggleAllRowsSelection,
-    updateRowById,
     setColumn,
   }
 
@@ -449,53 +466,18 @@ function List<T = unknown>(props: ListProps<T>) {
     }
   }, [selection])
 
-  // Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the saved filters differ from
-  // the prop, then the first request (skipped for a seeded list).
+  /*
+   * Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if a restore changed the
+   * filters, then the first request (skipped for a seeded list).
+   */
   useEffect(() => {
     if (isReady) return
 
-    const saved = stateManagerRef.current?.get?.(snapshot()) ?? {}
-
-    // A seeded list keeps its response only when nothing was restored (see `initialResponse`).
-    if (isSeededRef.current && hasSavedState(saved)) {
-      isSeededRef.current = false
-    }
-
-    if (saved.page != null && !isLoadMore) {
-      setLocalPage(saved.page)
-    }
-
-    if (saved.perPage != null) {
-      setLocalPerPage(saved.perPage)
-    }
-
-    if (saved.sortBy != null) {
-      setLocalSortBy(saved.sortBy)
-    }
-
-    if (saved.sortOrder != null) {
-      setLocalSortOrder(saved.sortOrder)
-    }
-
-    if (saved.search != null) {
-      setLocalSearch(saved.search)
-    }
-
-    // Saved columns and filters replace the ones from the props as they are, so `get` returns the
-    // complete lists, with `isDirty` already worked out.
-    if (saved.columns != null) {
-      setLocalColumns(saved.columns)
-    }
-
-    if (saved.filters != null) {
-      setLocalFilters(saved.filters)
-    }
+    stateManagerRef.current?.init?.(state)
 
     if (saved.filters != null && !equal(localFilters, defaultFilters)) {
       eventsRef.current?.onFiltersChange?.(localFilters)
     }
-
-    stateManagerRef.current?.init?.(state)
 
     if (isSeededRef.current) {
       isStartedRef.current = true
@@ -503,10 +485,11 @@ function List<T = unknown>(props: ListProps<T>) {
 
     setIsReady(true)
 
-    // Lifecycle 8, unmount: invalidate the request in flight so its late response or error does not
-    // update state, call `stateManager.set` or emit events on a list that no longer exists. Also
-    // clears `isStartedRef`: StrictMode replays the effects of a mount, and the query effect would
-    // otherwise run in that replay with the flag still set and refetch a seeded list.
+    /*
+     * Lifecycle 8, unmount: drop the request in flight so a late response does not update state or
+     * call hooks on a list that no longer exists. `isStartedRef` is cleared too: StrictMode replays
+     * a mount's effects, and with the flag still set the query effect would refetch a seeded list.
+     */
     return () => {
       requestIdRef.current += 1
       isStartedRef.current = false

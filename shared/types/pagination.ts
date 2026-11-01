@@ -1,11 +1,9 @@
 import type { ListScope } from './common'
 
-/** Props for the pagination component. */
 export interface PaginationProps {
   pageLinks?: number
 }
 
-/** Scope for pagination slot. */
 export interface PaginationScope extends ListScope {
   pagesCount: number
   halfWay: number

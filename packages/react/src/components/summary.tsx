@@ -7,11 +7,11 @@ import { ListSummaryProps } from '../types'
 
 export const ListSummary = ({ children }: ListSummaryProps) => {
   const context = useListContext()
-  const { rows, count, error, page, perPage, isInitialLoading, isEmpty } = context
+  const { rows, totalRows, error, page, perPage, isInitialLoading, isEmpty } = context
 
   const scope: SummaryScope = {
     context,
-    ...getSummaryRange(page, perPage, count),
+    ...getSummaryRange(page, perPage, totalRows),
     visibleCount: rows.length,
   }
 

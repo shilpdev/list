@@ -60,7 +60,7 @@ const showContent = computed(() => {
 })
 
 const scope = computed((): PaginationScope => {
-  const pagination = getPagination(context.page, context.perPage, context.count, pageLinks)
+  const pagination = getPagination(context.page, context.perPage, context.totalRows, pageLinks)
 
   return {
     context,

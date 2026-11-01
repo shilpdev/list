@@ -1,11 +1,101 @@
 {
   "version": 1,
   "skills": {
-    "dev-skills": {
+    "css": {
       "source": "7span/skills",
       "sourceType": "github",
-      "skillPath": "dev-skills/SKILL.md",
-      "computedHash": "659b406f3d333d201f13e586ad571d8c1b0f76b182ec680b79a6cb58d004578a"
+      "skillPath": "7span-skills/css/SKILL.md",
+      "computedHash": "49f3f3098a06524c235fa2c104bbef0e427ae6aae5bff8b288c2622061800ebf"
+    },
+    "directus": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "7span-skills/directus/SKILL.md",
+      "computedHash": "fcaa222e5686a920b24c0d3a8bce2c25a498483587b0b25d760b6a2b1e53a788"
+    },
+    "html": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "7span-skills/html/SKILL.md",
+      "computedHash": "0148ed29d0f35d524d76242dc010a56ac622556b8ca2a898f450857231c32da0"
+    },
+    "javascript": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "7span-skills/javascript/SKILL.md",
+      "computedHash": "536429f52175ed60e567b241ba85ef959fddbafe35ae654edffad566ab6c71f2"
+    },
+    "patterns": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "7span-skills/patterns/SKILL.md",
+      "computedHash": "907c17d3126b913bece82e2717de726288c2bcde40dd1667c32250da5640ce88"
+    },
+    "pro-blocks-brand": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "shadcn-design/pro-blocks-brand/SKILL.md",
+      "computedHash": "b282d72fb6c46dd66787b28885d0d86e3afe68f7f04cb0861ce4030fa3261826"
+    },
+    "pro-blocks-create": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "shadcn-design/pro-blocks-create/SKILL.md",
+      "computedHash": "745f298a50e5631c6860681b856500ffc2574da3639fb0ec4fc7e5249aac3ddc"
+    },
+    "pro-blocks-page": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "shadcn-design/pro-blocks-page/SKILL.md",
+      "computedHash": "3a25662752ff8bfb64a7c0258ec6f4839736c066b8b0f02b0c984303d08eb241"
+    },
+    "pro-blocks-select": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "shadcn-design/pro-blocks-select/SKILL.md",
+      "computedHash": "a93493dc83d9a9d64b5170bf084cc27ced25407f41ca437b97516b433edcb87b"
+    },
+    "pro-blocks-setup": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "shadcn-design/pro-blocks-setup/SKILL.md",
+      "computedHash": "6790f50344eb428ab9733fc4da85487bd98a144f55d57dcd4a593976145d4cb4"
+    },
+    "shadcn-design-apply-brand": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "shadcn-design/shadcn-design-apply-brand/SKILL.md",
+      "computedHash": "a9c24bdccadd10ee159b40271375259c8dc24f55f35c7fbcb6ec566f586cf1a6"
+    },
+    "shadcn-design-figma": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "shadcn-design/shadcn-design-figma/SKILL.md",
+      "computedHash": "c383f506b80ca4c975f725f33f663bdbaff900ca8848cf22a1daa86f398da35c"
+    },
+    "shadcn-design-figma-to-code": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "shadcn-design/shadcn-design-figma-to-code/SKILL.md",
+      "computedHash": "3eca51464d90ecf8e647acf979a2326a83144e784a29f560fbfc371d585a20d4"
+    },
+    "shadcn-design-import-style": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "shadcn-design/shadcn-design-import-style/SKILL.md",
+      "computedHash": "1ccc641b64a8af5761ca0717e9614266bdec8edd3287cfeb24bd497ee29a4b1a"
+    },
+    "shadcn-design-update": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "shadcn-design/shadcn-design-update/SKILL.md",
+      "computedHash": "f62e2c96425d007cff768567a8519d8ebec48ca11c5a26a3fb6bad9f8e9df032"
+    },
+    "tailwind": {
+      "source": "7span/skills",
+      "sourceType": "github",
+      "skillPath": "7span-skills/tailwind/SKILL.md",
+      "computedHash": "9764d15932bb5db77457f4ddabf7a554d7e42298df4126b1a6f5f4452a5fc3d9"
     }
   }
 }

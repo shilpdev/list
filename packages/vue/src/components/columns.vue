@@ -5,13 +5,9 @@
         <slot :name="column.name" v-bind="getColumnScope(column, context)">
           <label>
             <span>{{ column.label ?? column.name }}</span>
-            <input
-              type="checkbox"
-              :checked="column.visibility"
-              @change="
-                context.setColumn(column.name, 'visibility', ($event.target as HTMLInputElement).checked)
-              "
-            />
+            <input type="checkbox" :checked="column.visibility" @change="
+              context.setColumn(column.name, 'visibility', ($event.target as HTMLInputElement).checked)
+              " />
           </label>
         </slot>
       </template>

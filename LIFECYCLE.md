@@ -22,7 +22,7 @@ sequenceDiagram
   List-->>App: beforePageChange / beforeLoadMore (State)
   List->>RH: requestHandler(State)
   alt 4. Response (latest request)
-    RH-->>List: { rows, count, meta }
+    RH-->>List: { rows, totalRows, meta }
     List->>SM: set(State)
     List-->>App: onResponse
     List-->>App: afterPageChange / afterLoadMore
@@ -37,10 +37,10 @@ sequenceDiagram
 ### 1. Setup (first render)
 
 - State starts from the props and the defaults in `shared/constants.ts`.
-- `stateManager.get(state)` runs once, with the State built from the props and defaults, before anything is shown or fetched. React applies what it returns while rendering, so the values before the restore are never committed. It may return `page`, `perPage`, `sortBy`, `sortOrder`, `search`, `filters` and `columns`; other fields are ignored.
+- `stateManager.get(state)` runs once, with the props and defaults (no rows, flags or response yet), before anything is shown or fetched. Vue calls it in setup and React in the first render, so the values before the restore are never committed. A `get` that throws is not caught: the error reaches the caller (the list does not render). It may return `page`, `perPage`, `sortBy`, `sortOrder`, `search`, `filters` and `columns` (used as returned, so it must be a complete `Column[]`); other fields are ignored. The saved values are applied on top of the initial ones (`applySavedState`) before any state is created.
 - A `loadMore` list always starts on page 1, whatever was saved.
 - Nothing is fetched yet, and `isInitialLoading` is `true`.
-- With `initialResponse` (a response fetched earlier, for example on the server), the list starts with its `rows`, `count` and `response`, and `isLoading` and `isInitialLoading` are `false`, so the server renders the rows. No hook fires for it.
+- With `initialResponse` (a response fetched earlier, for example on the server), the list starts with its `rows`, `totalRows` and `response`, and `isLoading` and `isInitialLoading` are `false`, so the server renders the rows. No hook fires for it.
 
 ### 2. Mount
 
@@ -64,7 +64,7 @@ Every fetch goes through these steps: the first load, page, search, sort and fil
 In this order:
 
 1. Rows are replaced in page mode, or appended after page 1 in load-more mode. Each row gets a 1-based `_index` across pages.
-2. `count` and `response` (with its `meta`) are stored. `selection` resets to `[]`.
+2. `totalRows` and `response` (with its `meta`) are stored. `selection` resets to `[]`.
 3. `isInitialLoading = false`, `isLoading = false`.
 4. `stateManager.set(state)`.
 5. `onResponse(response)`.
@@ -73,7 +73,7 @@ In this order:
 
 ### 5. Error
 
-- `error` is set, `rows` is `[]`, `count` is `0`, and the loading flags are cleared.
+- `error` is set, `rows` is `[]`, `totalRows` is `0`, and the loading flags are cleared.
 - `onError(error)` fires.
 - `stateManager.set` and the `after*` hooks do **not** run.
 - The error is not re-thrown, so there is no unhandled rejection. Read it from `context.error` or `onError`.
@@ -89,7 +89,6 @@ In this order:
 | `refresh`                                              | Refetches the current page with `requestTrigger = 'refresh'`. In load-more mode it clears the rows and starts again from page 1.                                                                                                                                                                                                             |
 | `clearState`                                           | Vue: calls `stateManager.clear(state)` so the saved state can be removed. The list itself is not reset and nothing is fetched.                                                                                                                                                                                                               |
 | `toggleRowSelection(id)`                               | Adds the row id (the `idKey` field) to `selection`, or removes it when it is there. `onRowSelect` fires when the selection really changes. The `ListRows` row slot (Vue) and `row` render prop (React) have `isSelected` and `toggleSelection()` for one row.                                                                                |
-| `updateRowById(row, id)`                               | Merges into the row whose `idKey` field equals `id`. No request. Warns if no row matches.                                                                                                                                                                                                                                                    |
 | `setColumn(column, key, value)`                        | Vue: sets one key of one column (`visibility`, `label` or a key of your own); an unknown column is ignored. Calls `stateManager.set`, then goes back to page 1 and refetches, except before the first response. Nothing happens if the value is unchanged.                                                                                   |
 
 ### 7. Props changing after mount

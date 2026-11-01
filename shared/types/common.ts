@@ -1,9 +1,6 @@
 import type { Column } from './columns'
 import type { FilterState, FilterValues } from './filters'
 
-/** Types shared across the list root and its components that do not belong to a single component. */
-
-/** Sort direction used by list queries. */
 export type SortOrder = 'asc' | 'desc' | ''
 
 /** What started the request: a list action, or `mount` for the first one. */
@@ -28,7 +25,6 @@ export type RowId = string | number
  */
 export type SelectionState = 'none' | 'partial' | 'all'
 
-/** How the list loads additional pages. */
 export type PaginationMode = 'pagination' | 'loadMore'
 
 /** Free-form JSON object passed through list configuration and API responses. */
@@ -37,7 +33,7 @@ export type Meta = Record<string, unknown>
 /** Standard shape returned by `requestHandler`. */
 export interface RequestHandlerResponse<T = unknown> {
   rows: T[]
-  count: number
+  totalRows: number
   meta?: Meta
 }
 
@@ -47,11 +43,35 @@ export interface RequestHandlerResponse<T = unknown> {
  */
 export type RequestHandler<T = unknown> = (state: State) => Promise<RequestHandlerResponse<T>>
 
+/**
+ * What a list knows before `stateManager.get` runs: the props and their defaults. Nothing is
+ * loaded yet, so there are no rows, flags or response.
+ */
+export type InitialState = Pick<
+  State,
+  | 'endpoint'
+  | 'version'
+  | 'meta'
+  | 'idKey'
+  | 'page'
+  | 'perPage'
+  | 'sortBy'
+  | 'sortOrder'
+  | 'search'
+  | 'filters'
+  | 'columns'
+>
+
 /** Optional persistence layer for list UI state. Each method receives a snapshot of the list state. */
 export interface StateManager {
   init?: (state: State) => void
-  /** Return the saved values to restore (`page`, `perPage`, `sortBy`, `sortOrder`, `search`, `filters`, `columns`); other fields are ignored. */
-  get?: (state: State) => Partial<State> | null
+  /*
+   * Return the saved values to restore (`page`, `perPage`, `sortBy`, `sortOrder`, `search`,
+   * `filters`, `columns`); other fields are ignored. `columns` is used as returned, so it must be
+   * a complete `Column[]`. Runs once at setup, before any request. An error it throws is not
+   * caught, so the list does not render.
+   */
+  get?: (state: InitialState) => Partial<InitialState> | null
   set?: (state: State) => void
   /** Remove what `set` saved. Runs when the list's `clearState` action is called. */
   clear?: (state: State) => void
@@ -77,7 +97,6 @@ export interface Actions<T = unknown> {
   toggleRowSelection: (id: RowId) => void
   /** Selects every loaded row, or clears the selection when all loaded rows are already selected. */
   toggleAllRowsSelection: () => void
-  updateRowById: (row: Partial<T>, id: RowId) => void
   /** Sets one key of one column, such as `visibility` or a key of your own. Unknown columns are ignored. */
   setColumn: (column: string, key: string, value: unknown) => void
 }
@@ -91,7 +110,7 @@ export interface State<T = unknown> {
   rows: T[]
   response: RequestHandlerResponse<T> | null
   error: Error | null
-  count: number
+  totalRows: number
   /** Ids of the selected rows. */
   selection: RowId[]
   /** Whether `none`, `partial`, or `all` of the loaded rows are selected. */

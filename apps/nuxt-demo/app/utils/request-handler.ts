@@ -63,7 +63,7 @@ export const requestHandler = async (query: Query) => {
 
   const data = await get(path, params)
   let rows: Record<string, unknown>[] = data[endpoint]
-  let count: number = data.total
+  let totalRows: number = data.total
 
   if (narrowing.length > 0) {
     rows = rows.filter((row) => {
@@ -71,9 +71,9 @@ export const requestHandler = async (query: Query) => {
         return String(row[filter.column]) === String(filter.value)
       })
     })
-    count = rows.length
+    totalRows = rows.length
     rows = rows.slice((page - 1) * perPage, page * perPage)
   }
 
-  return { rows, count }
+  return { rows, totalRows }
 }

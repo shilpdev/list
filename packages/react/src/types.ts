@@ -30,10 +30,12 @@ export interface ListProps<T = unknown> extends ListPropsBase<T>, EventProps<T> 
 type ColumnsSlot = (scope: ColumnsScope) => ReactNode
 type ColumnSlot = (scope: ColumnScope) => ReactNode
 
-// `children` is the whole control (the Vue default slot). The index signature holds one render prop
-// per column, named after it (the Vue slot of the same name), so it also has to allow the type of
-// `children`. Give such a render prop its scope type: `id={(scope: ColumnScope) => ...}`. A column
-// called `children` clashes.
+/*
+ * `children` is the whole control (the Vue default slot). The index signature holds one render prop
+ * per column, named after it (the Vue slot of the same name), so it also has to allow the type of
+ * `children`. Give such a render prop its scope type: `id={(scope: ColumnScope) => ...}`. A column
+ * called `children` clashes.
+ */
 export interface ListColumnsProps {
   /** Replaces the whole control. Gets `{ context, setColumn }`. */
   children?: ReactNode | ColumnsSlot
@@ -51,8 +53,10 @@ export type ListErrorProps = {
 type FiltersSlot = (scope: FiltersScope) => ReactNode
 type FilterSlot = (scope: FilterScope) => ReactNode
 
-// Same as `ListColumnsProps`: `children` is the whole control, and one render prop per filter is
-// named after its column (`status={(scope: FilterScope) => ...}`).
+/*
+ * Same as `ListColumnsProps`: `children` is the whole control, and one render prop per filter is
+ * named after its column (`status={(scope: FilterScope) => ...}`).
+ */
 export interface ListFiltersProps {
   /** Replaces the whole control. Gets `{ context, setFilter, setFilters }`. */
   children?: ReactNode | FiltersSlot

@@ -6,11 +6,13 @@ import type { State, StateManager } from '@shilp.dev/vue-list'
  */
 const KEYS = ['page', 'perPage', 'filters', 'sortOrder', 'sortBy', 'search', 'columns'] as const
 
-// `clearState` makes the list fetch again, and that response would save the state right back.
-// Nothing is saved after a clear until the page reloads.
+/*
+ * `clearState` makes the list fetch again, and that response would save the state right back.
+ * Nothing is saved after a clear until the page reloads.
+ */
 let isCleared = false
 
-function getKey(state: State) {
+function getKey(state: Pick<State, 'endpoint' | 'version'>) {
   return `shilp-list--${state.endpoint}--${state.version}`
 }
 

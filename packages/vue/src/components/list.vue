@@ -11,6 +11,7 @@ import type {
   Events,
   FilterState,
   FilterValues,
+  InitialState,
   ListPropsBase,
   RequestHandlerResponse,
   RequestTrigger,
@@ -34,18 +35,17 @@ import {
   computeColumns,
   computeHasMore,
   computeSelectionState,
-  createColumns,
   hasSelectionChanged,
   mergeRows,
-  patchRowById,
   toError,
   toggleAllIds,
   toggleId,
   computeFilters,
   computeDefaultFilters,
+  createColumns,
   hasSavedState,
+  applySavedState,
 } from '@shared/utils'
-import { rowNotFoundMessage } from '@shared/messages'
 import equal from 'fast-deep-equal'
 import { computed, onMounted, onUnmounted, provide, reactive, ref, toRef, toRefs, watch } from 'vue'
 
@@ -80,19 +80,40 @@ const isLoadMore = computed(() => {
 
 const defaultFilters = computeDefaultFilters(filters)
 
-const localPage = ref<number>(page)
-const localPerPage = ref<number>(perPage)
-const localSortBy = ref<string>(sortBy)
-const localSortOrder = ref<SortOrder>(sortOrder)
-const localSearch = ref<string>(search)
-const localFilters = ref<FilterState[]>([...defaultFilters])
-const localColumns = ref<Column[]>(createColumns(columns))
+/*
+ * Lifecycle 1, setup. `stateManager.get` runs before the refs exist, so each ref starts with its
+ * final value instead of being assigned and then overwritten. A load-more list ignores a saved
+ * page because it always starts on page 1.
+ */
+const initial: InitialState = {
+  endpoint,
+  version,
+  meta,
+  idKey,
+  page,
+  perPage,
+  sortBy,
+  sortOrder,
+  search,
+  filters: defaultFilters,
+  columns: createColumns(columns),
+}
+const saved = stateManager?.get?.(initial) ?? {}
+const start = applySavedState(initial, saved, isLoadMore.value)
+
+const localPage = ref<number>(start.page)
+const localPerPage = ref<number>(start.perPage)
+const localSortBy = ref<string>(start.sortBy)
+const localSortOrder = ref<SortOrder>(start.sortOrder)
+const localSearch = ref<string>(start.search)
+const localFilters = ref<FilterState[]>(start.filters)
+const localColumns = ref<Column[]>(start.columns)
 
 const rows = ref<unknown[]>([])
 const selection = ref<RowId[]>([])
 const error = ref<Error | null>(null)
 const response = ref<RequestHandlerResponse | null>(null)
-const count = ref(0)
+const totalRows = ref(0)
 const isLoading = ref(true)
 const isInitialLoading = ref(true)
 const requestTrigger = ref<RequestTrigger>('mount')
@@ -103,7 +124,7 @@ const isEmpty = computed(() => {
 })
 
 const hasMore = computed(() => {
-  return computeHasMore(localPage.value, localPerPage.value, count.value)
+  return computeHasMore(localPage.value, localPerPage.value, totalRows.value)
 })
 
 const selectionState = computed(() => {
@@ -119,13 +140,13 @@ function clearState() {
   init()
 }
 
-// Lifecycle 3 to 5, one request. Only the latest request counts (`requestId`).
-// 3. Request: state shows isLoading (`requestTrigger` says what started it), `beforePageChange` / `beforeLoadMore` get the
-//    State being requested, then `requestHandler` runs.
-// 4. Response: rows are replaced (page mode) or appended (load-more) with their `_index`, selection
-//    resets, `stateManager.set` runs, then `onResponse` and `afterPageChange` / `afterLoadMore` emit.
-// 5. Error: error is set, rows and count are cleared and `onError` emits. `stateManager.set` and the
-//    after events do not run.
+/*
+ * Lifecycle 3 to 5, one request. Only the latest request counts (`requestId`).
+ * 3. Request: the `before*` event gets the State being requested, then `requestHandler` runs.
+ * 4. Response: rows are replaced (page mode) or appended (load-more), selection resets, then
+ *    `stateManager.set`, `onResponse` and the `after*` event run.
+ * 5. Error: `error` is set, rows and totalRows are cleared and `onError` emits.
+ */
 function getData() {
   error.value = null
   isLoading.value = true
@@ -152,7 +173,7 @@ function getData() {
         perPage: localPerPage.value,
         isLoadMore: isLoadMore.value,
       })
-      count.value = res.count
+      totalRows.value = res.totalRows
       updateStateManager()
       emit('onResponse', res)
 
@@ -169,10 +190,12 @@ function getData() {
 
       error.value = toError(err)
       rows.value = []
-      count.value = 0
+      totalRows.value = 0
       emit('onError', error.value)
-      // The list UI already surfaces the error via `error`.
-      // Re-throwing here creates unhandled promise rejections.
+      /*
+       * The list UI already surfaces the error via `error`.
+       * Re-throwing here creates unhandled promise rejections.
+       */
     })
     .finally(() => {
       if (currentRequestId !== requestId) {
@@ -183,12 +206,11 @@ function getData() {
     })
 }
 
-// Lifecycle 6, actions called by the consumer. They only change local state; the watcher below
-// starts the request. setPerPage, setSearch, setSortBy and setSortOrder go back to page 1, and
-// setFilters and clearFilters do the same through the `filters` watcher. refresh refetches the
-// current page (load-more: from page 1). loadMore fetches the next page. updateRowById,
-// setColumn and toggleRowSelection change state without a request.
-// Internal: `requestTrigger` is set by the caller, before the request reads it.
+/*
+ * Lifecycle 6, actions. A query-changing action sets its ref, then `fetchPage` requests straight
+ * away. The action sets `requestTrigger` first so `requestHandler` and the `before*` event can
+ * read what started the request.
+ */
 function fetchPage(value: number) {
   localPage.value = value
   getData()
@@ -287,17 +309,6 @@ function loadMore() {
   }
 }
 
-function updateRowById(row: Partial<unknown>, id: RowId) {
-  const next = patchRowById(rows.value, row, id, idKey)
-
-  if (!next) {
-    console.warn(rowNotFoundMessage(idKey, id))
-    return
-  }
-
-  rows.value = next
-}
-
 function setColumn(column: string, key: string, value: unknown) {
   const next = computeColumns(localColumns.value, column, key, value)
 
@@ -328,7 +339,7 @@ const state = reactive({
   rows,
   response,
   error,
-  count,
+  totalRows,
   selection,
   selectionState,
   hasMore,
@@ -353,7 +364,6 @@ const context = reactive({
   clearState,
   toggleRowSelection,
   toggleAllRowsSelection,
-  updateRowById,
   setColumn,
 }) as Context
 
@@ -363,49 +373,10 @@ const snapshot = (): State => {
   return { ...state }
 }
 
-// Lifecycle 1, setup: state starts from the props and defaults. `stateManager.get` runs before any
-// state exists and may restore page, perPage, sort, search, filters and columns. A load-more
-// list always starts on page 1. Nothing is fetched yet.
-let saved: Partial<State> = {}
-
-try {
-  saved = stateManager?.get?.(snapshot()) ?? {}
-} catch (err) {
-  console.error(err)
-}
-
-if (saved.page != null && !isLoadMore.value) {
-  localPage.value = saved.page
-}
-
-if (saved.perPage != null) {
-  localPerPage.value = saved.perPage
-}
-
-if (saved.sortBy != null) {
-  localSortBy.value = saved.sortBy
-}
-
-if (saved.sortOrder != null) {
-  localSortOrder.value = saved.sortOrder
-}
-
-if (saved.search != null) {
-  localSearch.value = saved.search
-}
-
-// Saved columns and filters replace the ones from the props as they are, so `get` returns the
-// complete lists, with `isDirty` already worked out.
-if (saved.columns != null) {
-  localColumns.value = saved.columns
-}
-
-if (saved.filters != null) {
-  localFilters.value = saved.filters
-}
-
-// A seeded list (`initialResponse`) shows that response without a request. It stays seeded only
-// when nothing was restored: saved values may ask for another query, so then the list fetches.
+/*
+ * A seeded list shows `initialResponse` without a request, but only when nothing was restored:
+ * saved values may ask for another query, so then the list fetches.
+ */
 let isSeeded = false
 
 if (initialResponse != null) {
@@ -415,17 +386,17 @@ if (initialResponse != null) {
     perPage: localPerPage.value,
     isLoadMore: isLoadMore.value,
   })
-  count.value = initialResponse.count
+  totalRows.value = initialResponse.totalRows
   isLoading.value = false
   isInitialLoading.value = false
   isSeeded = !hasSavedState(saved)
 }
 
-// Lifecycle 7, props changing after mount: `filters`, `columns` and the query props (page, perPage,
-// search, sortBy, sortOrder) are read once; change them through the context actions. `endpoint`,
-// `version`, `meta` and `idKey` follow the prop (`toRef` in `state`) but start no request. A change
-// of `localFilters` or `localColumns` (setFilter, setFilters, clearFilters, setColumn) refetches,
-// except before the first response has arrived.
+/*
+ * Lifecycle 7, props changing after mount. The query props are read once, so a later change goes
+ * through an action. A filters or columns change refetches, except before the first response:
+ * the first request is already on its way.
+ */
 watch(localFilters, (newValue, oldValue) => {
   if (isInitialLoading.value) {
     return
@@ -474,14 +445,18 @@ function init() {
   getData()
 }
 
-// Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if the saved filters differ from
-// the prop, then the first request (skipped for a seeded list).
+/*
+ * Lifecycle 2, mount: `stateManager.init`, then `onFiltersChange` if a restore changed the
+ * filters, then the first request (skipped for a seeded list).
+ */
 onMounted(() => {
   init()
 })
 
-// Lifecycle 8, unmount: invalidate the request in flight so its late response or error does not
-// update state, call `stateManager.set` or emit events on a list that no longer exists.
+/*
+ * Lifecycle 8, unmount: drop the request in flight so a late response does not update state or
+ * emit events on a list that no longer exists.
+ */
 onUnmounted(() => {
   requestId++
 })

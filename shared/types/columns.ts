@@ -11,12 +11,10 @@ export interface Column {
   [key: string]: unknown
 }
 
-/** Scope for the `columns` slot. */
 export interface ColumnsScope extends ListScope {
   setColumn: (column: string, key: string, value: unknown) => void
 }
 
-/** Scope for a column slot, which is named after its column. */
 export interface ColumnScope extends ListScope, Column {
   setValue: (key: string, value: unknown) => void
 }

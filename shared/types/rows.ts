@@ -1,6 +1,5 @@
 import type { ListScope } from './common'
 
-/** Scope for a row slot. */
 export interface RowScope<T = any> extends ListScope {
   row: T
   index: number

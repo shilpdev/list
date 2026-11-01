@@ -15,13 +15,11 @@ export interface FilterState extends Filter {
   isDirty: boolean
 }
 
-/** Scope for the `filters` slot. */
 export interface FiltersScope extends ListScope {
   setFilter: (column: string, value: unknown) => void
   setFilters: (values: FilterValues) => void
 }
 
-/** Scope for a filter slot, which is named after its column. */
 export interface FilterScope extends ListScope, FilterState {
   setValue: (value: unknown) => void
 }

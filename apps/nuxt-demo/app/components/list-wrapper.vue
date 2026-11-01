@@ -108,8 +108,10 @@ function getTableColumns(context: Context) {
   return [{ id: 'select' }, { accessorKey: '_index', header: '#' }, ...visible]
 }
 
-// Sorting is done by the API. A header click goes asc, then desc, then off. The list starts with
-// `sort-order="asc"`, so the first click on a column is a single request.
+/*
+ * Sorting is done by the API. A header click goes asc, then desc, then off. The list starts with
+ * `sort-order="asc"`, so the first click on a column is a single request.
+ */
 function sort(context: Context, name: string) {
   if (context.sortBy !== name) {
     context.setSortBy(name)
@@ -319,7 +321,7 @@ function getRowId(row: unknown) {
 
       <ListSummary v-slot="{ context, from, to }">
         <p class="text-center text-sm text-muted">
-          Showing {{ from }} - {{ to }} of {{ context.count }}
+          Showing {{ from }} - {{ to }} of {{ context.totalRows }}
           <template v-if="context.selection.length">
             - {{ context.selection.length }} selected</template
           >
@@ -331,7 +333,7 @@ function getRowId(row: unknown) {
           <UPagination
             :page="context.page"
             :items-per-page="context.perPage"
-            :total="context.count"
+            :total="context.totalRows"
             @update:page="context.setPage"
           />
         </ListPagination>
@@ -343,7 +345,7 @@ function getRowId(row: unknown) {
 
       <ListSummary v-slot="{ context, visibleCount }">
         <p class="text-center text-sm text-muted">
-          Showing {{ visibleCount }} of {{ context.count }}
+          Showing {{ visibleCount }} of {{ context.totalRows }}
         </p>
       </ListSummary>
 

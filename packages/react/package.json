@@ -4,13 +4,11 @@
   "description": "Simplified API-based list rendering. Build listing layouts faster by abstracting away the boilerplate of API calls, pagination, and state management.",
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write src/",
     "lint": "eslint . --fix",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "pnpm build"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",

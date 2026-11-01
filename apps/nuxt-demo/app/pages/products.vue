@@ -24,8 +24,10 @@ const filters: FilterConfig[] = [
   },
 ]
 
-// Fetched on the server, so the HTML ships with the first page and the list skips its first
-// client request.
+/*
+ * Fetched on the server, so the HTML ships with the first page and the list skips its first
+ * client request.
+ */
 const { data: initialResponse } = await useAsyncData('products-initial', () => {
   return requestHandler({
     endpoint: 'products',

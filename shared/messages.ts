@@ -1,4 +1,4 @@
-import type { PerPageOption, RowId, SummaryScope } from './types'
+import type { PerPageOption, SummaryScope } from './types'
 
 /**
  * Every message the packages show or throw, so @shilp.dev/react-list and @shilp.dev/vue-list say
@@ -30,16 +30,9 @@ export const getGoToMessage = (page: number): string => {
 }
 
 export const getSummaryMessage = ({ context, from, to, visibleCount }: SummaryScope): string => {
-  return `Showing ${visibleCount} rows (${from} - ${to}) out of ${context.count}`
+  return `Showing ${visibleCount} rows (${from} - ${to}) out of ${context.totalRows}`
 }
 
 export const getPerPageMessage = (option: PerPageOption): string => {
   return `${option.label} rows per page`
-}
-
-export const rowNotFoundMessage = (idKey: string, id: RowId): string => {
-  return (
-    `List: updateRowById did not find a row where ${idKey} === ${JSON.stringify(id)}. ` +
-    `Verify your rows expose "${idKey}" and that the id type matches exactly.`
-  )
 }
