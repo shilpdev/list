@@ -1,4 +1,4 @@
-export { default, default as List } from './components/list'
+export { List } from './components/list'
 export { ListGoTo } from './components/go-to'
 export { ListError } from './components/error'
 export { ListEmpty } from './components/empty'

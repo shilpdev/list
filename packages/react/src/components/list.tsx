@@ -524,4 +524,4 @@ function List<T = unknown>(props: ListProps<T>) {
   )
 }
 
-export default List
+export { List }

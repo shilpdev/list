@@ -1,6 +1,7 @@
 'use client'
 
-import List, {
+import {
+  List,
   ListColumns,
   ListEmpty,
   ListError,
