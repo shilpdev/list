@@ -1,4 +1,4 @@
-export { default, default as List } from './components/list.vue'
+export { default as List } from './components/list.vue'
 export { default as ListRows } from './components/rows.vue'
 export { default as ListLoaderInitial } from './components/loader-initial.vue'
 export { default as ListLoader } from './components/loader.vue'
