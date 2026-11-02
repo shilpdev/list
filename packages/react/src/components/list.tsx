@@ -110,6 +110,7 @@ function List<T = unknown>(props: ListProps<T>) {
   const [localSearch, setLocalSearch] = useState<string>(start.search)
   const [localFilters, setLocalFilters] = useState<FilterState[]>(start.filters)
   const [localColumns, setLocalColumns] = useState<Column[]>(start.columns)
+  const [localRefresh, setLocalRefresh] = useState<boolean>(false)
 
   const [rows, setRows] = useState<T[]>(() => {
     if (initialResponse == null) {
@@ -337,6 +338,7 @@ function List<T = unknown>(props: ListProps<T>) {
     if (isLoadMore) {
       setRows([])
       setLocalPage(1)
+      setLocalRefresh(!localRefresh)
     } else {
       getData()
     }
@@ -425,7 +427,15 @@ function List<T = unknown>(props: ListProps<T>) {
     return () => {
       requestIdRef.current += 1
     }
-  }, [localPage, localPerPage, localSearch, localSortBy, localSortOrder, localFilters])
+  }, [
+    localPage,
+    localPerPage,
+    localSearch,
+    localSortBy,
+    localSortOrder,
+    localFilters,
+    localRefresh,
+  ])
 
   useEffect(() => {
     const previousFilters = previousFiltersRef.current
