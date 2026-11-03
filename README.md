@@ -5,7 +5,24 @@
 [![license](https://img.shields.io/github/license/shilpdev/list)](./LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/shilpdev/list?style=social)](https://github.com/shilpdev/list)
 
----
+## Contents
+
+- [What is Shilp List](#what-is-shilp-list)
+  - [The mental model](#the-mental-model)
+  - [What is in the box](#what-is-in-the-box)
+- [Why you should use it](#why-you-should-use-it)
+- [How it is different from AG Grid and TanStack Table](#how-it-is-different-from-ag-grid-and-tanstack-table-and-how-it-works-with-them)
+  - [With TanStack Table](#with-tanstack-table)
+  - [With AG Grid](#with-ag-grid)
+  - [When to pick which](#when-to-pick-which)
+- [How it helps AI build listing pages](#how-it-helps-ai-build-listing-pages)
+  - [A prompt that works well](#a-prompt-that-works-well)
+  - [Tips for teaching your AI assistant](#tips-for-teaching-your-ai-assistant)
+- [Examples](#examples)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [Credits](#credits)
+- [License](#license)
 
 **Headless list components for React and Vue.** You write the markup. Shilp handles fetching, pagination, search, filters, sorting, selection and state persistence.
 
