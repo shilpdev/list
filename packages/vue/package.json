@@ -2,7 +2,39 @@
   "name": "@shilp.dev/vue-list",
   "version": "0.1.0",
   "description": "Simplified API-based list rendering. Build listing layouts faster by abstracting away the boilerplate of API calls, pagination, and state management.",
+  "keywords": [
+    "vue",
+    "vue3",
+    "nuxt",
+    "vue-list",
+    "list",
+    "headless",
+    "table",
+    "data-table",
+    "datagrid",
+    "pagination",
+    "infinite-scroll",
+    "load-more",
+    "search",
+    "filter",
+    "sort",
+    "scoped-slots",
+    "typescript",
+    "ssr"
+  ],
+  "homepage": "https://github.com/shilpdev/list/tree/main/packages/vue#readme",
+  "bugs": {
+    "url": "https://github.com/shilpdev/list/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shilpdev/list.git",
+    "directory": "packages/vue"
+  },
+  "license": "MIT",
+  "author": "7Span (https://7span.com)",
   "type": "module",
+  "sideEffects": false,
   "scripts": {
     "build": "vite build",
     "typecheck": "vue-tsc --noEmit",
@@ -21,7 +53,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"

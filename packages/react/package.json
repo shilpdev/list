@@ -2,7 +2,38 @@
   "name": "@shilp.dev/react-list",
   "version": "0.1.0",
   "description": "Simplified API-based list rendering. Build listing layouts faster by abstracting away the boilerplate of API calls, pagination, and state management.",
+  "keywords": [
+    "react",
+    "react-list",
+    "list",
+    "headless",
+    "table",
+    "data-table",
+    "datagrid",
+    "pagination",
+    "infinite-scroll",
+    "load-more",
+    "search",
+    "filter",
+    "sort",
+    "render-props",
+    "typescript",
+    "ssr",
+    "nextjs"
+  ],
+  "homepage": "https://github.com/shilpdev/list/tree/main/packages/react#readme",
+  "bugs": {
+    "url": "https://github.com/shilpdev/list/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shilpdev/list.git",
+    "directory": "packages/react"
+  },
+  "license": "MIT",
+  "author": "7Span (https://7span.com)",
   "type": "module",
+  "sideEffects": false,
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc --noEmit",
@@ -21,7 +52,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "publishConfig": {
     "access": "public"
