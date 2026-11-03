@@ -1,7 +1,7 @@
 {
   "name": "shilp",
   "version": "0.0.1",
-  "description": "",
+  "description": "Headless list components for React and Vue: fetching, pagination, load more, search, sorting, filters, row selection and saved state, with your own markup.",
   "packageManager": "pnpm@11.9.0",
   "main": "index.js",
   "scripts": {
@@ -24,9 +24,32 @@
   "overrides": {
     "aria-query": "5.3.2"
   },
-  "keywords": [],
+  "keywords": [
+    "react",
+    "react-list",
+    "nextjs",
+    "vue",
+    "vue-list",
+    "list",
+    "headless",
+    "table",
+    "data-table",
+    "datagrid",
+    "pagination",
+    "infinite-scroll",
+    "nuxtjs",
+    "datatable",
+    "data-grid",
+    "grid",
+    "listing",
+    "list-view",
+    "infinite-list",
+    "api",
+    "admin",
+    "dashboard"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "fast-deep-equal": "^3.1.3"
   }

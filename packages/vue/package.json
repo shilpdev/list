@@ -4,8 +4,6 @@
   "description": "Simplified API-based list rendering. Build listing layouts faster by abstracting away the boilerplate of API calls, pagination, and state management.",
   "keywords": [
     "vue",
-    "vue3",
-    "nuxt",
     "vue-list",
     "list",
     "headless",
@@ -14,13 +12,16 @@
     "datagrid",
     "pagination",
     "infinite-scroll",
-    "load-more",
-    "search",
-    "filter",
-    "sort",
-    "scoped-slots",
-    "typescript",
-    "ssr"
+    "nuxtjs",
+    "datatable",
+    "data-grid",
+    "grid",
+    "listing",
+    "list-view",
+    "infinite-list",
+    "api",
+    "admin",
+    "dashboard"
   ],
   "homepage": "https://github.com/shilpdev/list/tree/main/packages/vue#readme",
   "bugs": {

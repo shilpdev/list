@@ -2,6 +2,8 @@
 
 Headless list components for Vue 3: fetching, pagination, search, sorting and filters, with your own markup.
 
+Use it to build data tables, data grids, listing pages, card grids, infinite lists and admin dashboards that load from an API, with server-side pagination, sorting, filtering and search.
+
 [![npm version](https://img.shields.io/npm/v/@shilp.dev/vue-list.svg)](https://www.npmjs.com/package/@shilp.dev/vue-list)
 [![downloads](https://img.shields.io/npm/dm/@shilp.dev/vue-list.svg)](https://www.npmjs.com/package/@shilp.dev/vue-list)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@shilp.dev/vue-list)](https://bundlephobia.com/package/@shilp.dev/vue-list)
@@ -41,7 +43,3 @@ Requires Vue 3.5 or newer.
 ## Contributing
 
 Issues and pull requests are welcome on [GitHub](https://github.com/shilpdev/list).
-
-## License
-
-[MIT](./LICENSE), made by [7Span](https://7span.com).
