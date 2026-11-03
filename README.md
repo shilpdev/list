@@ -19,10 +19,6 @@
   - [A prompt that works well](#a-prompt-that-works-well)
   - [Tips for teaching your AI assistant](#tips-for-teaching-your-ai-assistant)
 - [Examples](#examples)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [Credits](#credits)
-- [License](#license)
 
 **Headless list components for React and Vue.** You write the markup. Shilp handles fetching, pagination, search, filters, sorting, selection and state persistence.
 
@@ -410,28 +406,3 @@ Working demos live in this repo:
 
 - [`apps/next-demo`](./apps/next-demo): Next.js, shadcn/ui, server-side `initialResponse`, `localStorage` `stateManager`
 - [`apps/nuxt-demo`](./apps/nuxt-demo): the same list in Nuxt
-
-## Documentation
-
-- [LIFECYCLE.md](./LIFECYCLE.md): the order requests and hooks fire in
-- [PARITY.md](./PARITY.md): known differences between the React and Vue packages
-
-## Contributing
-
-This is a pnpm monorepo (Node 22).
-
-```bash
-pnpm install
-pnpm build:packages   # build both libraries
-pnpm typecheck
-pnpm lint
-pnpm dev:next         # or pnpm dev:nuxt
-```
-
-## Credits
-
-Created by [7Span](https://7span.com). The first generation of these libraries, `vue-list` and `react-list`, lives on in this rewrite.
-
-## License
-
-ISC
