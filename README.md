@@ -169,7 +169,7 @@ import { requestHandler } from '~/api/request-handler'
 ```
 
 - `requestHandler` is the **only** place that knows about your API. It receives a plain data snapshot of the list state and returns `{ rows, totalRows }`.
-- `context` is state plus actions. Every slot component receives it, and `useListContext()` (React) / `useListContext()` (Vue) gives it to your own components.
+- `context` is state plus actions. Every component receives it.
 - Change a prop (`page`, `filters`, `search`...) or call an action and the list refetches. No `useEffect` chains to write.
 
 ### What is in the box
@@ -178,7 +178,7 @@ import { requestHandler } from '~/api/request-handler'
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Fetching    | One `requestHandler`, race-safe, with `isLoading` / `isInitialLoading` / `error` / `isEmpty`                                        |
 | Pagination  | Page links, per-page selector, go-to-page, summary ("1–10 of 240"), or `loadMore` mode                                              |
-| Search      | Debounced search input slot                                                                                                         |
+| Search      | Debounced search input                                                                                                         |
 | Filters     | Per-column filters with `isDirty` tracking and `clearFilters`                                                                       |
 | Sorting     | `sortBy` and `sortOrder` as plain state                                                                                             |
 | Columns     | Show/hide columns, plus any custom keys you attach                                                                                  |
@@ -235,7 +235,7 @@ Short version: **they solve different problems, so you rarely have to choose.**
 
 **Shilp List is not a grid.** It does not draw cells, resize columns or virtualize ten thousand rows. It answers a different question: _"what is the current page of data, and how do I change what's being asked for?"_ Cards, galleries, activity feeds and mobile lists have no table at all, but they still need pagination, search, and loading states. Shilp covers those and tables alike.
 
-**TanStack Table and AG Grid are strong at the rendering side** (cell models, column pinning, grouping, virtualization). Neither wants to own your fetching, URL state and server contract for every list in your app. That is the gap Shilp fills, so use them together.
+**TanStack Table and AG Grid** are strong at the rendering side (cell models, column pinning, grouping, virtualization). Neither wants to own your fetching, URL state and server contract for every list in your app. **That is the gap `Shilp` fills, so use them together.**
 
 ### With TanStack Table
 
@@ -368,13 +368,13 @@ Coding assistants (Claude Code, Cursor, Copilot, Codex) are good at layout and w
 Shilp List removes most of that surface area:
 
 **A tiny, closed vocabulary.**
-Every list page is the same recipe: `columns` + `requestHandler` + slot components. There are about a dozen components and one `Context` type. An AI that has seen one list page can write the next one, and every page in the codebase ends up looking the same.
+Every list page is the same recipe: `columns` + `requestHandler` + `components`. There are about a dozen components and one `Context` type. An AI that has seen one list page can write the next one, and every page in the codebase ends up looking the same.
 
 **The hard parts are not generated.**
 Debouncing, race conditions, refetch triggers, page reset on filter change, selection state, persistence: the assistant never writes them, so it cannot get them subtly wrong. It only fills in markup, which is the part it is good at.
 
 **One fully typed contract.**
-`requestHandler(state) → { rows, totalRows }` is a single function signature, and every slot scope extends the same `Context`. Types ship in the package, so an AI can read `State` and `Context` straight from `node_modules` and autocomplete real field names (`isInitialLoading`, `setFilter`, `selectionState`) instead of hallucinating them.
+`requestHandler(state) → { rows, totalRows }` is a single function signature, and every scope extends the same `Context`. Types ship in the package, so an AI can read `State` and `Context` straight from `node_modules` and autocomplete real field names (`isInitialLoading`, `setFilter`, `selectionState`) instead of hallucinating them.
 
 **Separation of data and UI.**
 "Add a status filter and a bulk-select checkbox to the orders list" becomes a small, reviewable diff: one entry in `filters`, a few lines in a slot. The data layer is not touched.
