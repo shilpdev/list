@@ -39,9 +39,11 @@ export interface RequestHandlerResponse<T = unknown> {
 
 /**
  * Fetches list data. Receives a snapshot of the list state for the request being made
- * (for example `page` is the page being requested and `requestTrigger` says what started it).
+ * (for example `page` is the page being requested). The list passes a full `State`, but the
+ * parameter is `InitialState` so you can also call the handler yourself before a list exists,
+ * for example on the server to build `initialResponse`.
  */
-export type RequestHandler<T = unknown> = (state: State) => Promise<RequestHandlerResponse<T>>
+export type RequestHandler<T = unknown> = (state: InitialState) => Promise<RequestHandlerResponse<T>>
 
 /**
  * What a list knows before `stateManager.get` runs: the props and their defaults. Nothing is

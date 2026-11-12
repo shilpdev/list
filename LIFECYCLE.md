@@ -57,7 +57,7 @@ Every fetch goes through these steps: the first load, page, search, sort and fil
 - State: `isLoading = true` and `error = null`. In Vue, `requestTrigger` is `refresh` for a refresh; `isRefresh` no longer exists.
 - Vue: `requestTrigger` says what started the request: `mount` for the first one, then the action (`page`, `perPage`, `search`, `sortBy`, `sortOrder`, `filters`, `columns`, `loadMore` or `refresh`). It is set when the action changes something, so `requestHandler` and `before*` get it in `state`.
 - `beforePageChange(state)` in page mode or `beforeLoadMore(state)` in load-more mode. `state` is the same snapshot passed to `requestHandler`.
-- `requestHandler(state)` runs. `state` is data only (no methods); `page` is the page being requested.
+- `requestHandler(state)` runs. `state` is data only (no methods); `page` is the page being requested. The list passes a full `State`, but the handler is typed to accept `InitialState` (the props and their defaults), so it can also be called on the server to build `initialResponse`.
 
 ### 4. Response
 
